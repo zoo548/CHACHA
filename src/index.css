@@ -1,6 +1,26 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
 @import "tailwindcss";
 
+/* =============================================================================
+ * 차차 (Chacha) 스타일시트
+ *
+ * 구조:
+ *   1. 공통 기반 — 색 변수, body/button 리셋, .icon
+ *   2. 공유 조각 — 로고, 미니 카드, PDF, 전화 그림, 완료/연습 아이콘
+ *   3. 노트북 미리보기 틀 — .prototype-stage / .iphone-frame /
+ *      가짜 StatusBar / 가짜 home-indicator (폭 ≤600px 에서는 숨겨짐)
+ *   4. 공통 버튼
+ *   5. 온보딩 레이아웃
+ *   6. 화면 공용 (page-heading, card-stack 등)
+ *   7. 각 화면 전용 (home / help / card / lock / alert / pdf / safety)
+ *   8. 바텀시트
+ *   9. 하단 탭
+ *  10. @media — 좁은 폭에서 iphone-frame 을 꽉 채움
+ *  11. 네이티브 safe area (env(safe-area-inset-*))
+ * ========================================================================== */
+
+/* ---- 1. 기반 --------------------------------------------------------- */
+
 :root {
   --blue: #1b64da;
   --pale-blue: #eef4fd;
@@ -10,178 +30,60 @@
   --line: #e3ded6;
   --danger: #d92d20;
   --caution: #f2a900;
+  /* 프로토타입 전용(배경/글자 톤) */
+  --proto-bg: #f8f5ef;
+  --proto-ink: #191f28;
+  --proto-copy: #4e5968;
+  --proto-line: #e5e8eb;
+  --proto-blue-soft: #e8f0fd;
   font-family: "Pretendard", sans-serif;
   color: var(--ink);
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; background: #eeece8; }
+body { margin: 0; min-width: 320px; background: #f3f4f6; }
 button, input { font: inherit; }
 button { border: 0; cursor: pointer; }
+button, .proto-row { -webkit-tap-highlight-color: transparent; }
+button:active { transform: scale(.97); transition: transform 100ms ease; }
+
 .icon { width: 24px; height: 24px; flex: 0 0 auto; }
 
-.design-board { min-height: 100vh; padding: 40px; }
-.board-header { display: flex; align-items: center; gap: 18px; margin-bottom: 44px; }
-.board-header h1 { margin: 0 0 5px; font-size: 28px; }
-.board-header p { margin: 0; color: #666; }
+/* ---- 2. 공유 조각 ---------------------------------------------------- */
+
+/* 로고 (brand-logo). large 는 온보딩 시작 화면 전용. */
 .brand-logo { display: flex; align-items: center; gap: 7px; color: var(--blue); }
 .brand-logo strong { font-size: 20px; font-weight: 800; }
 .logo-mark { width: 36px; height: 28px; display: flex; align-items: center; justify-content: center; gap: 3px; background: var(--blue); border-radius: 14px 14px 14px 5px; }
 .logo-mark i { width: 4px; height: 4px; background: white; border-radius: 50%; }
-.brand-logo.large { flex-direction: column; gap: 8px; }
-.brand-logo.large .logo-mark { width: 92px; height: 68px; gap: 7px; border-radius: 34px 34px 34px 12px; }
+.brand-logo.large { flex-direction: column; gap: 10px; }
+.brand-logo.large .logo-mark { width: 98px; height: 72px; gap: 7px; border-radius: 36px 36px 36px 13px; }
 .brand-logo.large .logo-mark i { width: 8px; height: 8px; }
-.brand-logo.large strong { font-size: 34px; line-height: 1; }
+.brand-logo.large strong { font-size: 38px; line-height: 1; }
 .brand-logo.large small { margin-top: -3px; font-size: 11px; font-weight: 700; letter-spacing: .18em; }
 
-.board-group { margin-bottom: 64px; }
-.board-group > h2 { margin: 0 0 20px; font-size: 20px; }
-.frame-row { display: flex; align-items: flex-start; gap: 28px; overflow-x: auto; padding: 0 4px 28px; }
-.design-frame { width: 393px; flex: 0 0 393px; margin: 0; }
-.design-frame figcaption { height: 34px; color: #626262; font-size: 13px; }
-.design-frame figcaption b { margin-right: 7px; color: var(--blue); }
-.phone { position: relative; width: 393px; height: 852px; overflow: hidden; background: var(--cream); border: 1px solid #d1cec8; border-radius: 28px; }
-.pdf-frame { width: 595px; flex-basis: 595px; }
-.paper { width: 595px; height: 842px; overflow: hidden; background: white; border: 1px solid #d1cec8; }
-
-.group-header { position: relative; height: 151px; padding: 25px 24px 10px; }
-.group-steps { position: relative; width: 166px; margin: 0 auto; display: flex; justify-content: space-between; }
-.group-steps::before { content: ""; position: absolute; z-index: 0; top: 15px; right: 20px; left: 20px; height: 2px; background: var(--line); }
-.group-steps span { position: relative; z-index: 1; width: 32px; height: 32px; display: grid; place-items: center; color: #777; background: var(--cream); border: 2px solid var(--line); border-radius: 50%; font-size: 14px; font-weight: 700; }
-.group-steps span.current { color: white; background: var(--blue); border-color: var(--blue); }
-.group-steps span.done { color: var(--blue); background: var(--pale-blue); border-color: var(--blue); }
-.group-steps span .icon { width: 17px; height: 17px; stroke-width: 3; }
-.group-header > p { margin: 8px 0 0; color: var(--blue); font-size: 15px; font-weight: 600; text-align: center; }
-.later { position: absolute; top: 30px; right: 24px; padding: 5px 0; color: var(--muted); background: transparent; font-size: 13px; }
-.form-nav { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
-.form-nav button { padding: 0; color: #555; background: transparent; }
-.form-nav b { color: var(--blue); }
-.progress { margin-top: 9px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-.progress i { height: 4px; background: var(--line); border-radius: 3px; }
-.progress i.filled { background: var(--blue); }
-
-.intro, .prep, .complete-card { padding: 12px 24px 120px; }
-.intro h1, .prep h1, .form-page h1, .complete-card h1 { margin: 0 0 12px; font-size: 26px; line-height: 1.35; letter-spacing: -.025em; word-break: keep-all; }
-.intro > p, .prep > p, .complete-card > p, .description { margin: 0; color: #555; font-size: 17px; line-height: 1.55; word-break: keep-all; }
-.centered { text-align: left; }
-.intro.centered > .brand-logo { width: fit-content; margin-right: auto; margin-left: auto; }
-.intro.centered { padding-top: 58px; }
-.intro.centered h1 { margin-top: 42px; }
-.intro.centered > p span, .prep > p span { display: block; }
-.intro-list { margin-top: 36px; display: flex; flex-direction: column; gap: 22px; }
-.intro-list > div { display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 16px; }
-.intro-list > div > span { width: 48px; height: 48px; display: grid; place-items: center; color: var(--blue); background: var(--pale-blue); border-radius: 14px; }
-.intro-list p { margin: 0; font-size: 18px; line-height: 1.5; word-break: keep-all; }
-.adult-illustration { width: 240px; height: 174px; margin: 0 auto; color: var(--blue); }
-.together { padding-top: 8px !important; }
-.together h1 { margin-top: 22px !important; }
-.guardian { margin: 14px 0 0 !important; display: flex; align-items: flex-start; gap: 7px; color: var(--muted) !important; font-size: 15px !important; line-height: 1.45 !important; text-align: left; }
-.guardian .icon { width: 18px; height: 18px; margin-top: 1px; }
-
-.fixed-bottom { position: absolute; z-index: 5; right: 0; bottom: 0; left: 0; padding: 12px 24px 22px; background: var(--cream); }
-.main-button { width: 100%; height: 64px; color: white; background: var(--blue); border-radius: 16px; font-size: 20px; font-weight: 700; }
-.main-button.secondary { color: var(--blue); background: white; border: 1px solid var(--blue); }
-.text-button { width: 100%; height: 35px; margin-top: 4px; color: #707070; background: transparent; font-size: 15px; }
-
-.form-page { height: calc(100% - 151px); padding: 8px 24px 135px; overflow-y: auto; scrollbar-width: none; }
-.form-page::-webkit-scrollbar { display: none; }
-.form-page .description { margin-top: -4px; }
-.fields { margin-top: 25px; display: flex; flex-direction: column; gap: 20px; }
-.field { display: flex; flex-direction: column; gap: 8px; }
-.field > span, .chip-field > b { font-size: 18px; font-weight: 600; }
-.field > span i { width: 6px; height: 6px; display: inline-block; margin: 0 0 3px 5px; background: var(--blue); border-radius: 50%; }
-.field > div { position: relative; }
-.field input { width: 100%; height: 56px; padding: 0 15px; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 12px; outline: none; font-size: 18px; }
-.field input:focus { border: 2px solid var(--blue); }
-.field input::placeholder { color: var(--muted); opacity: 1; }
-.field > div > button { position: absolute; right: 10px; bottom: -22px; padding: 3px 0; color: var(--blue); background: transparent; font-size: 12px; font-weight: 700; }
-.chip-field { display: flex; flex-direction: column; gap: 10px; }
-.chip-field > div { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip-field button { min-height: 44px; padding: 0 15px; display: flex; align-items: center; gap: 5px; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 22px; font-size: 14px; }
-.chip-field button.selected { color: var(--blue); background: var(--pale-blue); border-color: var(--blue); font-weight: 700; }
-.chip-field button .icon { width: 16px; height: 16px; stroke-width: 3; }
-.fixed-bottom .guardian { margin: 0 0 9px !important; font-size: 13px !important; }
-.privacy { margin: 0 0 10px; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 15px; }
-.privacy .icon { width: 18px; height: 18px; }
-.scroll-form { padding-bottom: 160px; }
-.scroll-form .fields { padding-bottom: 30px; }
-
-.sheet-overlay { position: absolute; z-index: 20; inset: 0; background: rgba(26,26,26,.32); }
-.bottom-sheet { position: absolute; right: 0; bottom: 0; left: 0; padding: 13px 24px 24px; background: white; border-radius: 24px 24px 0 0; }
-.bottom-sheet > i { width: 40px; height: 4px; margin: 0 auto 28px; display: block; background: var(--line); border-radius: 4px; }
-.bottom-sheet h2 { margin: 0; font-size: 22px; line-height: 1.4; }
-.bottom-sheet p { margin: 10px 0 28px; color: #555; font-size: 17px; line-height: 1.5; }
-
-.mini-card { width: 250px; margin: 8px auto 34px; padding: 18px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px 12px; background: white; border: 1px solid var(--line); border-radius: 16px; text-align: left; }
+/* 미니 카드 (온보딩 8단계 "카드 만들었어요") */
+.mini-card { width: 270px; margin: 14px auto 34px; padding: 20px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px 12px; background: white; border: 1px solid var(--line); border-radius: 22px; text-align: left; }
 .mini-card .brand-logo { grid-column: 1 / 3; transform: scale(.8); transform-origin: left center; }
 .mini-card hr { grid-column: 1 / 3; width: 100%; border: 0; border-top: 1px solid var(--line); }
 .mini-card > b { grid-column: 1 / 3; font-size: 22px; }
 .mini-card span { color: var(--blue); font-size: 12px; }
 .mini-card strong { font-size: 13px; }
-.complete-card { padding-top: 18px; }
 
-.prep.centered { padding-top: 34px; }
-.phone-drawing { position: relative; width: 205px; height: 235px; margin: 0 auto 38px; color: var(--blue); }
-.phone-drawing > .icon { width: 180px; height: 235px; stroke-width: 1.5; }
-.phone-drawing > span { position: absolute; top: 70px; left: 30px; width: 145px; padding: 10px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 10px; text-align: left; }
+/* 전화 그림 (온보딩 9단계 "알림을 켜요") */
+.phone-drawing { position: relative; width: 224px; height: 252px; margin: 0 auto 42px; padding: 10px; color: var(--blue); background: var(--pale-blue); border-radius: 32px; }
+.phone-drawing > .icon { width: 180px; height: 232px; margin-left: 12px; stroke-width: 1.5; }
+.phone-drawing > span { position: absolute; top: 78px; left: 38px; width: 148px; padding: 12px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 14px; text-align: left; }
 .phone-drawing .brand-logo { transform: scale(.55); transform-origin: left center; height: 18px; }
 .phone-drawing b { font-size: 12px; }
-.connect-drawing { height: 110px; display: flex; align-items: center; justify-content: center; color: var(--blue); }
-.connect-drawing > span { width: 82px; height: 82px; display: grid; place-items: center; border: 2px solid var(--blue); border-radius: 40px 40px 20px 20px; }
-.connect-drawing > span .icon { width: 43px; height: 43px; }
-.connect-drawing > i { width: 65px; margin: 0 12px; border-top: 2px dashed var(--blue); }
-.connect-drawing > .icon { width: 60px; height: 82px; }
-.light-states { margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.light-states section { min-height: 155px; padding: 10px 8px; background: white; border: 1px solid var(--line); border-radius: 12px; }
-.light-states section > b { display: block; color: var(--blue); font-size: 10px; }
-.light-states section > div { margin-top: 16px; font-size: 10px; }
-.search-dots { color: var(--blue); font-size: 28px !important; text-align: center; }
-.light-states section:nth-child(2) div { display: flex; flex-direction: column; gap: 9px; word-break: break-all; }
-.light-states button { padding: 6px; color: var(--blue); background: var(--pale-blue); border-radius: 7px; font-size: 9px; font-weight: 700; }
-.connected { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.connected .icon { grid-column: 1 / 3; width: 31px; height: 31px; margin: 0 auto; color: #7a5800; }
-.connected span { grid-column: 1 / 3; text-align: center; }
-.practice-icon { width: 150px; height: 150px; margin: 20px auto 54px; display: grid; place-items: center; color: var(--blue); background: var(--pale-blue); border-radius: 50%; }
+
+/* 연습/완료 큰 원 아이콘 (온보딩 11, 12단계) */
+.practice-icon { width: 150px; height: 150px; margin: 28px auto 54px; display: grid; place-items: center; color: var(--blue); background: var(--pale-blue); border-radius: 50%; }
 .practice-icon .icon { width: 76px; height: 76px; }
-.done-check { width: 116px; height: 116px; margin: 18px auto 42px; display: grid; place-items: center; color: white; background: var(--blue); border-radius: 50%; }
+.done-check { width: 116px; height: 116px; margin: 28px auto 42px; display: grid; place-items: center; color: white; background: var(--blue); border-radius: 50%; }
 .done-check .icon { width: 60px; height: 60px; stroke-width: 2.5; }
-.safety-card { margin-top: 35px; padding: 15px; display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 11px; background: white; border: 1px solid var(--line); border-radius: 16px; text-align: left; }
-.safety-card > .icon { width: 40px; height: 40px; padding: 8px; color: var(--blue); background: var(--pale-blue); border-radius: 11px; }
-.safety-card span { display: flex; flex-direction: column; gap: 4px; }
-.safety-card b { font-size: 14px; }
-.safety-card small { color: #666; font-size: 10px; }
-.safety-card button { padding: 8px; color: var(--blue); background: var(--pale-blue); border-radius: 8px; font-size: 10px; font-weight: 700; }
 
-.home-state { padding-bottom: 90px; }
-.continue-banner { height: 57px; padding: 0 17px; display: flex; align-items: center; justify-content: space-between; color: var(--blue); background: var(--pale-blue); font-size: 14px; font-weight: 700; }
-.continue-banner button { padding: 8px 11px; color: white; background: var(--blue); border-radius: 9px; font-size: 12px; font-weight: 700; }
-.home-state > .brand-logo { margin: 28px 24px 80px; }
-.home-state h1 { margin: 0 24px 30px; font-size: 26px; }
-.home-state section { margin: 0 24px; padding: 22px; display: flex; align-items: center; gap: 15px; background: white; border: 1px solid var(--line); border-radius: 16px; }
-.home-state section .icon { color: var(--blue); }
-.home-state section p { margin: 0; font-size: 17px; }
-.tabbar { position: absolute; z-index: 9; right: 0; bottom: 0; left: 0; height: 78px; padding: 8px 13px 11px; display: flex; justify-content: space-between; background: white; border-top: 1px solid var(--line); }
-.tabbar button { width: 83px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #777; background: transparent; border-radius: 12px; font-size: 11px; font-weight: 700; }
-.tabbar button.active { color: var(--blue); background: var(--pale-blue); }
-.tabbar .icon { width: 20px; height: 20px; }
-
-.card-view { height: 100%; padding: 36px 24px 100px; overflow-y: auto; scrollbar-width: none; }
-.card-view h1 { margin: 0 0 7px; font-size: 26px; }
-.card-view > p { margin: 0 0 22px; color: #555; font-size: 17px; }
-.full-card { padding: 17px; background: white; border: 1px solid var(--line); border-radius: 16px; }
-.full-card header { padding-bottom: 13px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
-.full-card header .brand-logo { transform: scale(.55); transform-origin: left center; width: 25px; }
-.full-card header > b { font-size: 15px; }
-.full-card header button { color: var(--blue); background: transparent; font-size: 13px; font-weight: 700; }
-.card-item { padding-top: 14px; }
-.card-item > b { color: var(--blue); font-size: 15px; font-weight: 600; }
-.card-item p { margin: 5px 0 0; display: flex; align-items: center; gap: 5px; font-size: 18px; line-height: 1.45; }
-.card-item p .icon { width: 18px; height: 18px; color: var(--blue); }
-.card-actions { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-.card-actions button { height: 53px; display: flex; align-items: center; justify-content: center; gap: 6px; color: white; background: var(--blue); border-radius: 14px; font-size: 14px; font-weight: 700; }
-.card-actions button:last-child { color: var(--blue); background: white; border: 1px solid var(--blue); }
-.card-actions .icon { width: 19px; height: 19px; }
-
+/* 인쇄용 PDF 레이아웃 (PdfPreview) */
 .pdf { padding: 42px 46px; color: #123c7a; }
 .pdf header { display: flex; align-items: flex-end; justify-content: space-between; }
 .pdf h1 { margin: 0; font-size: 28px; }
@@ -190,9 +92,8 @@ button { border: 0; cursor: pointer; }
 .pdf table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.45; }
 .pdf th, .pdf td { padding: 7px 10px; border: 1px solid #7f9ac4; text-align: left; }
 .pdf th { width: 135px; background: #f1f5fa; }
-.cut-line { position: relative; margin: 32px 0 20px; border-top: 1px dashed #5376ab; font-size: 17px; }
+.cut-line { position: relative; margin: 32px 0 20px; border-top: 1px dashed #5376ab; font-size: 17px; text-indent: -2px; line-height: 0; }
 .cut-line::before { content: ""; position: absolute; top: -10px; left: -6px; width: 24px; height: 18px; background: white; }
-.cut-line { text-indent: -2px; line-height: 0; }
 .wallet-card { width: 325px; height: 204px; margin: 0 auto; padding: 18px 20px; display: flex; flex-direction: column; border: 2px solid #123c7a; border-radius: 9px; }
 .wallet-card .brand-logo { transform: scale(.55); transform-origin: left top; height: 20px; }
 .wallet-card h2 { margin: 7px 0 4px; font-size: 23px; }
@@ -201,494 +102,11 @@ button { border: 0; cursor: pointer; }
 .wallet-card strong { font-size: 15px; }
 .wallet-card small { margin-top: auto; padding-top: 8px; border-top: 1px solid #7f9ac4; font-size: 12px; }
 
-.alert-screen { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--cream); }
-.alert-head { padding: 30px 24px 17px; }
-.alert-screen.danger .alert-head, .alert-screen.danger .collapsed-alert { color: white; background: var(--danger); }
-.alert-screen.caution .alert-head { color: var(--ink); background: var(--caution); }
-.alert-screen.practice .alert-head { color: white; background: var(--blue); }
-.alert-head > b { display: block; height: 28px; font-size: 18px; }
-.alert-head > div { min-height: 72px; margin-top: 8px; display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 16px; }
-.alert-head > div .icon { width: 64px; height: 64px; }
-.alert-head h1 { margin: 0; font-size: 28px; line-height: 1.4; letter-spacing: -.035em; word-break: keep-all; }
-.collapsed-alert { height: 56px; padding: 18px 24px; display: flex; align-items: center; gap: 7px; font-size: 18px; }
-.alert-main { min-height: 0; padding: 0 24px; display: flex; flex-direction: column; overflow: hidden; }
-.situation { margin: 15px 0 12px; font-size: 22px; font-weight: 600; line-height: 1.6; letter-spacing: -.035em; word-break: keep-all; }
-.alert-main h2 { margin: 0 0 5px; font-size: 20px; }
-.action-list { min-height: 0; margin: 0 -12px; padding: 0 12px 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; scrollbar-width: none; }
-.action-list::-webkit-scrollbar { display: none; }
-.action-row { min-height: 60px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: start; gap: 12px; }
-.action-row > i { width: 30px; height: 30px; display: grid; place-items: center; border: 1.5px solid var(--ink); border-radius: 50%; font-size: 16px; font-style: normal; font-weight: 700; }
-.action-row p { margin: 0; font-size: 20px; font-weight: 500; line-height: 1.5; letter-spacing: -.04em; word-break: keep-all; }
-.action-row p span { display: block; }
-.action-row > .icon { width: 40px; height: 40px; margin-top: -4px; }
-.phone-group { margin: 0 -12px; padding: 12px; display: flex; flex-direction: column; gap: 20px; background: var(--pale-blue); border-radius: 16px; }
-.phone-group .action-row { color: var(--blue); }
-.phone-group .action-row > i { color: var(--ink); border-color: var(--ink); }
-.phone-group .action-row > .icon { width: 24px; height: 24px; margin-top: 3px; }
-.phone-group .disabled { color: var(--muted); }
-.phone-group .disabled > i { color: var(--muted); border-color: var(--muted); }
-.more { height: 24px; padding-top: 3px; color: #666; background: var(--cream); font-size: 13px; font-weight: 600; text-align: center; }
-.alert-bottom { padding: 10px 24px 12px; background: var(--cream); border-top: 1px solid var(--line); }
-.alert-bottom button { width: 100%; height: 64px; color: white; background: var(--blue); border-radius: 16px; font-size: 20px; font-weight: 700; }
-.alert-bottom small { height: 28px; padding-top: 7px; display: block; color: var(--muted); font-size: 14px; text-align: center; }
-.alert-screen.practice .alert-main { padding-top: 15px; }
-.alert-screen.practice .alert-bottom { padding-bottom: 22px; }
-
-@media (max-width: 700px) {
-  .design-board { padding: 24px 14px; }
-  .board-header { margin-bottom: 34px; }
-}
-
-/* Reference-led visual refresh: spacious hierarchy, quiet cards, one clear action. */
-body {
-  background: #f3f4f6;
-}
-
-.design-board {
-  padding: 48px;
-}
-
-.board-header {
-  margin-bottom: 52px;
-}
-
-.board-header h1 {
-  font-size: 30px;
-  letter-spacing: -.03em;
-}
-
-.board-group {
-  margin-bottom: 76px;
-}
-
-.board-group > h2 {
-  margin-bottom: 24px;
-  font-size: 22px;
-}
-
-.frame-row {
-  gap: 32px;
-}
-
-.design-frame figcaption {
-  height: 38px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.phone {
-  border-color: #dedbd5;
-  border-radius: 34px;
-}
-
-.group-header {
-  height: 151px;
-  padding-top: 28px;
-  background: var(--cream);
-}
-
-.group-steps {
-  width: 176px;
-}
-
-.group-steps span {
-  width: 34px;
-  height: 34px;
-  font-size: 15px;
-}
-
-.group-header > p {
-  margin-top: 10px;
-  font-weight: 700;
-}
-
-.later {
-  top: 33px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.form-nav {
-  margin-top: 10px;
-  font-size: 15px;
-}
-
-.progress {
-  margin-top: 10px;
-  gap: 7px;
-}
-
-.progress i {
-  height: 5px;
-}
-
-.intro,
-.prep,
-.complete-card {
-  padding-right: 24px;
-  padding-left: 24px;
-}
-
-.intro h1,
-.prep h1,
-.form-page h1,
-.complete-card h1 {
-  margin-bottom: 14px;
-  font-size: 28px;
-  line-height: 1.3;
-  letter-spacing: -.035em;
-}
-
-.intro > p,
-.prep > p,
-.complete-card > p,
-.description {
-  color: #626872;
-  font-size: 18px;
-  line-height: 1.55;
-}
-
-.intro.centered {
-  padding-top: 46px;
-}
-
-.intro.centered h1 {
-  margin-top: 48px;
-}
-
-.brand-logo.large {
-  gap: 10px;
-}
-
-.brand-logo.large .logo-mark {
-  width: 98px;
-  height: 72px;
-  border-radius: 36px 36px 36px 13px;
-}
-
-.brand-logo.large strong {
-  font-size: 38px;
-}
-
-.intro-list {
-  margin-top: 30px;
-  gap: 12px;
-}
-
-.intro-list > div {
-  min-height: 88px;
-  padding: 16px;
-  grid-template-columns: 52px 1fr;
-  gap: 15px;
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-}
-
-.intro-list > div > span {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-}
-
-.intro-list p {
-  font-size: 17px;
-  font-weight: 600;
-}
-
-.adult-illustration {
-  width: 250px;
-  height: 182px;
-  padding: 14px;
-  background: var(--pale-blue);
-  border-radius: 28px;
-}
-
-.together h1 {
-  margin-top: 28px !important;
-}
-
-.guardian {
-  padding: 0 2px;
-}
-
-.fixed-bottom {
-  padding: 14px 24px 24px;
-  background: var(--cream);
-}
-
-.main-button,
-.alert-bottom button {
-  height: 64px;
-  border-radius: 20px;
-  font-size: 20px;
-}
-
-.text-button {
-  margin-top: 6px;
-  font-weight: 600;
-}
-
-.form-page {
-  padding-top: 12px;
-}
-
-.form-page .description {
-  margin-top: -3px;
-}
-
-.fields {
-  margin-top: 28px;
-  gap: 22px;
-}
-
-.field {
-  gap: 9px;
-}
-
-.field > span,
-.chip-field > b {
-  font-size: 17px;
-  line-height: 1.4;
-}
-
-.field input {
-  height: 60px;
-  padding: 0 17px;
-  border-radius: 16px;
-  font-size: 18px;
-}
-
-.field > div > button {
-  right: 6px;
-  bottom: -23px;
-  font-size: 13px;
-}
-
-.chip-field {
-  gap: 11px;
-}
-
-.chip-field > div {
-  gap: 9px;
-}
-
-.chip-field button {
-  min-height: 46px;
-  padding: 0 16px;
-  border-radius: 23px;
-  font-size: 14px;
-}
-
-.sheet-overlay {
-  background: rgba(18, 23, 31, .28);
-}
-
-.bottom-sheet {
-  padding: 14px 24px 28px;
-  border-radius: 28px 28px 0 0;
-}
-
-.bottom-sheet > i {
-  margin-bottom: 32px;
-}
-
-.bottom-sheet h2 {
-  font-size: 24px;
-  line-height: 1.35;
-  letter-spacing: -.025em;
-}
-
-.bottom-sheet p {
-  margin: 12px 0 30px;
-  color: #626872;
-  font-size: 17px;
-}
-
-.mini-card {
-  width: 270px;
-  margin-top: 14px;
-  padding: 20px;
-  border-radius: 22px;
-}
-
-.complete-card {
-  padding-top: 24px;
-}
-
-.phone-drawing {
-  width: 224px;
-  height: 252px;
-  margin-bottom: 42px;
-  padding: 10px;
-  background: var(--pale-blue);
-  border-radius: 32px;
-}
-
-.phone-drawing > .icon {
-  width: 180px;
-  height: 232px;
-  margin-left: 12px;
-}
-
-.phone-drawing > span {
-  top: 78px;
-  left: 38px;
-  width: 148px;
-  padding: 12px;
-  border-radius: 14px;
-}
-
-.connect-drawing {
-  height: 126px;
-  margin-bottom: 6px;
-  background: var(--pale-blue);
-  border-radius: 28px;
-}
-
-.light-states {
-  gap: 8px;
-}
-
-.light-states section {
-  min-height: 164px;
-  padding: 11px 9px;
-  border-radius: 16px;
-}
-
-.practice-icon,
-.done-check {
-  margin-top: 28px;
-}
-
-.safety-card {
-  margin-top: 38px;
-  padding: 17px;
-  border-radius: 20px;
-}
-
-.continue-banner {
-  height: 64px;
-  padding: 0 20px;
-  font-size: 15px;
-}
-
-.continue-banner button {
-  padding: 10px 13px;
-  border-radius: 12px;
-}
-
-.home-state > .brand-logo {
-  margin-top: 32px;
-}
-
-.home-state section {
-  padding: 24px 20px;
-  border-radius: 22px;
-}
-
-.tabbar {
-  right: 12px;
-  bottom: 10px;
-  left: 12px;
-  height: 72px;
-  padding: 7px 9px;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-}
-
-.tabbar button {
-  width: 82px;
-  border-radius: 16px;
-}
-
-.card-view {
-  padding-top: 42px;
-}
-
-.card-view h1 {
-  margin-bottom: 9px;
-  font-size: 28px;
-  letter-spacing: -.035em;
-}
-
-.card-view > p {
-  margin-bottom: 26px;
-  color: #626872;
-  font-size: 18px;
-}
-
-.full-card {
-  padding: 19px;
-  border-radius: 22px;
-}
-
-.full-card header {
-  padding-bottom: 16px;
-}
-
-.card-item {
-  padding-top: 16px;
-}
-
-.card-item p {
-  margin-top: 6px;
-  line-height: 1.5;
-}
-
-.card-actions {
-  margin-top: 16px;
-  gap: 10px;
-}
-
-.card-actions button {
-  height: 58px;
-  border-radius: 18px;
-  font-size: 15px;
-}
-
-.alert-head {
-  padding-top: 32px;
-}
-
-.alert-head h1 {
-  letter-spacing: -.04em;
-}
-
-.phone-group {
-  border-radius: 20px;
-}
-
-.alert-bottom {
-  padding-top: 12px;
-  padding-bottom: 14px;
-}
-
-@media (max-width: 700px) {
-  .design-board {
-    padding: 28px 14px;
-  }
-}
-
-/* Interactive app prototype */
-:root {
-  --proto-bg: #f8f5ef;
-  --proto-ink: #191f28;
-  --proto-copy: #4e5968;
-  --proto-line: #e5e8eb;
-  --proto-blue-soft: #e8f0fd;
-}
-
-button,
-.proto-row {
-  -webkit-tap-highlight-color: transparent;
-}
-
-button:active {
-  transform: scale(.97);
-  transition: transform 100ms ease;
-}
-
+/* ---- 3. 노트북 미리보기 틀 ----------------------------------------- */
+
+/* .prototype-stage > .iphone-frame 안에 모든 화면이 들어간다.
+ * 폭 >600px: 가짜 아이폰 393×852 틀.
+ * 폭 ≤600px: 꽉 찬 전체 화면 (아래 @media + safe area 섹션 참고). */
 .prototype-stage {
   min-height: 100dvh;
   padding: 0;
@@ -710,6 +128,7 @@ button:active {
   border-radius: 0;
 }
 
+/* 가짜 상태바 — 폭 ≤600px 에서 숨겨진다 (아래 safe area 섹션 참고) */
 .proto-status {
   position: absolute;
   z-index: 80;
@@ -724,10 +143,7 @@ button:active {
   color: var(--proto-ink);
   font-size: 13px;
 }
-
-.proto-status.light {
-  color: white;
-}
+.proto-status.light { color: white; }
 
 .dynamic-island {
   position: absolute;
@@ -740,100 +156,34 @@ button:active {
   transform: translateX(-50%);
 }
 
-.status-icons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+.status-icons { display: flex; align-items: center; gap: 6px; }
+.status-icons i { position: relative; display: block; }
 
-.status-icons i {
-  position: relative;
-  display: block;
-}
+.signal { width: 3px; height: 4px; margin-right: 14px; margin-top: 7px; background: currentColor; }
+.signal::before, .signal::after { content: ""; position: absolute; bottom: 0; width: 3px; background: currentColor; }
+.signal::before { left: 5px; height: 7px; }
+.signal::after { left: 10px; height: 10px; }
 
-.signal {
-  width: 3px;
-  height: 4px;
-  margin-right: 14px;
-  margin-top: 7px;
-  background: currentColor;
-}
+.wifi { width: 16px; height: 11px; border-top: 3px solid currentColor; border-radius: 50%; }
+.wifi::after { content: ""; position: absolute; bottom: 0; left: 6px; width: 4px; height: 4px; background: currentColor; border-radius: 50%; }
 
-.signal::before,
-.signal::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  width: 3px;
-  background: currentColor;
-}
+.battery { width: 22px; height: 11px; border: 1.5px solid currentColor; border-radius: 3px; }
+.battery::before { content: ""; position: absolute; inset: 2px; background: currentColor; border-radius: 1px; }
+.battery::after { content: ""; position: absolute; top: 3px; right: -4px; width: 2px; height: 5px; background: currentColor; border-radius: 0 2px 2px 0; }
 
-.signal::before {
-  left: 5px;
-  height: 7px;
-}
-
-.signal::after {
-  left: 10px;
-  height: 10px;
-}
-
-.wifi {
-  width: 16px;
-  height: 11px;
-  border-top: 3px solid currentColor;
-  border-radius: 50%;
-}
-
-.wifi::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 6px;
-  width: 4px;
-  height: 4px;
-  background: currentColor;
-  border-radius: 50%;
-}
-
-.battery {
-  width: 22px;
-  height: 11px;
-  border: 1.5px solid currentColor;
-  border-radius: 3px;
-}
-
-.battery::before {
-  content: "";
-  position: absolute;
-  inset: 2px;
-  background: currentColor;
-  border-radius: 1px;
-}
-
-.battery::after {
-  content: "";
-  position: absolute;
-  top: 3px;
-  right: -4px;
-  width: 2px;
-  height: 5px;
-  background: currentColor;
-  border-radius: 0 2px 2px 0;
-}
-
+/* 화면 전환 애니메이션 */
 .screen-transition {
   position: absolute;
   inset: 0;
   overflow: hidden;
   animation: screen-in 180ms ease-out;
 }
-
 @keyframes screen-in {
   from { transform: translateX(28px); opacity: .7; }
   to { transform: translateX(0); opacity: 1; }
 }
 
+/* 가짜 홈 인디케이터 — 폭 ≤600px 에서 숨겨진다 */
 .home-indicator {
   position: absolute;
   z-index: 90;
@@ -846,29 +196,7 @@ button:active {
   transform: translateX(-50%);
 }
 
-.demo-shortcuts {
-  width: 155px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.demo-shortcuts button {
-  min-height: 42px;
-  padding: 10px 12px;
-  color: var(--proto-copy);
-  background: white;
-  border: 1px solid #d8dce1;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  text-align: left;
-}
-
-.demo-shortcuts button:hover {
-  color: var(--blue);
-  border-color: var(--blue);
-}
+/* ---- 4. 공통 버튼 --------------------------------------------------- */
 
 .proto-button {
   width: 100%;
@@ -880,11 +208,7 @@ button:active {
   font-size: 20px;
   font-weight: 700;
 }
-
-.proto-button.secondary {
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-}
+.proto-button.secondary { color: var(--blue); background: var(--proto-blue-soft); }
 
 .proto-text-button {
   width: 100%;
@@ -894,6 +218,8 @@ button:active {
   font-size: 16px;
   font-weight: 600;
 }
+
+/* ---- 5. 온보딩 --------------------------------------------------- */
 
 .onboard-screen {
   height: 100%;
@@ -910,37 +236,11 @@ button:active {
   align-items: center;
   gap: 8px;
 }
-
-.onboard-header button {
-  padding: 8px 0;
-  color: var(--proto-copy);
-  background: transparent;
-  font-size: 15px;
-  font-weight: 600;
-  text-align: left;
-}
-
-.onboard-header button:last-child {
-  text-align: right;
-}
-
-.onboard-header button:disabled {
-  visibility: hidden;
-}
-
-.onboard-header > div {
-  height: 4px;
-  overflow: hidden;
-  background: var(--proto-line);
-  border-radius: 3px;
-}
-
-.onboard-header > div i {
-  height: 100%;
-  display: block;
-  background: var(--blue);
-  border-radius: 3px;
-}
+.onboard-header button { padding: 8px 0; color: var(--proto-copy); background: transparent; font-size: 15px; font-weight: 600; text-align: left; }
+.onboard-header button:last-child { text-align: right; }
+.onboard-header button:disabled { visibility: hidden; }
+.onboard-header > div { height: 4px; overflow: hidden; background: var(--proto-line); border-radius: 3px; }
+.onboard-header > div i { height: 100%; display: block; background: var(--blue); border-radius: 3px; }
 
 .onboard-body {
   min-height: 0;
@@ -948,330 +248,90 @@ button:active {
   overflow-y: auto;
   scrollbar-width: none;
 }
-
 .onboard-body::-webkit-scrollbar,
 .proto-page::-webkit-scrollbar,
-.prototype-alert main::-webkit-scrollbar {
-  display: none;
-}
+.prototype-alert main::-webkit-scrollbar { display: none; }
 
-.onboard-body h1,
-.page-heading h1 {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.3;
-  letter-spacing: -.035em;
-}
+.onboard-body h1, .page-heading h1 { margin: 0; font-size: 28px; line-height: 1.3; letter-spacing: -.035em; }
+.onboard-description { margin: 10px 0 0; color: var(--proto-copy); font-size: 18px; line-height: 1.5; }
+.onboard-description span, .page-heading h1 span { display: block; }
 
-.onboard-description {
-  margin: 10px 0 0;
-  color: var(--proto-copy);
-  font-size: 18px;
-  line-height: 1.5;
-}
+.onboard-start { padding-top: 90px; }
+.onboard-start .brand-logo { width: fit-content; margin: 0 auto; }
+.onboard-start p { margin: 54px 0 0; color: var(--proto-copy); font-size: 20px; font-weight: 500; line-height: 1.5; text-align: left; }
+.onboard-start p span { display: block; }
 
-.onboard-description span,
-.page-heading h1 span {
-  display: block;
-}
+.card-progress { margin-bottom: 8px; display: block; color: var(--blue); font-size: 16px; }
 
-.onboard-start {
-  padding-top: 90px;
-}
+.proto-fixed { padding: 12px 24px 24px; background: white; }
+.proto-fixed .proto-text-button { margin-top: 5px; }
 
-.onboard-start .brand-logo {
-  width: fit-content;
-  margin: 0 auto;
-}
-
-.onboard-start p {
-  margin: 54px 0 0;
-  color: var(--proto-copy);
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.5;
-  text-align: left;
-}
-
-.onboard-start p span {
-  display: block;
-}
-
-.card-progress {
-  margin-bottom: 8px;
-  display: block;
-  color: var(--blue);
-  font-size: 16px;
-}
-
-.proto-fixed {
-  padding: 12px 24px 24px;
-  background: white;
-}
-
-.proto-fixed .proto-text-button {
-  margin-top: 5px;
-}
-
-.proto-list {
-  margin-top: 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.proto-list > div {
-  min-height: 82px;
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  align-items: center;
-  gap: 16px;
-}
-
+/* 소개 리스트 (step 1 "차차는 이런 일을 해요") */
+.proto-list { margin-top: 30px; display: flex; flex-direction: column; gap: 12px; }
+.proto-list > div { min-height: 82px; display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 16px; }
 .proto-list > div > span,
 .proto-row > span,
 .task-card > span {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 12px;
+  width: 44px; height: 44px; display: grid; place-items: center;
+  color: var(--blue); background: var(--proto-blue-soft); border-radius: 12px;
 }
+.proto-list b { font-size: 20px; font-weight: 500; line-height: 1.5; }
 
-.proto-list b {
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.onboard-body .adult-illustration {
-  width: 100%;
-  height: 210px;
-  margin: 18px 0 18px;
-  padding: 18px;
-  background: var(--proto-bg);
-  border-radius: 24px;
-}
-
+/* 보호자와 함께 삽화 */
 .together-illustration {
-  width: 345px;
-  max-width: 100%;
-  height: 220px;
+  width: 345px; max-width: 100%; height: 220px;
   margin: 18px auto;
-  display: block;
-  overflow: hidden;
-  background: var(--proto-bg);
-  border-radius: 24px;
+  display: block; overflow: hidden;
+  background: var(--proto-bg); border-radius: 24px;
 }
 
-.proto-fields {
-  margin-top: 28px;
-  padding-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* 입력 필드 */
+.proto-fields { margin-top: 28px; padding-bottom: 10px; display: flex; flex-direction: column; gap: 20px; }
+.proto-field { display: flex; flex-direction: column; gap: 8px; }
+.proto-field > b, .proto-chips > b { color: var(--proto-copy); font-size: 16px; font-weight: 600; }
+.proto-field > b i { width: 6px; height: 6px; margin: 0 0 3px 5px; display: inline-block; background: var(--blue); border-radius: 50%; }
+.proto-field > span { position: relative; }
+.proto-field input { width: 100%; height: 56px; padding: 0 15px; color: var(--proto-ink); background: var(--proto-bg); border: 0; border-radius: 14px; outline: 0; font-size: 18px; }
+.proto-field input:focus { padding: 0 13px; background: white; border: 2px solid var(--blue); }
+.proto-field input::placeholder { color: var(--proto-copy); opacity: 1; }
+.proto-field > span button { position: absolute; right: 10px; bottom: -25px; padding: 4px; color: var(--blue); background: transparent; font-size: 14px; font-weight: 700; }
 
-.proto-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* 선택 칩 */
+.proto-chips { display: flex; flex-direction: column; gap: 10px; }
+.proto-chips > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.proto-chips button { min-height: 44px; padding: 0 14px; display: flex; align-items: center; gap: 5px; color: var(--proto-ink); background: var(--proto-bg); border-radius: 22px; font-size: 15px; font-weight: 600; }
+.proto-chips button.active { color: var(--blue); background: var(--proto-blue-soft); }
+.proto-chips .icon { width: 16px; height: 16px; stroke-width: 3; }
 
-.proto-field > b,
-.proto-chips > b {
-  color: var(--proto-copy);
-  font-size: 16px;
-  font-weight: 600;
-}
+/* 보호자 안내 상자 */
+.proto-guardian { padding: 14px; display: flex; align-items: flex-start; gap: 9px; color: var(--proto-copy); background: var(--proto-bg); border-radius: 14px; font-size: 16px; font-weight: 600; line-height: 1.45; }
+.proto-guardian .icon { width: 20px; height: 20px; }
 
-.proto-field > b i {
-  width: 6px;
-  height: 6px;
-  margin: 0 0 3px 5px;
-  display: inline-block;
-  background: var(--blue);
-  border-radius: 50%;
-}
+/* 온보딩 안에서 미니 카드/전화 그림 쓸 때 폭 조정 */
+.onboard-body > .mini-card { width: 100%; margin: 8px 0 28px; border-color: var(--proto-line); border-radius: 24px; }
+.onboard-body > .phone-drawing { margin-top: 8px; }
 
-.proto-field > span {
-  position: relative;
-}
+/* 차차등 연결 그림 (step 10) */
+.proto-light { height: 176px; margin: 8px 0 28px; display: flex; align-items: center; justify-content: center; color: var(--blue); background: var(--proto-bg); border-radius: 24px; }
+.proto-light > span { width: 88px; height: 88px; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 44px 44px 20px 20px; }
+.proto-light > span .icon { width: 46px; height: 46px; }
+.proto-light > i { width: 70px; margin: 0 12px; border-top: 2px dashed currentColor; }
+.proto-light > .icon { width: 58px; height: 76px; }
+.proto-light.lit > span { color: #6d4d00; background: var(--caution); }
 
-.proto-field input {
-  width: 100%;
-  height: 56px;
-  padding: 0 15px;
-  color: var(--proto-ink);
-  background: var(--proto-bg);
-  border: 0;
-  border-radius: 14px;
-  outline: 0;
-  font-size: 18px;
-}
+.device-result { margin-top: 18px; padding: 17px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--proto-bg); border-radius: 16px; }
+.device-result > b { font-size: 17px; }
+.device-result button { min-height: 38px; padding: 0 13px; color: var(--blue); background: var(--proto-blue-soft); border-radius: 11px; font-weight: 700; }
+.device-result div { display: flex; gap: 6px; }
 
-.proto-field input:focus {
-  padding: 0 13px;
-  background: white;
-  border: 2px solid var(--blue);
-}
+/* 온보딩 끝 (step 12) 에서 안전 점검 바로가기 — 공용 .proto-row 를 쓰는 중이지만 간격만 추가 */
+.safety-row { margin-top: 32px; }
 
-.proto-field input::placeholder {
-  color: var(--proto-copy);
-  opacity: 1;
-}
+/* "내 카드만 들여다볼 때" 안내 */
+.privacy { margin: 0 0 10px; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 15px; }
+.privacy .icon { width: 18px; height: 18px; }
 
-.proto-field > span button {
-  position: absolute;
-  right: 10px;
-  bottom: -25px;
-  padding: 4px;
-  color: var(--blue);
-  background: transparent;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.proto-chips {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.proto-chips > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.proto-chips button {
-  min-height: 44px;
-  padding: 0 14px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--proto-ink);
-  background: var(--proto-bg);
-  border-radius: 22px;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.proto-chips button.active {
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-}
-
-.proto-chips .icon {
-  width: 16px;
-  height: 16px;
-  stroke-width: 3;
-}
-
-.proto-guardian {
-  padding: 14px;
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  color: var(--proto-copy);
-  background: var(--proto-bg);
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-.proto-guardian .icon {
-  width: 20px;
-  height: 20px;
-}
-
-.onboard-body > .mini-card {
-  width: 100%;
-  margin: 8px 0 28px;
-  border-color: var(--proto-line);
-  border-radius: 24px;
-}
-
-.onboard-body > .phone-drawing {
-  margin-top: 8px;
-}
-
-.proto-light {
-  height: 176px;
-  margin: 8px 0 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--blue);
-  background: var(--proto-bg);
-  border-radius: 24px;
-}
-
-.proto-light > span {
-  width: 88px;
-  height: 88px;
-  display: grid;
-  place-items: center;
-  border: 2px solid currentColor;
-  border-radius: 44px 44px 20px 20px;
-}
-
-.proto-light > span .icon {
-  width: 46px;
-  height: 46px;
-}
-
-.proto-light > i {
-  width: 70px;
-  margin: 0 12px;
-  border-top: 2px dashed currentColor;
-}
-
-.proto-light > .icon {
-  width: 58px;
-  height: 76px;
-}
-
-.proto-light.lit > span {
-  color: #6d4d00;
-  background: var(--caution);
-}
-
-.device-result {
-  margin-top: 18px;
-  padding: 17px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: var(--proto-bg);
-  border-radius: 16px;
-}
-
-.device-result > b {
-  font-size: 17px;
-}
-
-.device-result button {
-  min-height: 38px;
-  padding: 0 13px;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 11px;
-  font-weight: 700;
-}
-
-.device-result div {
-  display: flex;
-  gap: 6px;
-}
-
-.safety-row {
-  margin-top: 32px;
-}
+/* ---- 6. 화면 공용 ------------------------------------------------- */
 
 .proto-page {
   height: 100%;
@@ -1281,9 +341,7 @@ button:active {
   scrollbar-width: none;
 }
 
-.home-page {
-  padding-top: 58px;
-}
+.home-page { padding-top: 58px; }
 
 .home-head {
   height: 48px;
@@ -1291,85 +349,23 @@ button:active {
   align-items: center;
   justify-content: space-between;
 }
+.home-head > em { height: 32px; padding: 0 12px; display: flex; align-items: center; color: var(--blue); background: var(--proto-blue-soft); border-radius: 16px; font-size: 15px; font-style: normal; font-weight: 600; }
 
-.home-head > em {
-  height: 32px;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 16px;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 600;
+.page-heading { padding: 24px 8px 22px; }
+.page-heading.compact { padding-top: 16px; }
+.page-heading p { margin: 10px 0 0; color: var(--proto-copy); font-size: 18px; line-height: 1.5; }
+
+/* 카드 리스트 */
+.card-stack { display: flex; flex-direction: column; gap: 12px; }
+.white-card, .quiet-card, .task-card, .danger-card, .disaster-card {
+  background: white; border-radius: 24px;
 }
+.quiet-card { padding: 24px; display: flex; align-items: center; gap: 16px; }
+.quiet-card > span { width: 52px; height: 52px; flex: 0 0 auto; display: grid; place-items: center; color: var(--proto-copy); background: var(--proto-bg); border-radius: 16px; }
+.quiet-card h2, .task-card h2, .danger-card h2 { margin: 0; font-size: 22px; line-height: 1.4; }
+.quiet-card p, .task-card p, .danger-card p { margin: 6px 0 0; color: var(--proto-copy); font-size: 18px; line-height: 1.45; }
 
-.page-heading {
-  padding: 24px 8px 22px;
-}
-
-.page-heading.compact {
-  padding-top: 16px;
-}
-
-.page-heading p {
-  margin: 10px 0 0;
-  color: var(--proto-copy);
-  font-size: 18px;
-  line-height: 1.5;
-}
-
-.card-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.white-card,
-.quiet-card,
-.task-card,
-.danger-card,
-.disaster-card {
-  background: white;
-  border-radius: 24px;
-}
-
-.quiet-card {
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.quiet-card > span {
-  width: 52px;
-  height: 52px;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  color: var(--proto-copy);
-  background: var(--proto-bg);
-  border-radius: 16px;
-}
-
-.quiet-card h2,
-.task-card h2,
-.danger-card h2 {
-  margin: 0;
-  font-size: 22px;
-  line-height: 1.4;
-}
-
-.quiet-card p,
-.task-card p,
-.danger-card p {
-  margin: 6px 0 0;
-  color: var(--proto-copy);
-  font-size: 18px;
-  line-height: 1.45;
-}
-
+/* 리스트 한 줄 */
 .proto-row {
   width: 100%;
   min-height: 72px;
@@ -1382,135 +378,38 @@ button:active {
   background: transparent;
   text-align: left;
 }
+.proto-row > b { display: flex; flex-direction: column; font-size: 20px; font-weight: 500; line-height: 1.35; }
+.proto-row small { margin-top: 4px; color: var(--proto-copy); font-size: 16px; font-weight: 600; }
+.proto-row > i { color: #8b95a1; font-size: 28px; font-style: normal; }
+.proto-row > em { height: 32px; padding: 0 11px; display: flex; align-items: center; color: var(--blue); background: var(--proto-blue-soft); border-radius: 16px; font-size: 15px; font-style: normal; font-weight: 600; }
 
-.proto-row > b {
-  display: flex;
-  flex-direction: column;
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.35;
-}
+.danger-card { overflow: hidden; padding: 20px 24px 24px; border: 2px solid var(--danger); border-top: 13px solid #fdecec; }
+.danger-card header { display: flex; align-items: center; justify-content: space-between; }
+.danger-card header em { height: 32px; padding: 0 12px; display: flex; align-items: center; color: white; background: var(--danger); border-radius: 16px; font-size: 15px; font-style: normal; font-weight: 700; }
+.danger-card header .icon { width: 46px; height: 46px; color: var(--danger); }
+.danger-card h2 { margin-top: 16px; }
+.danger-card .proto-button { margin-top: 20px; }
 
-.proto-row small {
-  margin-top: 4px;
-  color: var(--proto-copy);
-  font-size: 16px;
-  font-weight: 600;
-}
+/* 홈화면에서 디버그용으로 쓸 수 있는 숨은 링크 (지금은 안 보임) */
+.hidden-links { display: none; }
 
-.proto-row > i {
-  color: #8b95a1;
-  font-size: 28px;
-  font-style: normal;
-}
+.help-list { overflow: hidden; }
+.help-list .proto-row + .proto-row { border-top: 1px solid var(--proto-line); }
 
-.proto-row > em {
-  height: 32px;
-  padding: 0 11px;
-  display: flex;
-  align-items: center;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 16px;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 600;
-}
+.proto-back { margin: 0 0 12px 2px; padding: 7px; color: var(--proto-copy); background: transparent; font-size: 17px; font-weight: 700; }
 
-.danger-card {
-  overflow: hidden;
-  padding: 20px 24px 24px;
-  border: 2px solid var(--danger);
-  border-top: 13px solid #fdecec;
-}
+.situation-pill { width: fit-content; height: 32px; margin: 4px 8px 0; padding: 0 12px; display: flex; align-items: center; color: var(--blue); background: var(--proto-blue-soft); border-radius: 16px; font-size: 15px; font-style: normal; font-weight: 600; }
 
-.danger-card header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+.card-note { margin: 14px 8px; color: var(--proto-copy); font-size: 16px; font-weight: 600; }
 
-.danger-card header em {
-  height: 32px;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  color: white;
-  background: var(--danger);
-  border-radius: 16px;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 700;
-}
+.task-card { padding: 24px; }
+.task-card > span { margin-bottom: 18px; }
+.task-card .proto-button { margin-top: 22px; }
+.task-card > header { display: flex; align-items: center; justify-content: space-between; }
+.task-card > header > span { width: 44px; height: 44px; display: grid; place-items: center; color: var(--blue); background: var(--proto-blue-soft); border-radius: 12px; }
+.task-card > header > em { height: 32px; padding: 0 11px; display: flex; align-items: center; color: var(--blue); background: var(--proto-blue-soft); border-radius: 16px; font-size: 15px; font-style: normal; font-weight: 600; }
 
-.danger-card header .icon {
-  width: 46px;
-  height: 46px;
-  color: var(--danger);
-}
-
-.danger-card h2 {
-  margin-top: 16px;
-}
-
-.danger-card .proto-button {
-  margin-top: 20px;
-}
-
-.hidden-links {
-  display: none;
-}
-
-.help-list {
-  overflow: hidden;
-}
-
-.help-list .proto-row + .proto-row {
-  border-top: 1px solid var(--proto-line);
-}
-
-.proto-back {
-  margin: 0 0 12px 2px;
-  padding: 7px;
-  color: var(--proto-copy);
-  background: transparent;
-  font-size: 17px;
-  font-weight: 700;
-}
-
-.situation-pill {
-  width: fit-content;
-  height: 32px;
-  margin: 4px 8px 0;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 16px;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 600;
-}
-
-.card-note {
-  margin: 14px 8px;
-  color: var(--proto-copy);
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.task-card {
-  padding: 24px;
-}
-
-.task-card > span {
-  margin-bottom: 18px;
-}
-
-.task-card .proto-button {
-  margin-top: 22px;
-}
+/* ---- 7a. 하단 탭 ---------------------------------------------------- */
 
 .proto-tabs {
   position: absolute;
@@ -1525,381 +424,98 @@ button:active {
   background: white;
   border-radius: 24px 24px 0 0;
 }
+.proto-tabs button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #b0b8c1; background: transparent; font-size: 13px; font-weight: 700; }
+.proto-tabs button.active { color: var(--proto-ink); }
+.proto-tabs .icon { width: 26px; height: 26px; }
 
-.proto-tabs button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  color: #b0b8c1;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 700;
-}
+/* ---- 7b. 내 카드 화면 ---------------------------------------------- */
 
-.proto-tabs button.active {
-  color: var(--proto-ink);
-}
+.card-page { padding-bottom: 112px; }
 
-.proto-tabs .icon {
-  width: 26px;
-  height: 26px;
-}
+.disaster-card { padding: 0 24px; }
+.disaster-card > header { min-height: 70px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; border-bottom: 1px solid var(--proto-line); }
+.disaster-card > header .brand-logo { width: 28px; overflow: hidden; }
+.disaster-card > header .brand-logo strong { display: none; }
+.disaster-card > header button { color: var(--blue); background: transparent; font-size: 16px; font-weight: 700; }
+.disaster-card > section { padding: 16px 0; border-bottom: 1px solid var(--proto-line); }
+.disaster-card > section:last-child { border-bottom: 0; }
+.disaster-card > section > b { color: var(--proto-copy); font-size: 16px; }
+.disaster-card > section > p { margin: 7px 0 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 20px; font-weight: 500; line-height: 1.5; }
+.disaster-card > section > p button { padding: 7px; color: var(--blue); background: var(--proto-blue-soft); border-radius: 10px; }
 
-.card-page {
-  padding-bottom: 112px;
-}
+.split-actions { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-.disaster-card {
-  padding: 0 24px;
-}
+/* ---- 7c. PDF 미리보기 화면 ----------------------------------------- */
 
-.disaster-card > header {
-  min-height: 70px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 9px;
-  border-bottom: 1px solid var(--proto-line);
-}
+.pdf-preview-screen { height: 100%; padding: 58px 16px 94px; display: flex; flex-direction: column; background: var(--proto-bg); }
+.pdf-preview-screen > div { min-height: 0; flex: 1; overflow: auto; }
+.pdf-preview-screen .pdf { width: 595px; height: 842px; transform: scale(.54); transform-origin: top left; }
+.pdf-preview-screen footer { position: absolute; right: 16px; bottom: 22px; left: 16px; }
 
-.disaster-card > header .brand-logo {
-  width: 28px;
-  overflow: hidden;
-}
+/* ---- 7d. 잠금 화면 데모 -------------------------------------------- */
 
-.disaster-card > header .brand-logo strong {
-  display: none;
-}
+.lock-screen { height: 100%; padding: 82px 16px 24px; color: white; background: #26303d; }
+.lock-time { margin-bottom: 44px; display: flex; flex-direction: column; align-items: center; }
+.lock-time b { font-size: 58px; font-weight: 500; letter-spacing: -.04em; }
+.lock-time span { margin-top: 5px; font-size: 18px; }
 
-.disaster-card > header button {
-  color: var(--blue);
-  background: transparent;
-  font-size: 16px;
-  font-weight: 700;
-}
+.lock-notification { width: 100%; margin-top: 12px; padding: 17px; display: flex; flex-direction: column; align-items: flex-start; color: var(--proto-ink); background: rgba(255,255,255,.82); border-radius: 20px; text-align: left; }
+.lock-notification header { display: flex; align-items: center; color: var(--proto-copy); font-size: 14px; }
+.lock-notification header .brand-logo { transform: scale(.7); transform-origin: left center; }
+.lock-notification em { margin: 8px 0; padding: 5px 9px; color: white; background: var(--danger); border-radius: 12px; font-style: normal; font-weight: 700; }
+.lock-notification > b { font-size: 19px; }
+.lock-notification p { margin: 5px 0 0; font-size: 16px; line-height: 1.4; }
 
-.disaster-card > section {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--proto-line);
-}
+/* ---- 7e. 알림 상세 (ProtoAlert) ----------------------------------- */
 
-.disaster-card > section:last-child {
-  border-bottom: 0;
-}
+.prototype-alert { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--proto-bg); }
+.prototype-alert > header { padding: 56px 24px 20px; border-radius: 0 0 24px 24px; }
+.prototype-alert.danger > header { color: white; background: var(--danger); }
+.prototype-alert.caution > header { color: var(--proto-ink); background: var(--caution); }
+.prototype-alert.practice > header { color: white; background: var(--blue); }
+.prototype-alert > header > b { display: block; font-size: 16px; }
+.prototype-alert > header > div { margin-top: 12px; display: grid; grid-template-columns: 56px 1fr; align-items: center; gap: 14px; }
+.prototype-alert > header span { width: 56px; height: 56px; display: grid; place-items: center; color: currentColor; background: rgba(255,255,255,.22); border-radius: 50%; }
+.prototype-alert.caution > header span { background: rgba(255,255,255,.55); }
+.prototype-alert > header .icon { width: 38px; height: 38px; }
+.prototype-alert > header h1 { margin: 0; font-size: 28px; line-height: 1.35; }
 
-.disaster-card > section > b {
-  color: var(--proto-copy);
-  font-size: 16px;
-}
+.prototype-alert > main { min-height: 0; padding: 12px 16px; overflow-y: auto; scrollbar-width: none; }
 
-.disaster-card > section > p {
-  margin: 7px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.5;
-}
+.alert-card { min-height: 100%; padding: 20px 20px 16px; background: white; border-radius: 24px; }
+.alert-card > p { margin: 0 0 20px; font-size: 22px; font-weight: 600; line-height: 1.5; }
+.alert-card > h2 { margin: 0 0 12px; color: var(--proto-copy); font-size: 18px; }
 
-.disaster-card > section > p button {
-  padding: 7px;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 10px;
-}
-
-.split-actions {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.pdf-preview-screen {
-  height: 100%;
-  padding: 58px 16px 94px;
-  display: flex;
-  flex-direction: column;
-  background: var(--proto-bg);
-}
-
-.pdf-preview-screen > div {
-  min-height: 0;
-  flex: 1;
-  overflow: auto;
-}
-
-.pdf-preview-screen .pdf {
-  width: 595px;
-  height: 842px;
-  transform: scale(.54);
-  transform-origin: top left;
-}
-
-.pdf-preview-screen footer {
-  position: absolute;
-  right: 16px;
-  bottom: 22px;
-  left: 16px;
-}
-
-.lock-screen {
-  height: 100%;
-  padding: 82px 16px 24px;
-  color: white;
-  background: #26303d;
-}
-
-.lock-time {
-  margin-bottom: 44px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.lock-time b {
-  font-size: 58px;
-  font-weight: 500;
-  letter-spacing: -.04em;
-}
-
-.lock-time span {
-  margin-top: 5px;
-  font-size: 18px;
-}
-
-.lock-notification {
-  width: 100%;
-  margin-top: 12px;
-  padding: 17px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  color: var(--proto-ink);
-  background: rgba(255,255,255,.82);
-  border-radius: 20px;
-  text-align: left;
-}
-
-.lock-notification header {
-  display: flex;
-  align-items: center;
-  color: var(--proto-copy);
-  font-size: 14px;
-}
-
-.lock-notification header .brand-logo {
-  transform: scale(.7);
-  transform-origin: left center;
-}
-
-.lock-notification em {
-  margin: 8px 0;
-  padding: 5px 9px;
-  color: white;
-  background: var(--danger);
-  border-radius: 12px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.lock-notification > b {
-  font-size: 19px;
-}
-
-.lock-notification p {
-  margin: 5px 0 0;
-  font-size: 16px;
-  line-height: 1.4;
-}
-
-.prototype-alert {
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  background: var(--proto-bg);
-}
-
-.prototype-alert > header {
-  padding: 56px 24px 20px;
-  border-radius: 0 0 24px 24px;
-}
-
-.prototype-alert.danger > header {
-  color: white;
-  background: var(--danger);
-}
-
-.prototype-alert.caution > header {
-  color: var(--proto-ink);
-  background: var(--caution);
-}
-
-.prototype-alert.practice > header {
-  color: white;
-  background: var(--blue);
-}
-
-.prototype-alert > header > b {
-  display: block;
-  font-size: 16px;
-}
-
-.prototype-alert > header > div {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: 56px 1fr;
-  align-items: center;
-  gap: 14px;
-}
-
-.prototype-alert > header span {
-  width: 56px;
-  height: 56px;
-  display: grid;
-  place-items: center;
-  color: currentColor;
-  background: rgba(255,255,255,.22);
-  border-radius: 50%;
-}
-
-.prototype-alert.caution > header span {
-  background: rgba(255,255,255,.55);
-}
-
-.prototype-alert > header .icon {
-  width: 38px;
-  height: 38px;
-}
-
-.prototype-alert > header h1 {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.35;
-}
-
-.prototype-alert > main {
-  min-height: 0;
-  padding: 12px 16px;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.alert-card {
-  min-height: 100%;
-  padding: 20px 20px 16px;
-  background: white;
-  border-radius: 24px;
-}
-
-.alert-card > p {
-  margin: 0 0 20px;
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.alert-card > h2 {
-  margin: 0 0 12px;
-  color: var(--proto-copy);
-  font-size: 18px;
-}
-
-.proto-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
+.proto-actions { display: flex; flex-direction: column; gap: 20px; }
 .proto-action,
 .proto-call-group button {
-  min-height: 56px;
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 12px;
+  min-height: 56px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: start; gap: 12px;
 }
-
 .proto-action > i,
 .proto-call-group button > i {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  color: var(--proto-ink);
-  background: var(--proto-bg);
-  border-radius: 50%;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
+  width: 30px; height: 30px; display: grid; place-items: center;
+  color: var(--proto-ink); background: var(--proto-bg); border-radius: 50%;
+  font-size: 16px; font-style: normal; font-weight: 700;
 }
-
 .proto-action > span,
 .proto-call-group button > span {
-  color: var(--proto-ink);
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.5;
-  text-align: left;
+  color: var(--proto-ink); font-size: 20px; font-weight: 500; line-height: 1.5; text-align: left;
 }
-
 .proto-action > span span,
-.proto-call-group button > span span {
-  display: block;
-}
+.proto-call-group button > span span { display: block; }
+.proto-action > .icon { width: 40px; height: 40px; }
 
-.proto-action > .icon {
-  width: 40px;
-  height: 40px;
-}
-
-.proto-call-group {
-  margin: 0 -12px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  background: var(--proto-blue-soft);
-  border-radius: 16px;
-}
-
-.proto-call-group button {
-  width: 100%;
-  padding: 0;
-  color: var(--blue);
-  background: transparent;
-}
-
-.proto-call-group button > span {
-  color: var(--blue);
-}
-
-.proto-call-group button > .icon {
-  width: 24px;
-  height: 24px;
-  margin-top: 3px;
-}
-
+.proto-call-group { margin: 0 -12px; padding: 12px; display: flex; flex-direction: column; gap: 20px; background: var(--proto-blue-soft); border-radius: 16px; }
+.proto-call-group button { width: 100%; padding: 0; color: var(--blue); background: transparent; }
+.proto-call-group button > span { color: var(--blue); }
+.proto-call-group button > .icon { width: 24px; height: 24px; margin-top: 3px; }
 .proto-call-group button:disabled,
-.proto-call-group button:disabled > span {
-  color: var(--proto-copy);
-}
+.proto-call-group button:disabled > span { color: var(--proto-copy); }
 
-.prototype-alert > footer {
-  padding: 10px 16px 20px;
-}
+.prototype-alert > footer { padding: 10px 16px 20px; }
+.prototype-alert > footer > button:last-child:not(.proto-button) { width: 100%; height: 26px; color: var(--proto-copy); background: transparent; font-size: 14px; }
 
-.prototype-alert > footer > button:last-child:not(.proto-button) {
-  width: 100%;
-  height: 26px;
-  color: var(--proto-copy);
-  background: transparent;
-  font-size: 14px;
-}
+/* ---- 8. 바텀시트 (ProtoSheet) --------------------------------------- */
 
 .proto-sheet-wrap {
   position: absolute;
@@ -1918,115 +534,25 @@ button:active {
   border-radius: 24px 24px 0 0;
   animation: sheet-up 180ms ease-out;
 }
-
 @keyframes sheet-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+.proto-sheet > i { width: 42px; height: 5px; margin: 0 auto 28px; display: block; background: #b0b8c1; border-radius: 3px; }
+.proto-sheet h2 { margin: 0; font-size: 22px; line-height: 1.4; }
+.proto-sheet p { margin: 10px 0 26px; color: var(--proto-copy); font-size: 18px; line-height: 1.5; }
+.proto-sheet .secondary { margin-top: 8px; }
 
-.proto-sheet > i {
-  width: 42px;
-  height: 5px;
-  margin: 0 auto 28px;
-  display: block;
-  background: #b0b8c1;
-  border-radius: 3px;
-}
+/* ---- 7f. 안전 점검 (SafetyCheck) ----------------------------------- */
 
-.proto-sheet h2 {
-  margin: 0;
-  font-size: 22px;
-  line-height: 1.4;
-}
+.safety-screen { position: relative; height: 100%; padding-top: 44px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: white; }
 
-.proto-sheet p {
-  margin: 10px 0 26px;
-  color: var(--proto-copy);
-  font-size: 18px;
-  line-height: 1.5;
-}
-
-.proto-sheet .secondary {
-  margin-top: 8px;
-}
-
-.task-card > header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.task-card > header > span {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 12px;
-}
-
-.task-card > header > em {
-  height: 32px;
-  padding: 0 11px;
-  display: flex;
-  align-items: center;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 16px;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 600;
-}
-
-.safety-screen {
-  position: relative;
-  height: 100%;
-  padding-top: 44px;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  background: white;
-}
-
-.safety-top {
-  padding: 10px 24px 0;
-}
-
-.safety-top > div {
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.safety-top button {
-  padding: 7px 0;
-  color: var(--proto-copy);
-  background: transparent;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.safety-top b {
-  color: var(--proto-copy);
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.safety-top > span {
-  height: 4px;
-  display: block;
-  overflow: hidden;
-  background: var(--proto-line);
-  border-radius: 2px;
-}
-
-.safety-top > span i {
-  height: 100%;
-  display: block;
-  background: var(--blue);
-  border-radius: 2px;
-}
+.safety-top { padding: 10px 24px 0; }
+.safety-top > div { height: 38px; display: flex; align-items: center; justify-content: space-between; }
+.safety-top button { padding: 7px 0; color: var(--proto-copy); background: transparent; font-size: 16px; font-weight: 600; }
+.safety-top b { color: var(--proto-copy); font-size: 16px; font-weight: 600; }
+.safety-top > span { height: 4px; display: block; overflow: hidden; background: var(--proto-line); border-radius: 2px; }
+.safety-top > span i { height: 100%; display: block; background: var(--blue); border-radius: 2px; }
 
 .safety-start,
 .safety-question,
@@ -2036,456 +562,117 @@ button:active {
   overflow-y: auto;
   scrollbar-width: none;
 }
-
 .safety-start::-webkit-scrollbar,
 .safety-question::-webkit-scrollbar,
-.result-screen > main::-webkit-scrollbar {
-  display: none;
-}
+.result-screen > main::-webkit-scrollbar { display: none; }
 
 .safety-start > h1,
 .safety-question > h1,
-.result-screen h1 {
-  margin: 0;
-  color: var(--proto-ink);
-  font-size: 28px;
-  line-height: 1.3;
-  letter-spacing: -.035em;
-}
-
+.result-screen h1 { margin: 0; color: var(--proto-ink); font-size: 28px; line-height: 1.3; letter-spacing: -.035em; }
 .safety-start > p,
 .safety-question > p,
-.result-screen > main > p {
-  margin: 10px 0 0;
-  color: var(--proto-copy);
-  font-size: 18px;
-  line-height: 1.5;
-}
+.result-screen > main > p { margin: 10px 0 0; color: var(--proto-copy); font-size: 18px; line-height: 1.5; }
 
-.safety-start .proto-guardian {
-  margin-top: 24px;
-}
-
-.safety-start > h2 {
-  margin: 30px 0 14px;
-  font-size: 22px;
-  line-height: 1.4;
-}
+.safety-start .proto-guardian { margin-top: 24px; }
+.safety-start > h2 { margin: 30px 0 14px; font-size: 22px; line-height: 1.4; }
 
 .home-options,
-.answer-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+.answer-options { display: flex; flex-direction: column; gap: 10px; }
 
 .home-options > button {
-  width: 100%;
-  height: 80px;
-  padding: 0 18px;
-  display: grid;
-  grid-template-columns: 44px 1fr auto;
-  align-items: center;
-  gap: 14px;
-  color: var(--proto-ink);
-  background: var(--proto-bg);
-  border: 2px solid transparent;
-  border-radius: 16px;
-  text-align: left;
+  width: 100%; height: 80px; padding: 0 18px;
+  display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 14px;
+  color: var(--proto-ink); background: var(--proto-bg);
+  border: 2px solid transparent; border-radius: 16px; text-align: left;
 }
-
-.home-options > button > span {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  color: var(--blue);
-  background: white;
-  border-radius: 12px;
-}
-
-.home-options b {
-  font-size: 20px;
-  font-weight: 600;
-}
-
+.home-options > button > span { width: 44px; height: 44px; display: grid; place-items: center; color: var(--blue); background: white; border-radius: 12px; }
+.home-options b { font-size: 20px; font-weight: 600; }
 .home-options > button > .icon,
 .answer-options > button > .icon,
-.send-people > button > .icon {
-  width: 22px;
-  height: 22px;
-  color: var(--blue);
-  stroke-width: 3;
-}
-
+.send-people > button > .icon { width: 22px; height: 22px; color: var(--blue); stroke-width: 3; }
 .home-options > button.selected,
-.answer-options > button.selected {
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-color: var(--blue);
-}
+.answer-options > button.selected { color: var(--blue); background: var(--proto-blue-soft); border-color: var(--blue); }
 
-.safety-fixed {
-  padding: 12px 24px 24px;
-  background: white;
-}
+.safety-fixed { padding: 12px 24px 24px; background: white; }
+.safety-fixed .proto-button + .proto-button { margin-top: 8px; }
+.safety-fixed .proto-button:disabled { color: white; background: #c9cdd2; cursor: default; }
 
-.safety-fixed .proto-button + .proto-button {
-  margin-top: 8px;
-}
+.safety-icon-tile { width: 100%; height: 140px; display: grid; place-items: center; color: var(--blue); background: var(--proto-blue-soft); border-radius: 24px; }
 
-.safety-fixed .proto-button:disabled {
-  color: white;
-  background: #c9cdd2;
-  cursor: default;
-}
-
-.safety-icon-tile {
-  width: 100%;
-  height: 140px;
-  display: grid;
-  place-items: center;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 24px;
-}
-
-.safety-question > em {
-  width: fit-content;
-  height: 32px;
-  margin-bottom: 14px;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 16px;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 600;
-}
-
-.safety-question > h1 {
-  margin-top: 24px;
-  font-size: 26px;
-}
-
-.safety-question > p {
-  margin-bottom: 22px;
-}
+.safety-question > em { width: fit-content; height: 32px; margin-bottom: 14px; padding: 0 12px; display: flex; align-items: center; color: var(--blue); background: var(--proto-blue-soft); border-radius: 16px; font-size: 15px; font-style: normal; font-weight: 600; }
+.safety-question > h1 { margin-top: 24px; font-size: 26px; }
+.safety-question > p { margin-bottom: 22px; }
 
 .answer-options > button {
-  width: 100%;
-  min-height: 64px;
-  padding: 0 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--proto-ink);
-  background: var(--proto-bg);
-  border: 2px solid transparent;
-  border-radius: 16px;
-  text-align: left;
+  width: 100%; min-height: 64px; padding: 0 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  color: var(--proto-ink); background: var(--proto-bg);
+  border: 2px solid transparent; border-radius: 16px; text-align: left;
 }
+.answer-options b { font-size: 20px; font-weight: 600; }
 
-.answer-options b {
-  font-size: 20px;
-  font-weight: 600;
-}
+.safety-tip { margin-top: 12px; padding: 16px; display: grid; grid-template-columns: 24px 1fr; gap: 12px; color: var(--blue); background: var(--proto-bg); border-radius: 16px; }
+.safety-tip b { color: var(--proto-ink); font-size: 16px; }
+.safety-tip p { margin: 5px 0 0; color: var(--proto-ink); font-size: 18px; line-height: 1.5; }
 
-.safety-tip {
-  margin-top: 12px;
-  padding: 16px;
-  display: grid;
-  grid-template-columns: 24px 1fr;
-  gap: 12px;
-  color: var(--blue);
-  background: var(--proto-bg);
-  border-radius: 16px;
-}
+.result-screen { grid-template-rows: auto minmax(0, 1fr) auto; }
+.result-close { height: 48px; padding: 4px 20px 0; display: flex; justify-content: flex-end; }
+.result-close button { width: 40px; height: 40px; color: var(--proto-copy); background: var(--proto-bg); border-radius: 50%; font-size: 28px; }
+.result-screen > main { padding-top: 6px; }
 
-.safety-tip b {
-  color: var(--proto-ink);
-  font-size: 16px;
-}
+.result-check { width: 56px; height: 56px; margin-bottom: 20px; display: grid; place-items: center; color: white; background: var(--blue); border-radius: 50%; }
+.result-check .icon { width: 30px; height: 30px; stroke-width: 3; }
 
-.safety-tip p {
-  margin: 5px 0 0;
-  color: var(--proto-ink);
-  font-size: 18px;
-  line-height: 1.5;
-}
+.result-counts { margin: 24px 0 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.result-counts > section { min-height: 88px; padding: 13px 9px; display: flex; flex-direction: column; justify-content: space-between; background: var(--proto-bg); border-radius: 16px; }
+.result-counts b { color: var(--proto-copy); font-size: 15px; font-weight: 600; }
+.result-counts strong { color: var(--proto-ink); font-size: 26px; }
+.result-counts section:first-child strong { color: var(--blue); }
+.result-counts section:last-child strong { color: var(--proto-copy); }
 
-.result-screen {
-  grid-template-rows: auto minmax(0, 1fr) auto;
-}
-
-.result-close {
-  height: 48px;
-  padding: 4px 20px 0;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.result-close button {
-  width: 40px;
-  height: 40px;
-  color: var(--proto-copy);
-  background: var(--proto-bg);
-  border-radius: 50%;
-  font-size: 28px;
-}
-
-.result-screen > main {
-  padding-top: 6px;
-}
-
-.result-check {
-  width: 56px;
-  height: 56px;
-  margin-bottom: 20px;
-  display: grid;
-  place-items: center;
-  color: white;
-  background: var(--blue);
-  border-radius: 50%;
-}
-
-.result-check .icon {
-  width: 30px;
-  height: 30px;
-  stroke-width: 3;
-}
-
-.result-counts {
-  margin: 24px 0 12px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.result-counts > section {
-  min-height: 88px;
-  padding: 13px 9px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background: var(--proto-bg);
-  border-radius: 16px;
-}
-
-.result-counts b {
-  color: var(--proto-copy);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.result-counts strong {
-  color: var(--proto-ink);
-  font-size: 26px;
-}
-
-.result-counts section:first-child strong {
-  color: var(--blue);
-}
-
-.result-counts section:last-child strong {
-  color: var(--proto-copy);
-}
-
-.result-card {
-  margin-top: 12px;
-  overflow: hidden;
-  border: 1px solid var(--proto-line);
-  border-radius: 24px;
-}
-
-.result-card h2 {
-  margin: 0;
-  padding: 20px 20px 10px;
-  font-size: 20px;
-}
-
+.result-card { margin-top: 12px; overflow: hidden; border: 1px solid var(--proto-line); border-radius: 24px; }
+.result-card h2 { margin: 0; padding: 20px 20px 10px; font-size: 20px; }
 .result-card > button {
-  width: 100%;
-  min-height: 72px;
-  padding: 12px 16px;
-  display: grid;
-  grid-template-columns: 44px 1fr auto;
-  align-items: center;
-  gap: 16px;
-  color: var(--proto-ink);
-  background: white;
-  text-align: left;
+  width: 100%; min-height: 72px; padding: 12px 16px;
+  display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 16px;
+  color: var(--proto-ink); background: white; text-align: left;
 }
-
-.result-card > button + button {
-  border-top: 1px solid var(--proto-line);
-}
-
+.result-card > button + button { border-top: 1px solid var(--proto-line); }
 .result-card > button > span,
-.send-people > button > span {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 12px;
-}
+.send-people > button > span { width: 44px; height: 44px; display: grid; place-items: center; color: var(--blue); background: var(--proto-blue-soft); border-radius: 12px; }
+.result-card > button b { font-size: 20px; font-weight: 500; }
+.result-card > button i { color: #8b95a1; font-size: 28px; font-style: normal; }
 
-.result-card > button b {
-  font-size: 20px;
-  font-weight: 500;
-}
+.safety-detail .safety-icon-tile { height: 116px; margin-bottom: 20px; }
+.safety-detail > h2 { font-size: 22px; }
+.safety-detail ol { margin: 20px 0 24px; padding: 0; display: flex; flex-direction: column; gap: 18px; list-style: none; }
+.safety-detail li { display: grid; grid-template-columns: 30px 1fr; align-items: start; gap: 12px; }
+.safety-detail li i { width: 30px; height: 30px; display: grid; place-items: center; color: var(--proto-ink); background: var(--proto-bg); border-radius: 50%; font-size: 16px; font-style: normal; font-weight: 700; }
+.safety-detail li span { font-size: 20px; font-weight: 500; line-height: 1.5; }
 
-.result-card > button i {
-  color: #8b95a1;
-  font-size: 28px;
-  font-style: normal;
-}
+.safety-send { max-height: 760px; overflow-y: auto; }
 
-.safety-detail .safety-icon-tile {
-  height: 116px;
-  margin-bottom: 20px;
-}
-
-.safety-detail > h2 {
-  font-size: 22px;
-}
-
-.safety-detail ol {
-  margin: 20px 0 24px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  list-style: none;
-}
-
-.safety-detail li {
-  display: grid;
-  grid-template-columns: 30px 1fr;
-  align-items: start;
-  gap: 12px;
-}
-
-.safety-detail li i {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  color: var(--proto-ink);
-  background: var(--proto-bg);
-  border-radius: 50%;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.safety-detail li span {
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.safety-send {
-  max-height: 760px;
-  overflow-y: auto;
-}
-
-.send-people {
-  margin: 20px 0 12px;
-  overflow: hidden;
-  border: 1px solid var(--proto-line);
-  border-radius: 16px;
-}
-
+.send-people { margin: 20px 0 12px; overflow: hidden; border: 1px solid var(--proto-line); border-radius: 16px; }
 .send-people > button {
-  width: 100%;
-  min-height: 68px;
-  padding: 10px 14px;
-  display: grid;
-  grid-template-columns: 44px 1fr auto;
-  align-items: center;
-  gap: 14px;
-  color: var(--proto-ink);
-  background: white;
-  text-align: left;
+  width: 100%; min-height: 68px; padding: 10px 14px;
+  display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 14px;
+  color: var(--proto-ink); background: white; text-align: left;
 }
+.send-people > button + button { border-top: 1px solid var(--proto-line); }
+.send-people > button.selected { background: var(--proto-blue-soft); }
+.send-people b { font-size: 18px; }
 
-.send-people > button + button {
-  border-top: 1px solid var(--proto-line);
-}
+.send-preview { margin-bottom: 18px; padding: 16px; display: flex; flex-direction: column; gap: 8px; color: var(--proto-ink); background: var(--proto-bg); border-radius: 16px; font-size: 16px; font-weight: 600; line-height: 1.45; }
 
-.send-people > button.selected {
-  background: var(--proto-blue-soft);
-}
+.safety-toast { position: absolute; z-index: 110; top: 52px; right: 16px; left: 16px; min-height: 48px; padding: 13px 16px; color: var(--blue); background: var(--proto-blue-soft); border-radius: 14px; font-size: 16px; font-weight: 600; text-align: center; }
 
-.send-people b {
-  font-size: 18px;
-}
-
-.send-preview {
-  margin-bottom: 18px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: var(--proto-ink);
-  background: var(--proto-bg);
-  border-radius: 16px;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-.safety-toast {
-  position: absolute;
-  z-index: 110;
-  top: 52px;
-  right: 16px;
-  left: 16px;
-  min-height: 48px;
-  padding: 13px 16px;
-  color: var(--blue);
-  background: var(--proto-blue-soft);
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
-}
+/* ---- 10. 좁은 폭에서 iphone-frame 꽉 채움 --------------------------- */
 
 @media (max-width: 700px) {
   .prototype-stage {
     padding: 0;
     display: block;
   }
-
-  .demo-shortcuts {
-    position: fixed;
-    z-index: 120;
-    top: 50%;
-    right: 6px;
-    width: 38px;
-    transform: translateY(-50%);
-  }
-
-  .demo-shortcuts button {
-    width: 38px;
-    min-height: 38px;
-    padding: 4px;
-    overflow: hidden;
-    color: transparent;
-    font-size: 0;
-    text-align: center;
-  }
-
-  .demo-shortcuts button::first-letter {
-    color: var(--blue);
-    font-size: 13px;
-  }
-
   .iphone-frame {
     width: 100%;
     height: 100dvh;
@@ -2494,145 +681,24 @@ button:active {
   }
 }
 
-.app-shell {
-  min-height: 100dvh;
-  padding: 24px;
-  display: grid;
-  grid-template-rows: auto auto;
-  align-content: center;
-  justify-content: center;
-  gap: 14px;
-}
-
-.screen-switcher {
-  width: 393px;
-  height: 48px;
-  padding: 4px;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 8px;
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-}
-
-.screen-switcher button {
-  height: 38px;
-  padding: 0 12px;
-  color: var(--blue);
-  background: var(--pale-blue);
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.screen-switcher button:first-child {
-  text-align: left;
-}
-
-.screen-switcher button:last-child {
-  text-align: right;
-}
-
-.screen-switcher button:disabled {
-  color: var(--muted);
-  background: transparent;
-  cursor: default;
-}
-
-.screen-switcher strong {
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.app-shell .design-board {
-  min-height: 0;
-  padding: 0;
-}
-
-.app-shell .board-header,
-.app-shell .board-group > h2,
-.app-shell .design-frame figcaption {
-  display: none;
-}
-
-.app-shell .board-group {
-  display: none;
-  margin: 0;
-}
-
-.app-shell .board-group:has(.design-frame) {
-  display: block;
-}
-
-.app-shell .frame-row {
-  padding: 0;
-  display: block;
-  overflow: visible;
-}
-
-.app-shell .phone {
-  border-color: #d9d6d0;
-}
-
-@media (max-width: 700px) {
-  body {
-    background: var(--cream);
-  }
-
-  .app-shell {
-    width: 100%;
-    min-height: 100dvh;
-    padding: 0;
-    display: block;
-  }
-
-  .screen-switcher {
-    display: none;
-  }
-
-  .app-shell .design-frame,
-  .app-shell .phone {
-    width: 100%;
-    height: 100dvh;
-    border: 0;
-    border-radius: 0;
-  }
-
-  .app-shell .design-frame {
-    flex-basis: 100%;
-  }
-
-  .app-shell .pdf-frame {
-    width: 100%;
-  }
-
-  .app-shell .paper {
-    width: 100%;
-    min-height: 100dvh;
-    border: 0;
-  }
-}
-
-/* ---------------------------------------------------------------------
- * 휴대폰(네이티브 앱 + 좁은 브라우저) safe area 처리
+/* ---- 11. 네이티브 safe area ----------------------------------------
  *
- * - 폭 > 600px (노트북 미리보기): 가짜 StatusBar / home-indicator / iphone-frame
- *   을 그대로 보여준다. 디자인 그대로.
- * - 폭 ≤ 600px (휴대폰 또는 앱): 가짜 chrome 을 숨기고, OS 가 그리는 진짜
- *   노치/다이내믹 아일랜드/홈 인디케이터 자리를 env(safe-area-inset-*)
- *   로 피해 준다. 기존 레이아웃이 가짜 상태바(44px) 를 가정해서 짜여
- *   있으므로, 노치가 44px 보다 큰 기기(아이폰 14 등 ≈59px)에서는
- *   그 차이만큼만 위로 더 밀어 준다.
+ * - 폭 > 600px (노트북 미리보기): 가짜 StatusBar / home-indicator /
+ *   iphone-frame 을 그대로 보여준다. 디자인 그대로.
+ * - 폭 ≤ 600px (휴대폰 또는 네이티브 앱): 가짜 chrome 을 숨기고,
+ *   OS 가 그리는 진짜 노치/다이내믹 아일랜드/홈 인디케이터 자리를
+ *   env(safe-area-inset-*) 로 피해 준다. 기존 레이아웃이 가짜 상태바
+ *   44px 를 가정해서 짜여 있으므로, 노치가 44px 보다 큰 기기(아이폰 14
+ *   등 ≈59px) 에서는 그 차이만큼만 위로 더 밀어 준다.
  * ------------------------------------------------------------------- */
+
 .iphone-frame {
   --safe-top-extra: 0px;
   --safe-bottom-extra: 0px;
 }
 
 @media (max-width: 600px) {
-  /* 가짜 상태바와 홈 인디케이터는 네이티브에서 OS 가 진짜로 그려 주므로 숨긴다 */
+  /* 가짜 chrome 숨김 — 네이티브는 OS 가 진짜로 그려 준다 */
   .proto-status,
   .home-indicator {
     display: none;
@@ -2662,8 +728,4 @@ button:active {
 
   /* 떠다니는 토스트도 노치 아래로 */
   .safety-toast { top: calc(52px + var(--safe-top-extra)); }
-
-  /* 레거시 디자인 보드 레이아웃도 혹시 쓰일 때를 대비해 같이 조정 */
-  .fixed-bottom { padding-bottom: calc(24px + var(--safe-bottom-extra)); }
-  .alert-bottom { padding-bottom: calc(14px + var(--safe-bottom-extra)); }
 }
