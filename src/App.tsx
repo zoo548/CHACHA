@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar as NativeStatusBar, Style as NativeStatusBarStyle } from "@capacitor/status-bar";
 import {
   ArrowUpFromLine,
   Backpack,
@@ -548,7 +550,23 @@ function App() {
   const setActiveTab = (next: typeof tab) => { setTab(next); setScreen(next === "home" ? "home" : next === "help" ? "help" : next === "prep" ? "prep" : "card"); };
   const content = screen === "onboarding" ? <OnboardingFlow step={onboardStep} setStep={setOnboardStep} openSheet={setSheet} openPdf={() => setScreen("pdf")} openPractice={() => { setAlertType("practice"); setScreen("alert"); }} finish={goHome} startSafety={() => setScreen("safety")} /> : screen === "safety" ? <SafetyCheck back={() => setActiveTab("prep")} home={goHome} onComplete={() => setSafetyComplete(true)} /> : screen === "lock" ? <LockScreen openAlert={() => { setAlertType("rain"); setScreen("alert"); }} /> : screen === "alert" ? <ProtoAlert type={alertType} acknowledge={() => { if (alertType === "practice") { setOnboardStep(12); setScreen("onboarding"); } else { setAcknowledged(true); setDanger(false); goHome(); } }} call={() => openCall()} source={() => setSheet("source")} /> : screen === "help" ? <HelpScreen choose={(value) => { setSituation(value); setScreen("call-choice"); }} /> : screen === "call-choice" ? <CallChoice situation={situation} back={() => setScreen("help")} call={openCall} /> : screen === "prep" ? <PrepScreen goCard={() => setActiveTab("card")} startSafety={() => setScreen("safety")} safetyComplete={safetyComplete} /> : screen === "card" ? <ProtoCard openPdf={() => setScreen("pdf")} call={() => openCall()} edit={() => { setOnboardStep(3); setScreen("onboarding"); }} /> : screen === "pdf" ? <main className="pdf-preview-screen"><button className="proto-back" onClick={() => setActiveTab("card")}>‹ 뒤로</button><div><PdfPreview /></div><footer><ProtoButton onClick={() => setActiveTab("card")}>저장하기</ProtoButton></footer></main> : <HomeScreen danger={danger} acknowledged={acknowledged} openAlert={() => { setAlertType("rain"); setScreen("alert"); }} goCard={() => setActiveTab("card")} goHelp={() => setActiveTab("help")} goPrep={() => setActiveTab("prep")} />;
   const showTabs = ["home", "help", "prep", "card"].includes(screen);
-  return <div className="prototype-stage"><div className="iphone-frame"><StatusBar light={screen === "lock" || (screen === "alert" && alertType !== "heat")} /><div className="screen-transition" key={`${screen}-${onboardStep}-${alertType}`}>{content}</div>{showTabs && <ProtoTabs active={tab} setActive={setActiveTab} />}<span className="home-indicator" /><ProtoSheet kind={sheet} close={() => setSheet(null)} next={() => { setSheet(null); setOnboardStep(5); }} callNumber={callNumber} /></div></div>;
+  // 잠금화면·빨간 알림 화면은 배경이 어둡다 → 상태바 글자를 흰색으로.
+  // 그 외 화면은 밝은 배경 → 상태바 글자를 검은색으로.
+  const lightStatusBar = screen === "lock" || (screen === "alert" && alertType !== "heat");
+  // 네이티브(iOS/Android)에서만 진짜 상태바 스타일을 바꾼다. 웹에서는 조용히 무시.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    // Capacitor: Style.Dark = 어두운 배경용(흰 글자), Style.Light = 밝은 배경용(검은 글자)
+    NativeStatusBar.setStyle({
+      style: lightStatusBar ? NativeStatusBarStyle.Dark : NativeStatusBarStyle.Light,
+    }).catch(() => {});
+  }, [lightStatusBar]);
+  // 안드로이드에서는 상태바를 WebView 위에 겹치게 둬서 edge-to-edge 유지
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    NativeStatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+  }, []);
+  return <div className="prototype-stage"><div className="iphone-frame"><StatusBar light={lightStatusBar} /><div className="screen-transition" key={`${screen}-${onboardStep}-${alertType}`}>{content}</div>{showTabs && <ProtoTabs active={tab} setActive={setActiveTab} />}<span className="home-indicator" /><ProtoSheet kind={sheet} close={() => setSheet(null)} next={() => { setSheet(null); setOnboardStep(5); }} callNumber={callNumber} /></div></div>;
 }
 
 export default App;

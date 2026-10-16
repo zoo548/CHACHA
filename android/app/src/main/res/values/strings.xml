@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">차차</string>
+    <string name="title_activity_main">차차</string>
+    <string name="package_name">kr.vess.chacha</string>
+    <string name="custom_url_scheme">kr.vess.chacha</string>
+</resources>

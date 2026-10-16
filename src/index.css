@@ -2614,3 +2614,56 @@ button:active {
     border: 0;
   }
 }
+
+/* ---------------------------------------------------------------------
+ * 휴대폰(네이티브 앱 + 좁은 브라우저) safe area 처리
+ *
+ * - 폭 > 600px (노트북 미리보기): 가짜 StatusBar / home-indicator / iphone-frame
+ *   을 그대로 보여준다. 디자인 그대로.
+ * - 폭 ≤ 600px (휴대폰 또는 앱): 가짜 chrome 을 숨기고, OS 가 그리는 진짜
+ *   노치/다이내믹 아일랜드/홈 인디케이터 자리를 env(safe-area-inset-*)
+ *   로 피해 준다. 기존 레이아웃이 가짜 상태바(44px) 를 가정해서 짜여
+ *   있으므로, 노치가 44px 보다 큰 기기(아이폰 14 등 ≈59px)에서는
+ *   그 차이만큼만 위로 더 밀어 준다.
+ * ------------------------------------------------------------------- */
+.iphone-frame {
+  --safe-top-extra: 0px;
+  --safe-bottom-extra: 0px;
+}
+
+@media (max-width: 600px) {
+  /* 가짜 상태바와 홈 인디케이터는 네이티브에서 OS 가 진짜로 그려 주므로 숨긴다 */
+  .proto-status,
+  .home-indicator {
+    display: none;
+  }
+
+  .iphone-frame {
+    --safe-top-extra: max(0px, calc(env(safe-area-inset-top) - 44px));
+    --safe-bottom-extra: env(safe-area-inset-bottom);
+  }
+
+  /* 화면 상단 패딩: 기존값(가짜 상태바 44px 가정) + 추가 노치 여백 */
+  .proto-page { padding-top: calc(68px + var(--safe-top-extra)); }
+  .home-page { padding-top: calc(58px + var(--safe-top-extra)); }
+  .lock-screen { padding-top: calc(82px + var(--safe-top-extra)); }
+  .onboard-screen { padding-top: calc(44px + var(--safe-top-extra)); }
+  .safety-screen { padding-top: calc(44px + var(--safe-top-extra)); }
+  .prototype-alert > header { padding-top: calc(56px + var(--safe-top-extra)); }
+  .pdf-preview-screen { padding-top: calc(58px + var(--safe-top-extra)); }
+
+  /* 하단 고정 영역: 홈 인디케이터 자리만큼 더 올려 준다 */
+  .proto-fixed { padding-bottom: calc(24px + var(--safe-bottom-extra)); }
+  .safety-fixed { padding-bottom: calc(24px + var(--safe-bottom-extra)); }
+  .prototype-alert > footer { padding-bottom: calc(20px + var(--safe-bottom-extra)); }
+  .proto-tabs { padding-bottom: calc(18px + var(--safe-bottom-extra)); }
+  .proto-sheet { padding-bottom: calc(30px + var(--safe-bottom-extra)); }
+  .pdf-preview-screen > footer { bottom: calc(22px + var(--safe-bottom-extra)); }
+
+  /* 떠다니는 토스트도 노치 아래로 */
+  .safety-toast { top: calc(52px + var(--safe-top-extra)); }
+
+  /* 레거시 디자인 보드 레이아웃도 혹시 쓰일 때를 대비해 같이 조정 */
+  .fixed-bottom { padding-bottom: calc(24px + var(--safe-bottom-extra)); }
+  .alert-bottom { padding-bottom: calc(14px + var(--safe-bottom-extra)); }
+}

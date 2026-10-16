@@ -12,7 +12,9 @@ export default defineConfig(({ mode }) => {
   const emitSourcemaps = mode === 'development'
 
   return {
-    base: process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/',
+    // './' 는 Capacitor(capacitor://localhost) 와 루트에 배포하는 Vercel 모두에서
+    // 그대로 동작한다. Figma Make 미리보기만 FIGMA_PUBLIC_URL 을 쓴다.
+    base: process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : './',
     build: {
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
@@ -37,7 +39,11 @@ react(),
       watch: {
         ignored: [
           '**/.figma/**',
-],
+          // cap sync 가 dist 를 복사해 넣는 네이티브 폴더. 무시해야 매 sync 마다
+          // 브라우저가 다시 로드되지 않는다.
+          '**/android/**',
+          '**/ios/**',
+        ],
       },
     },
     preview: {
