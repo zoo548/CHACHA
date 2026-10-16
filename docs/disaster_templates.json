@@ -1,0 +1,1379 @@
+{
+  "schema_version": "0.3",
+  "updated": "2026-09-30",
+  "language": "ko",
+  "guide": "쉬운정보_변환_가이드.md",
+  "structure": [
+    "title",
+    "situation",
+    "actions"
+  ],
+  "structure_rules": {
+    "situation": "1문장, 제목과 겹치지 않게, 무엇 때문에 위험한지 포함",
+    "actions": "3~6개. 기본 4개, 중요한 내용을 빠뜨리지 않기 위해 1~2개 추가 가능. 가장 중요한 것 먼저"
+  },
+  "section_labels": {
+    "actions": "이렇게 해요"
+  },
+  "slots": {
+    "보호자": {
+      "description": "앱에 등록한 1순위 연락처 이름 (예: 엄마, 김OO 선생님)",
+      "fallback": "보호자"
+    },
+    "이웃": {
+      "description": "앱에 등록한 2순위 연락처, 가까이 사는 사람 — 등록 안 됐으면 이 슬롯이 든 행동 줄을 숨김",
+      "fallback": null
+    }
+  },
+  "device_signals": {
+    "H": "빨간불 점멸 + 진동 반복 (확인 전까지)",
+    "L": "노란불 + 진동 1회",
+    "C": "사용자가 '알았어요' 버튼을 누르면 전송"
+  },
+  "common": {
+    "confirm_button": "알았어요"
+  },
+  "glossary": {
+    "태풍": "아주 센 바람과 많은 비가 함께 오는 거예요.",
+    "산불": "산에 난 불이에요. 아주 빨리 번져요.",
+    "119": "불이 나거나 다쳤을 때 전화하는 번호예요.",
+    "공습경보": "다른 나라가 미사일이나 비행기로 공격할 수 있을 때 울리는 경보예요.",
+    "경계경보": "공격이 올 수 있어서 미리 준비하라고 울리는 경보예요.",
+    "방사능": "몸에 아주 나쁜 보이지 않는 것이에요. 원자력 발전소 사고 때 나올 수 있어요.",
+    "댐": "강물을 막아서 모아 두는 큰 벽이에요.",
+    "112": "경찰에 전화하는 번호예요."
+  },
+  "disasters": [
+    {
+      "id": "heavy_rain",
+      "name_official": "호우·홍수",
+      "category": "자연재난",
+      "hero_icon": "rain_heavy",
+      "matching": {
+        "keywords": [
+          "호우",
+          "집중호우",
+          "극한호우",
+          "홍수",
+          "침수",
+          "범람",
+          "폭우"
+        ],
+        "escalate_keywords": [
+          "대피",
+          "범람",
+          "긴급재난문자"
+        ]
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 호우주의보·경보",
+          "title": "비가 많이 와요",
+          "situation": "물이 넘칠 수 있어요.",
+          "actions": [
+            {
+              "text": "집 안에 있어요.",
+              "icon": "stay_home"
+            },
+            {
+              "text": "강, 개울, 계곡에 가지 마세요.",
+              "icon": "no_river"
+            },
+            {
+              "text": "지하 주차장에 가지 마세요."
+            },
+            {
+              "text": "밖에 나가야 하면 {보호자}에게 먼저 전화해요."
+            },
+            {
+              "text": "위험하면 119에 전화해요.",
+              "icon": "phone_119"
+            }
+          ]
+        },
+        {
+          "level": "evacuate",
+          "device_signal": "H",
+          "source_type": "긴급재난문자 / 호우 긴급재난문자·대피 안내",
+          "title": "비가 아주 많이 와요",
+          "situation": "물이 빨리 차올라서 위험해요.",
+          "actions": [
+            {
+              "text": "지하에 있으면 바로 밖으로 나와요.",
+              "icon": "exit_basement"
+            },
+            {
+              "text": "지금 바로 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            },
+            {
+              "text": "전화를 안 받으면 {이웃}에게 전화해요.",
+              "hide_if_empty": "이웃"
+            },
+            {
+              "text": "아무도 안 받으면 119에 전화해요.",
+              "icon": "phone_119"
+            },
+            {
+              "text": "물이 흐르는 길을 건너지 마세요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "typhoon",
+      "name_official": "태풍",
+      "category": "자연재난",
+      "hero_icon": "typhoon",
+      "matching": {
+        "keywords": [
+          "태풍",
+          "강풍",
+          "풍랑"
+        ],
+        "escalate_keywords": [
+          "대피",
+          "대피명령",
+          "긴급재난문자"
+        ]
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 태풍주의보·경보",
+          "title": "태풍이 와요",
+          "situation": "아주 센 바람과 많은 비가 와요.",
+          "actions": [
+            {
+              "text": "집 안에 있어요.",
+              "icon": "stay_home"
+            },
+            {
+              "text": "창문을 꼭 닫아요.",
+              "icon": "close_window"
+            },
+            {
+              "text": "바닷가, 강가에 가지 마세요."
+            },
+            {
+              "text": "무서우면 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            }
+          ]
+        },
+        {
+          "level": "evacuate",
+          "device_signal": "H",
+          "source_type": "긴급재난문자 / 태풍 대피 안내",
+          "title": "센 태풍이 왔어요",
+          "situation": "아주 센 바람과 많은 비 때문에 위험해요.",
+          "actions": [
+            {
+              "text": "창문에서 멀리 떨어져 있어요.",
+              "icon": "away_window"
+            },
+            {
+              "text": "지금 바로 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            },
+            {
+              "text": "전화를 안 받으면 {이웃}에게 전화해요.",
+              "hide_if_empty": "이웃"
+            },
+            {
+              "text": "아무도 안 받으면 119에 전화해요.",
+              "icon": "phone_119"
+            },
+            {
+              "text": "간판, 나무 옆으로 가지 마세요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "heatwave",
+      "name_official": "폭염",
+      "category": "자연재난",
+      "hero_icon": "sun_hot",
+      "matching": {
+        "keywords": [
+          "폭염",
+          "무더위",
+          "온열질환",
+          "열사병"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 폭염주의보·경보",
+          "title": "오늘은 아주 더워요",
+          "situation": "더우면 몸이 아플 수 있어요.",
+          "actions": [
+            {
+              "text": "물을 자주 마셔요.",
+              "icon": "drink_water"
+            },
+            {
+              "text": "시원한 곳에 있어요.",
+              "icon": "cool_place"
+            },
+            {
+              "text": "낮에는 밖에 오래 있지 마세요."
+            },
+            {
+              "text": "몸이 아프면 {보호자}나 119에 전화해요.",
+              "icon": "phone_119"
+            }
+          ],
+          "note": "미결: 시간 표기(장애인개발원 가이드 12~16시 vs 기존 안 12~17시) 공식 행동요령 확인 후 결정"
+        }
+      ]
+    },
+    {
+      "id": "wildfire",
+      "name_official": "산불",
+      "category": "사회재난",
+      "hero_icon": "wildfire",
+      "matching": {
+        "keywords": [
+          "산불",
+          "입산",
+          "산림"
+        ],
+        "escalate_keywords": [
+          "대피",
+          "주민 대피",
+          "마을회관"
+        ]
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 산불 발생 안내",
+          "title": "산에 불이 났어요",
+          "situation": "불이 가까이 올 수 있어요.",
+          "actions": [
+            {
+              "text": "산에 가지 마세요.",
+              "icon": "no_mountain"
+            },
+            {
+              "text": "창문을 닫아요."
+            },
+            {
+              "text": "휴대폰, 신분증, 약을 챙겨 둬요.",
+              "icon": "bag_ready"
+            },
+            {
+              "text": "{보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            }
+          ]
+        },
+        {
+          "level": "evacuate",
+          "device_signal": "H",
+          "source_type": "긴급재난문자 / 산불 주민 대피",
+          "title": "산불이 가까이 왔어요",
+          "situation": "불과 연기가 아주 빨리 번지고 있어요.",
+          "actions": [
+            {
+              "text": "젖은 수건으로 코와 입을 막아요.",
+              "icon": "wet_towel"
+            },
+            {
+              "text": "지금 바로 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            },
+            {
+              "text": "전화를 안 받으면 {이웃}에게 전화해요.",
+              "hide_if_empty": "이웃"
+            },
+            {
+              "text": "아무도 안 받으면 119에 전화해요.",
+              "icon": "phone_119"
+            },
+            {
+              "text": "안내하는 사람이 오면 따라가요.",
+              "icon": "follow_guide"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fire",
+      "name_official": "화재",
+      "category": "사회재난",
+      "hero_icon": "fire",
+      "matching": {
+        "keywords": [
+          "화재",
+          "연기",
+          "유독가스"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 대형화재 연기 안내",
+          "title": "근처에 불이 났어요",
+          "situation": "연기가 많이 나요.",
+          "actions": [
+            {
+              "text": "창문을 닫아요.",
+              "icon": "close_window"
+            },
+            {
+              "text": "집 안에 있어요.",
+              "icon": "stay_home"
+            },
+            {
+              "text": "불이 난 곳에 가지 마세요."
+            },
+            {
+              "text": "숨쉬기 힘들면 119에 전화해요.",
+              "icon": "phone_119"
+            }
+          ]
+        }
+      ],
+      "scope_note": "건물 안 화재는 범위에서 제외: 재난문자는 근처 주민 대상 안내로만 오고, 불난 건물 안 사람에게는 거의 오지 않음 (화재경보·안내방송으로 인지)"
+    },
+    {
+      "id": "cold_wave",
+      "name_official": "한파",
+      "category": "자연재난",
+      "hero_icon": "snow_cold",
+      "matching": {
+        "keywords": [
+          "한파",
+          "한랭질환",
+          "동파",
+          "저체온"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 한파주의보·경보",
+          "title": "오늘은 아주 추워요",
+          "situation": "추우면 몸이 아플 수 있어요.",
+          "actions": [
+            {
+              "text": "따뜻한 옷을 입어요."
+            },
+            {
+              "text": "밖에 나가면 모자와 장갑을 챙겨요."
+            },
+            {
+              "text": "집 안을 따뜻하게 해요."
+            },
+            {
+              "text": "몸이 아프면 {보호자}나 119에 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "heavy_snow",
+      "name_official": "대설",
+      "category": "자연재난",
+      "hero_icon": "snow_heavy",
+      "matching": {
+        "keywords": [
+          "대설",
+          "폭설",
+          "눈"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 대설주의보·경보",
+          "title": "눈이 많이 와요",
+          "situation": "길이 미끄러워서 넘어질 수 있어요.",
+          "actions": [
+            {
+              "text": "집 안에 있어요."
+            },
+            {
+              "text": "밖에 나가면 천천히 걸어요."
+            },
+            {
+              "text": "미끄럽지 않은 신발을 신어요."
+            },
+            {
+              "text": "무서우면 {보호자}에게 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "strong_wind",
+      "name_official": "강풍·풍랑",
+      "category": "자연재난",
+      "hero_icon": "wind",
+      "matching": {
+        "keywords": [
+          "강풍",
+          "풍랑",
+          "돌풍"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 강풍·풍랑주의보",
+          "title": "바람이 아주 세게 불어요",
+          "situation": "물건이 날아올 수 있어요.",
+          "actions": [
+            {
+              "text": "집 안에 있어요."
+            },
+            {
+              "text": "창문을 꼭 닫아요."
+            },
+            {
+              "text": "간판, 나무 옆으로 가지 마세요."
+            },
+            {
+              "text": "바닷가에 가지 마세요."
+            },
+            {
+              "text": "무서우면 {보호자}에게 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "earthquake",
+      "name_official": "지진",
+      "category": "자연재난",
+      "hero_icon": "earthquake",
+      "matching": {
+        "keywords": [
+          "지진",
+          "여진",
+          "규모"
+        ],
+        "escalate_keywords": [
+          "긴급재난문자",
+          "위급재난문자",
+          "강한 흔들림"
+        ]
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 지진 발생 안내(약한 흔들림, 먼 곳)",
+          "title": "땅이 흔들렸어요",
+          "situation": "또 흔들릴 수 있어요.",
+          "actions": [
+            {
+              "text": "흔들리면 책상 밑으로 들어가요."
+            },
+            {
+              "text": "가방이나 방석으로 머리를 가려요."
+            },
+            {
+              "text": "흔들림이 멈추면 {보호자}에게 전화해요."
+            }
+          ]
+        },
+        {
+          "level": "evacuate",
+          "device_signal": "H",
+          "source_type": "긴급재난문자 / 지진",
+          "title": "땅이 크게 흔들려요",
+          "situation": "물건이 떨어질 수 있어서 위험해요.",
+          "actions": [
+            {
+              "text": "책상 밑으로 들어가 머리를 가려요.",
+              "icon": "under_desk"
+            },
+            {
+              "text": "흔들림이 멈추면 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            },
+            {
+              "text": "전화를 안 받으면 {이웃}에게 전화해요.",
+              "hide_if_empty": "이웃"
+            },
+            {
+              "text": "아무도 안 받으면 119에 전화해요.",
+              "icon": "phone_119"
+            },
+            {
+              "text": "엘리베이터 말고 계단으로 나가요."
+            },
+            {
+              "text": "밖에서는 건물에서 멀리 떨어져요."
+            }
+          ],
+          "note": "흔들리는 동안 전화하지 않도록 2번은 '흔들림이 멈추면'으로 시작"
+        }
+      ]
+    },
+    {
+      "id": "tsunami",
+      "name_official": "지진해일",
+      "category": "자연재난",
+      "hero_icon": "tsunami",
+      "matching": {
+        "keywords": [
+          "지진해일",
+          "해일",
+          "쓰나미"
+        ],
+        "escalate_keywords": [
+          "지진해일",
+          "해일"
+        ]
+      },
+      "variants": [
+        {
+          "level": "evacuate",
+          "device_signal": "H",
+          "source_type": "긴급재난문자 / 지진해일",
+          "title": "바닷물이 크게 밀려와요",
+          "situation": "큰 파도가 와서 아주 위험해요.",
+          "actions": [
+            {
+              "text": "지금 바로 바닷가에서 멀리 떨어져요.",
+              "icon": "away_sea"
+            },
+            {
+              "text": "지금 바로 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            },
+            {
+              "text": "전화를 안 받으면 {이웃}에게 전화해요.",
+              "hide_if_empty": "이웃"
+            },
+            {
+              "text": "아무도 안 받으면 119에 전화해요.",
+              "icon": "phone_119"
+            },
+            {
+              "text": "바닷물이 빠져도 바닷가에 가지 마세요."
+            }
+          ],
+          "note": "1번은 장소 지시에 가깝지만 생명과 직결되어 예외로 둠 — 감수 때 확인"
+        }
+      ]
+    },
+    {
+      "id": "landslide",
+      "name_official": "산사태",
+      "category": "자연재난",
+      "hero_icon": "landslide",
+      "matching": {
+        "keywords": [
+          "산사태",
+          "토사",
+          "급경사지"
+        ],
+        "escalate_keywords": [
+          "대피",
+          "산사태 경보"
+        ]
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 산사태주의보",
+          "title": "산이 무너질 수 있어요",
+          "situation": "비가 많이 와서 흙과 돌이 쏟아질 수 있어요.",
+          "actions": [
+            {
+              "text": "산에 가지 마세요."
+            },
+            {
+              "text": "산 가까이 있는 길로 가지 마세요."
+            },
+            {
+              "text": "이상한 소리가 나면 {보호자}에게 전화해요."
+            }
+          ]
+        },
+        {
+          "level": "evacuate",
+          "device_signal": "H",
+          "source_type": "긴급재난문자 / 산사태 경보·주민 대피",
+          "title": "산이 곧 무너질 수 있어요",
+          "situation": "흙과 돌이 쏟아져서 위험해요.",
+          "actions": [
+            {
+              "text": "산에서 멀리 떨어져요.",
+              "icon": "away_mountain"
+            },
+            {
+              "text": "지금 바로 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            },
+            {
+              "text": "전화를 안 받으면 {이웃}에게 전화해요.",
+              "hide_if_empty": "이웃"
+            },
+            {
+              "text": "아무도 안 받으면 119에 전화해요.",
+              "icon": "phone_119"
+            },
+            {
+              "text": "산 가까이 있는 길로 다니지 마세요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yellow_dust",
+      "name_official": "황사",
+      "category": "자연재난",
+      "hero_icon": "dust",
+      "matching": {
+        "keywords": [
+          "황사"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 황사경보",
+          "title": "모래 먼지가 많이 날려요",
+          "situation": "숨쉬기 힘들 수 있어요.",
+          "actions": [
+            {
+              "text": "창문을 닫아요."
+            },
+            {
+              "text": "밖에 나가면 마스크를 써요."
+            },
+            {
+              "text": "집에 오면 손과 얼굴을 씻어요."
+            },
+            {
+              "text": "숨쉬기 힘들면 119에 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fine_dust",
+      "name_official": "미세먼지",
+      "category": "자연재난",
+      "hero_icon": "dust",
+      "matching": {
+        "keywords": [
+          "미세먼지",
+          "초미세먼지",
+          "비상저감조치"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 미세먼지 경보·비상저감조치",
+          "title": "공기가 아주 나빠요",
+          "situation": "나쁜 먼지를 마시면 몸이 아플 수 있어요.",
+          "actions": [
+            {
+              "text": "창문을 닫아요."
+            },
+            {
+              "text": "밖에 나가면 마스크를 써요."
+            },
+            {
+              "text": "밖에 오래 있지 마세요."
+            },
+            {
+              "text": "몸이 아프면 {보호자}에게 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lightning",
+      "name_official": "낙뢰",
+      "category": "자연재난",
+      "hero_icon": "lightning",
+      "matching": {
+        "keywords": [
+          "낙뢰",
+          "천둥",
+          "번개"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 낙뢰 주의",
+          "title": "번개가 많이 쳐요",
+          "situation": "번개에 맞으면 크게 다칠 수 있어요.",
+          "actions": [
+            {
+              "text": "건물 안으로 들어가요."
+            },
+            {
+              "text": "큰 나무 밑에 있지 마세요."
+            },
+            {
+              "text": "산 위나 물가에 가지 마세요."
+            },
+            {
+              "text": "무서우면 {보호자}에게 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drought",
+      "name_official": "가뭄",
+      "category": "자연재난",
+      "hero_icon": "drought",
+      "matching": {
+        "keywords": [
+          "가뭄",
+          "물 절약",
+          "제한급수"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 가뭄·물 절약",
+          "title": "비가 오랫동안 안 와요",
+          "situation": "물이 모자랄 수 있어요.",
+          "actions": [
+            {
+              "text": "물을 아껴 써요."
+            },
+            {
+              "text": "씻을 때 물을 짧게 틀어요."
+            },
+            {
+              "text": "설거지할 때 물을 받아서 써요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dam_release",
+      "name_official": "댐 방류",
+      "category": "자연재난",
+      "hero_icon": "dam",
+      "matching": {
+        "keywords": [
+          "방류",
+          "댐",
+          "수위 상승",
+          "하천 수위"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 댐 방류·하천 수위 상승",
+          "title": "댐에서 물을 내보내요",
+          "situation": "강물이 갑자기 불어날 수 있어요.",
+          "actions": [
+            {
+              "text": "강, 개울, 계곡에 가지 마세요."
+            },
+            {
+              "text": "강 가까이 있으면 바로 멀리 떨어져요."
+            },
+            {
+              "text": "무서우면 {보호자}에게 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "road_ice",
+      "name_official": "도로 결빙",
+      "category": "자연재난",
+      "hero_icon": "ice",
+      "matching": {
+        "keywords": [
+          "결빙",
+          "빙판",
+          "블랙아이스"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 도로 결빙 주의",
+          "title": "길이 얼었어요",
+          "situation": "미끄러워서 넘어질 수 있어요.",
+          "actions": [
+            {
+              "text": "밖에 나가면 천천히 걸어요."
+            },
+            {
+              "text": "미끄럽지 않은 신발을 신어요."
+            },
+            {
+              "text": "주머니에 손을 넣지 마세요."
+            },
+            {
+              "text": "넘어져서 아프면 119에 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "high_wave",
+      "name_official": "너울·높은 파도",
+      "category": "자연재난",
+      "hero_icon": "wave",
+      "matching": {
+        "keywords": [
+          "너울",
+          "이안류",
+          "높은 파도",
+          "갯바위",
+          "방파제"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 너울성 파도·이안류",
+          "title": "바닷가에 큰 파도가 쳐요",
+          "situation": "파도에 휩쓸릴 수 있어요.",
+          "actions": [
+            {
+              "text": "바닷가에 가지 마세요."
+            },
+            {
+              "text": "바닷가 바위에 올라가지 마세요."
+            },
+            {
+              "text": "바다에 들어가지 마세요."
+            },
+            {
+              "text": "사람이 물에 빠지면 119에 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chemical",
+      "name_official": "화학물질 누출",
+      "category": "사회재난",
+      "hero_icon": "chemical",
+      "matching": {
+        "keywords": [
+          "화학물질",
+          "유해물질",
+          "누출",
+          "유독"
+        ],
+        "escalate_keywords": [
+          "실내 대피",
+          "주민 대피"
+        ]
+      },
+      "variants": [
+        {
+          "level": "evacuate",
+          "device_signal": "H",
+          "source_type": "긴급재난문자 / 화학물질 누출·실내 대피",
+          "title": "나쁜 가스가 새어 나왔어요",
+          "situation": "가스를 마시면 위험해요.",
+          "actions": [
+            {
+              "text": "창문과 문을 모두 닫아요.",
+              "icon": "close_window"
+            },
+            {
+              "text": "지금 바로 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            },
+            {
+              "text": "전화를 안 받으면 {이웃}에게 전화해요.",
+              "hide_if_empty": "이웃"
+            },
+            {
+              "text": "아무도 안 받으면 119에 전화해요.",
+              "icon": "phone_119"
+            },
+            {
+              "text": "집 밖으로 나가지 마세요."
+            },
+            {
+              "text": "젖은 수건으로 코와 입을 막아요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gas_leak",
+      "name_official": "가스 누출",
+      "category": "사회재난",
+      "hero_icon": "gas",
+      "matching": {
+        "keywords": [
+          "가스 누출",
+          "가스 폭발",
+          "도시가스"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 가스 누출 사고",
+          "title": "근처에서 가스가 새요",
+          "situation": "불이 나거나 터질 수 있어요.",
+          "actions": [
+            {
+              "text": "가스가 새는 곳에 가지 마세요."
+            },
+            {
+              "text": "라이터나 불을 켜지 마세요."
+            },
+            {
+              "text": "무서우면 {보호자}에게 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blackout",
+      "name_official": "정전",
+      "category": "사회재난",
+      "hero_icon": "power",
+      "matching": {
+        "keywords": [
+          "정전",
+          "전기 공급",
+          "전력"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 정전",
+          "title": "전기가 끊겼어요",
+          "situation": "불이 꺼지고 전기 제품이 멈춰요.",
+          "actions": [
+            {
+              "text": "휴대폰 불빛을 켜요."
+            },
+            {
+              "text": "전기 제품 코드를 뽑아요."
+            },
+            {
+              "text": "엘리베이터는 타지 마세요."
+            },
+            {
+              "text": "무서우면 {보호자}에게 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "water_outage",
+      "name_official": "단수",
+      "category": "사회재난",
+      "hero_icon": "water_off",
+      "matching": {
+        "keywords": [
+          "단수",
+          "급수 중단",
+          "수돗물"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 단수",
+          "title": "수돗물이 안 나와요",
+          "situation": "물이 한동안 안 나올 수 있어요.",
+          "actions": [
+            {
+              "text": "물을 미리 받아 둬요."
+            },
+            {
+              "text": "마실 물을 챙겨 둬요."
+            },
+            {
+              "text": "물이 다시 나오면 처음 물은 조금 버려요."
+            }
+          ],
+          "note": "원문의 단수 시간은 중요 정보 → 시간 슬롯 도입 검토"
+        }
+      ]
+    },
+    {
+      "id": "epidemic",
+      "name_official": "감염병",
+      "category": "사회재난",
+      "hero_icon": "virus",
+      "matching": {
+        "keywords": [
+          "감염병",
+          "확진",
+          "유행",
+          "독감"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 감염병 유행",
+          "title": "병이 퍼지고 있어요",
+          "situation": "다른 사람에게 옮을 수 있어요.",
+          "actions": [
+            {
+              "text": "손을 자주 씻어요."
+            },
+            {
+              "text": "사람이 많은 곳에서는 마스크를 써요."
+            },
+            {
+              "text": "기침할 때 옷소매로 입을 가려요."
+            },
+            {
+              "text": "열이 나면 {보호자}에게 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "air_raid",
+      "name_official": "공습경보",
+      "category": "사회재난",
+      "hero_icon": "siren",
+      "matching": {
+        "keywords": [
+          "공습경보",
+          "민방공",
+          "미사일"
+        ],
+        "escalate_keywords": [
+          "공습경보"
+        ]
+      },
+      "variants": [
+        {
+          "level": "evacuate",
+          "device_signal": "H",
+          "source_type": "위급재난문자 / 민방공 공습경보",
+          "title": "공습경보가 울려요",
+          "situation": "미사일 공격이 올 수 있어서 위험해요.",
+          "actions": [
+            {
+              "text": "가까운 건물 지하로 들어가요.",
+              "icon": "go_underground"
+            },
+            {
+              "text": "지금 바로 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            },
+            {
+              "text": "전화를 안 받으면 {이웃}에게 전화해요.",
+              "hide_if_empty": "이웃"
+            },
+            {
+              "text": "아무도 안 받으면 119에 전화해요.",
+              "icon": "phone_119"
+            },
+            {
+              "text": "창문에서 멀리 떨어져 있어요."
+            }
+          ],
+          "note": "1번은 장소 지시에 가깝지만 공식 행동요령의 핵심이라 예외로 둠 — 감수 때 확인"
+        }
+      ]
+    },
+    {
+      "id": "alert_warning",
+      "name_official": "경계경보",
+      "category": "사회재난",
+      "hero_icon": "siren",
+      "matching": {
+        "keywords": [
+          "경계경보"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "위급재난문자 / 민방공 경계경보",
+          "title": "경계경보가 울려요",
+          "situation": "공격이 올 수 있어서 준비해야 해요.",
+          "actions": [
+            {
+              "text": "휴대폰, 신분증, 약을 챙겨 둬요."
+            },
+            {
+              "text": "가까운 건물 지하가 어디인지 알아 둬요."
+            },
+            {
+              "text": "문자가 또 오면 바로 봐요."
+            },
+            {
+              "text": "{보호자}에게 전화해요."
+            }
+          ],
+          "note": "위급재난문자로 오지만 행동은 준비 단계라 L로 둠 — 팀 확인 필요"
+        }
+      ]
+    },
+    {
+      "id": "radiation",
+      "name_official": "방사능 누출",
+      "category": "사회재난",
+      "hero_icon": "radiation",
+      "matching": {
+        "keywords": [
+          "방사능",
+          "방사선",
+          "원전",
+          "원자력"
+        ],
+        "escalate_keywords": [
+          "실내 대피",
+          "주민 대피"
+        ]
+      },
+      "variants": [
+        {
+          "level": "evacuate",
+          "device_signal": "H",
+          "source_type": "긴급재난문자 / 방사능 누출·실내 대피",
+          "title": "방사능이 새어 나왔어요",
+          "situation": "몸에 나쁜 것이 공기로 퍼져서 위험해요.",
+          "actions": [
+            {
+              "text": "창문과 문을 모두 닫아요.",
+              "icon": "close_window"
+            },
+            {
+              "text": "지금 바로 {보호자}에게 전화해요.",
+              "icon": "phone_guardian"
+            },
+            {
+              "text": "전화를 안 받으면 {이웃}에게 전화해요.",
+              "hide_if_empty": "이웃"
+            },
+            {
+              "text": "아무도 안 받으면 119에 전화해요.",
+              "icon": "phone_119"
+            },
+            {
+              "text": "집 밖으로 나가지 마세요."
+            },
+            {
+              "text": "밖에 있었으면 몸을 씻어요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "collapse",
+      "name_official": "붕괴·땅꺼짐",
+      "category": "사회재난",
+      "hero_icon": "collapse",
+      "matching": {
+        "keywords": [
+          "붕괴",
+          "싱크홀",
+          "땅꺼짐",
+          "지반침하"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 붕괴·싱크홀",
+          "title": "근처 땅이나 건물이 무너졌어요",
+          "situation": "더 무너질 수 있어요.",
+          "actions": [
+            {
+              "text": "무너진 곳에 가지 마세요."
+            },
+            {
+              "text": "다른 길로 돌아가요."
+            },
+            {
+              "text": "다치면 119에 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "crowd",
+      "name_official": "인파 밀집",
+      "category": "사회재난",
+      "hero_icon": "crowd",
+      "matching": {
+        "keywords": [
+          "인파",
+          "밀집",
+          "혼잡",
+          "다중운집"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 인파 밀집",
+          "title": "사람이 아주 많이 모였어요",
+          "situation": "밀려서 넘어지면 크게 다칠 수 있어요.",
+          "actions": [
+            {
+              "text": "사람이 많은 곳에 가지 마세요."
+            },
+            {
+              "text": "사람이 적은 가장자리로 가요."
+            },
+            {
+              "text": "숨쉬기 힘들면 두 팔로 가슴을 감싸요."
+            },
+            {
+              "text": "위험하면 119에 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "traffic",
+      "name_official": "교통 통제",
+      "category": "사회재난",
+      "hero_icon": "road_closed",
+      "matching": {
+        "keywords": [
+          "통제",
+          "우회",
+          "교통사고",
+          "도로 차단"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 교통 통제",
+          "title": "근처 길을 지나갈 수 없어요",
+          "situation": "사고나 공사 때문에 길을 막았어요.",
+          "actions": [
+            {
+              "text": "막힌 길로 들어가지 마세요."
+            },
+            {
+              "text": "다른 길로 돌아가요."
+            },
+            {
+              "text": "길을 모르면 {보호자}에게 전화해요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "missing_person",
+      "name_official": "실종 경보",
+      "category": "사회재난",
+      "hero_icon": "search",
+      "matching": {
+        "keywords": [
+          "실종",
+          "찾습니다",
+          "배회"
+        ],
+        "escalate_keywords": []
+      },
+      "variants": [
+        {
+          "level": "caution",
+          "device_signal": "L",
+          "source_type": "안전안내문자 / 실종경보",
+          "title": "사람을 찾고 있어요",
+          "situation": "나에게 위험한 일은 아니에요.",
+          "actions": [
+            {
+              "text": "문자에 나온 사진을 봐요."
+            },
+            {
+              "text": "문자에 나온 사람을 보면 112에 전화해요."
+            },
+            {
+              "text": "모르는 사람이면 그냥 넘어가도 괜찮아요."
+            }
+          ],
+          "note": "가장 자주 오는 문자. 위험 알림이 아니므로 기기 신호를 더 약하게(진동 없이 노란불만) 할지 검토"
+        }
+      ]
+    }
+  ]
+}

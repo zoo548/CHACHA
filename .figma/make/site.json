@@ -1,0 +1,10 @@
+{
+  "description": "This app simplifies disaster alerts for adults with developmental disabilities by translating complex messages into easy-to-understand language, ensuring prompt action.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
