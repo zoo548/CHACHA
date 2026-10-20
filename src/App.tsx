@@ -38,12 +38,23 @@ import {
   type Profile,
 } from "./data/profile"
 import { getAlertView, rawTextView, type AlertView } from "./data/alertTemplate"
+import { matchAlert } from "./matching/matchAlert"
 import { useDevice } from "./device/DeviceContext"
 import { onNotificationTap, type NotificationPayload } from "./notifications"
+import {
+  broadcastFromLevel,
+  fetchRegionAlerts,
+  formatLastChecked,
+  loadSeenIds,
+  saveSeenIds,
+  type RelayAlert,
+} from "./alerts/pollServer"
 import type { ActiveTab, AppScreen, SheetKind } from "./types"
 
 const TAB_SCREENS: AppScreen[] = ["home", "help", "prep", "card"]
 const SAFETY_COMPLETE_KEY = "chacha-safety-complete"
+const POLL_INIT_KEY = "chacha-alert-poll-init-v1"
+const POLL_MS = 60_000
 
 /** 지금 열려 있는 알림. null 이면 알림 화면 자체가 안 보임. */
 type AlertState =
@@ -72,6 +83,13 @@ function payloadToState(p: NotificationPayload): AlertState {
   return { kind: "raw", text: p.text }
 }
 
+function relayToPayload(alert: RelayAlert): NotificationPayload {
+  const broadcast = broadcastFromLevel(alert.level)
+  const result = matchAlert(alert.message, broadcast)
+  if (result) return { kind: "preset", disasterId: result.id, level: result.level }
+  return { kind: "raw", text: alert.message, broadcastType: broadcast }
+}
+
 function App() {
   // 차차등 BLE 연결 상태/조작
   const device = useDevice()
@@ -97,6 +115,7 @@ function App() {
 
   const [safetyComplete, setSafetyComplete] = useState(false)
   const [demoOpen, setDemoOpen] = useState(false)
+  const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
 
   // --- 앱 열 때 한 번: 프로필과 안전점검 완료 플래그 복원 ---
   useEffect(() => {
@@ -240,6 +259,69 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, alertState, device])
 
+  // 중계 서버 1분 폴링. 처음 보는 SN 만 알림으로 올린다.
+  useEffect(() => {
+    if (!ready) return
+    let cancelled = false
+
+    const applyIncoming = (payload: NotificationPayload) => {
+      let changed = true
+      setAlertState((prev) => {
+        const cur = statePriority(prev)
+        const next = payloadPriority(payload)
+        if (cur > 0 && cur >= next) {
+          changed = false
+          return prev
+        }
+        return payloadToState(payload)
+      })
+      if (changed) {
+        setScreen("alert")
+        setDemoOpen(false)
+        setSheet(null)
+        if (payload.kind === "preset" && payload.level === "evacuate") setDanger(true)
+      }
+    }
+
+    const tick = async () => {
+      const region = profile.address.trim()
+      if (!region) {
+        if (!cancelled) setLastCheckedAt(new Date())
+        return
+      }
+      try {
+        const data = await fetchRegionAlerts(region)
+        if (cancelled) return
+        setLastCheckedAt(new Date())
+        const seen = await loadSeenIds()
+        const init = await Preferences.get({ key: POLL_INIT_KEY })
+        if (!init.value) {
+          for (const a of data.alerts) seen.add(a.id)
+          await saveSeenIds(seen)
+          await Preferences.set({ key: POLL_INIT_KEY, value: "1" })
+          return
+        }
+        const fresh = data.alerts.filter((a) => !seen.has(a.id))
+        if (fresh.length === 0) return
+        for (const a of fresh) seen.add(a.id)
+        await saveSeenIds(seen)
+        const ranked = [...fresh].sort(
+          (a, b) => payloadPriority(relayToPayload(b)) - payloadPriority(relayToPayload(a)),
+        )
+        for (const a of ranked) applyIncoming(relayToPayload(a))
+      } catch {
+        if (!cancelled) setLastCheckedAt(new Date())
+      }
+    }
+
+    tick()
+    const id = window.setInterval(tick, POLL_MS)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [ready, profile.address])
+
   // --- 화면 선택 ---
   const content =
     screen === "onboarding" ? (
@@ -324,6 +406,7 @@ function App() {
         goPrep={() => setActiveTab("prep")}
         profile={profile}
         openDemo={() => setDemoOpen(true)}
+        lastCheckedLabel={lastCheckedAt ? formatLastChecked(lastCheckedAt) : ""}
       />
     )
 

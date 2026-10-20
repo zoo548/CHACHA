@@ -1,0 +1,30 @@
+{
+  "name": "chacha-alert-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "safetydata.go.kr 재난문자 중계 서버 (차차 앱용). 로컬 PC → Oracle Cloud 이식 전제.",
+  "scripts": {
+    "dev": "tsx watch index.ts",
+    "start": "tsx index.ts",
+    "sample": "tsx fetch-sample.ts",
+    "latency": "tsx latency-summary.ts",
+    "test": "tsx --test region.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

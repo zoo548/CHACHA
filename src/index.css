@@ -344,6 +344,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 }
 
 .home-page { padding-top: 58px; }
+.home-last-checked { margin: 18px 8px 0; color: var(--muted); font-size: 13px; font-weight: 500; text-align: center; }
 
 .home-head {
   height: 48px;

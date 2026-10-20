@@ -34,6 +34,7 @@ export function HomeScreen({
   goPrep,
   profile,
   openDemo,
+  lastCheckedLabel,
 }: {
   danger: boolean
   acknowledged: boolean
@@ -43,6 +44,7 @@ export function HomeScreen({
   goPrep: () => void
   profile: Profile
   openDemo: () => void
+  lastCheckedLabel: string
 }) {
   const { state: deviceState } = useDevice()
   const label = deviceStatusLabel(deviceState.status)
@@ -107,6 +109,7 @@ export function HomeScreen({
         <button onClick={goHelp}>도움</button>
         <button onClick={goPrep}>대비</button>
       </span>
+      {lastCheckedLabel && <p className="home-last-checked">{lastCheckedLabel}</p>}
     </main>
   )
 }

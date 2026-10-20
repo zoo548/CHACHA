@@ -4,7 +4,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -n app,server -c cyan,magenta \"vite\" \"pnpm --dir server start\"",
+    "dev:app": "vite",
+    "dev:server": "pnpm --dir server start",
+    "server": "pnpm --dir server start",
+    "latency": "pnpm --dir server latency",
+    "postinstall": "pnpm --dir server install",
     "build": "vite build",
     "preview": "vite preview",
     "format": "oxfmt",
@@ -32,6 +37,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.3",
+    "concurrently": "^9.1.2",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
