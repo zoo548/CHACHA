@@ -51,6 +51,27 @@ type AlertState =
   | { kind: "practice" }
   | { kind: "raw"; text: string }
 
+/** 승격·무시 규칙용 우선순위.
+ *  2 = 대피(H/위험), 1 = 주의(L/caution·raw), 0 = 없음/연습.
+ *  규칙: 더 높은 우선순위면 교체, 같거나 낮으면 유지. */
+function statePriority(s: AlertState | null): number {
+  if (!s) return 0
+  if (s.kind === "preset") return s.level === "evacuate" ? 2 : 1
+  if (s.kind === "raw") return 1
+  return 0 // practice
+}
+function payloadPriority(p: NotificationPayload): number {
+  if (p.kind === "preset") return p.level === "evacuate" ? 2 : 1
+  if (p.kind === "raw") return 1
+  return 0 // practice
+}
+function payloadToState(p: NotificationPayload): AlertState {
+  if (p.kind === "preset")
+    return { kind: "preset", disasterId: p.disasterId, level: p.level }
+  if (p.kind === "practice") return { kind: "practice" }
+  return { kind: "raw", text: p.text }
+}
+
 function App() {
   // 차차등 BLE 연결 상태/조작
   const device = useDevice()
@@ -100,21 +121,30 @@ function App() {
     }
   }, [])
 
-  // --- 로컬 알림 탭 처리: OS 알림을 누르면 그 알림 화면으로 바로 이동 ---
+  // --- 로컬 알림 탭 처리: OS 알림을 누르면 그 알림 화면으로 이동 ---
+  // 승격·무시 규칙:
+  //   - 열린 알림이 더 높은(또는 같은) 레벨이면 유지. (예: H 보는 중 L 탭 → 무시)
+  //   - 열린 알림보다 새 알림이 더 높으면 교체. (예: L 보는 중 H 탭 → H로 바뀜)
+  //   - 열린 알림이 없으면 그냥 새 알림을 연다.
   useEffect(() => {
     let unsub: (() => void) | null = null
     onNotificationTap((payload: NotificationPayload) => {
-      // 알림을 눌렀을 때. 알림 종류에 따라 화면 전환.
-      if (payload.kind === "preset") {
-        setAlertState({ kind: "preset", disasterId: payload.disasterId, level: payload.level })
-      } else if (payload.kind === "practice") {
-        setAlertState({ kind: "practice" })
-      } else {
-        setAlertState({ kind: "raw", text: payload.text })
+      let changed = true
+      setAlertState((prev) => {
+        const cur = statePriority(prev)
+        const next = payloadPriority(payload)
+        if (cur > 0 && cur >= next) {
+          changed = false
+          return prev // 유지 (무시)
+        }
+        return payloadToState(payload) // 교체 (승격 또는 신규)
+      })
+      // 유지로 결정된 경우: 이미 알림 화면에 있을 테니 아무 것도 바꾸지 않음.
+      if (changed) {
+        setScreen("alert")
+        setDemoOpen(false)
+        setSheet(null)
       }
-      setScreen("alert")
-      setDemoOpen(false)
-      setSheet(null)
     })
       .then((fn) => {
         unsub = fn
