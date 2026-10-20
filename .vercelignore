@@ -1,0 +1,5 @@
+# 프론트만 배포. 중계 서버·네이티브 폴더·Vercel 함수 디렉터리는 올리지 않는다.
+server
+api
+android
+ios

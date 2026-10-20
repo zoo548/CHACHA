@@ -20,8 +20,9 @@ export default defineConfig(({ mode }) => {
       minify: !emitSourcemaps,
     },
     plugins: [
-react(),
+      react(),
       tailwindcss(),
+      // HTML 타이틀 등만 넣는다. 나머지 Figma 플러그인은 apply:'serve' 라 배포 빌드에서 빠진다.
       figmaSiteConfiguration(siteConfiguration),
       figmaErrorOverlayReplay(),
       figmaReactRefreshBoundaryFallback(),

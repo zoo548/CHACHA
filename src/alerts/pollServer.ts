@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 // 중계 서버에서 내 지역 재난문자를 1분마다 가져온다.
-// 서버 URL 은 VITE_ALERTS_URL (없으면 http://localhost:8787).
+// 서버 URL 은 VITE_ALERTS_URL. 배포본에 없으면 연결하지 않는다. 로컬 개발만 localhost:8787.
 // 본 적 있는 SN 은 Preferences 에 남겨 앱을 껐다 켜도 다시 울리지 않는다.
 
 import { Preferences } from "@capacitor/preferences"
@@ -27,11 +27,17 @@ export type RelayResponse = {
 
 const SEEN_KEY = "chacha-seen-alert-ids-v1"
 const MAX_SEEN = 400
-const DEFAULT_URL = "http://localhost:8787"
+const FETCH_MS = 8_000
+const DEV_URL = "http://localhost:8787"
 
-export function alertsBaseUrl(): string {
-  const fromEnv = import.meta.env.VITE_ALERTS_URL as string | undefined
-  return (fromEnv && fromEnv.trim()) || DEFAULT_URL
+export const RELAY_DISCONNECTED = "재난문자 서버 연결 안 됨"
+
+/** 배포(Vercel)에서는 VITE_ALERTS_URL 이 없으면 연결하지 않는다. 로컬 개발만 localhost. */
+export function alertsBaseUrl(): string | null {
+  const fromEnv = (import.meta.env.VITE_ALERTS_URL as string | undefined)?.trim()
+  if (fromEnv) return fromEnv.replace(/\/$/, "")
+  if (import.meta.env.DEV) return DEV_URL
+  return null
 }
 
 export function formatLastChecked(at: Date): string {
@@ -42,11 +48,24 @@ export function formatLastChecked(at: Date): string {
   return `마지막 확인: ${ampm} ${h12}시 ${m}분`
 }
 
+async function fetchJson(url: URL): Promise<unknown> {
+  const ac = new AbortController()
+  const timer = window.setTimeout(() => ac.abort(), FETCH_MS)
+  try {
+    const res = await fetch(url, { signal: ac.signal })
+    if (!res.ok) throw new Error(`http_${res.status}`)
+    return await res.json()
+  } finally {
+    window.clearTimeout(timer)
+  }
+}
+
 export async function fetchRegionAlerts(region: string): Promise<RelayResponse> {
-  const url = new URL("/alerts", alertsBaseUrl())
+  const base = alertsBaseUrl()
+  if (!base) throw new Error("no_alerts_url")
+  const url = new URL("/alerts", `${base}/`)
   if (region.trim()) url.searchParams.set("region", region.trim())
-  const res = await fetch(url)
-  const json = (await res.json()) as RelayResponse
+  const json = (await fetchJson(url)) as RelayResponse
   return {
     alerts: Array.isArray(json.alerts) ? json.alerts : [],
     totalToday: json.totalToday,
@@ -56,6 +75,22 @@ export async function fetchRegionAlerts(region: string): Promise<RelayResponse> 
     error: json.error ?? null,
     errorCode: json.errorCode ?? null,
     lastPollAt: json.lastPollAt ?? null,
+  }
+}
+
+/** 주소가 없어도 서버가 켜져 있는지만 본다. 실패해도 throw 하지 않는다. */
+export async function pingAlertsServer(): Promise<boolean> {
+  const base = alertsBaseUrl()
+  if (!base) return false
+  const ac = new AbortController()
+  const timer = window.setTimeout(() => ac.abort(), FETCH_MS)
+  try {
+    const res = await fetch(base, { signal: ac.signal })
+    return res.ok
+  } catch {
+    return false
+  } finally {
+    window.clearTimeout(timer)
   }
 }
 

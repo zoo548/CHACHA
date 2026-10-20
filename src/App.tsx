@@ -42,10 +42,13 @@ import { matchAlert } from "./matching/matchAlert"
 import { useDevice } from "./device/DeviceContext"
 import { onNotificationTap, type NotificationPayload } from "./notifications"
 import {
+  RELAY_DISCONNECTED,
+  alertsBaseUrl,
   broadcastFromLevel,
   fetchRegionAlerts,
   formatLastChecked,
   loadSeenIds,
+  pingAlertsServer,
   saveSeenIds,
   type RelayAlert,
 } from "./alerts/pollServer"
@@ -116,6 +119,7 @@ function App() {
   const [safetyComplete, setSafetyComplete] = useState(false)
   const [demoOpen, setDemoOpen] = useState(false)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
+  const [relayOk, setRelayOk] = useState<boolean | null>(null)
 
   // --- 앱 열 때 한 번: 프로필과 안전점검 완료 플래그 복원 ---
   useEffect(() => {
@@ -284,14 +288,22 @@ function App() {
     }
 
     const tick = async () => {
-      const region = profile.address.trim()
-      if (!region) {
-        if (!cancelled) setLastCheckedAt(new Date())
+      if (!alertsBaseUrl()) {
+        if (!cancelled) setRelayOk(false)
         return
       }
+      const region = profile.address.trim()
       try {
+        if (!region) {
+          const ok = await pingAlertsServer()
+          if (cancelled) return
+          setRelayOk(ok)
+          if (ok) setLastCheckedAt(new Date())
+          return
+        }
         const data = await fetchRegionAlerts(region)
         if (cancelled) return
+        setRelayOk(true)
         setLastCheckedAt(new Date())
         const seen = await loadSeenIds()
         const init = await Preferences.get({ key: POLL_INIT_KEY })
@@ -310,7 +322,7 @@ function App() {
         )
         for (const a of ranked) applyIncoming(relayToPayload(a))
       } catch {
-        if (!cancelled) setLastCheckedAt(new Date())
+        if (!cancelled) setRelayOk(false)
       }
     }
 
@@ -406,7 +418,13 @@ function App() {
         goPrep={() => setActiveTab("prep")}
         profile={profile}
         openDemo={() => setDemoOpen(true)}
-        lastCheckedLabel={lastCheckedAt ? formatLastChecked(lastCheckedAt) : ""}
+        lastCheckedLabel={
+          relayOk === false
+            ? RELAY_DISCONNECTED
+            : lastCheckedAt
+              ? formatLastChecked(lastCheckedAt)
+              : ""
+        }
       />
     )
 
