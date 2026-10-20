@@ -5,6 +5,7 @@ import { Icon } from "../components/Icon"
 import { Logo } from "../components/Logo"
 import { ProtoButton } from "../components/ProtoButton"
 import type { CallTarget } from "../components/ProtoSheet"
+import { useCardPdf } from "../card/useCardPdf"
 import { describeContact, describeInstitution, type Profile } from "../data/profile"
 
 type Row = {
@@ -69,17 +70,16 @@ function buildRows(profile: Profile): Row[] {
 }
 
 export function ProtoCard({
-  openPdf,
   call,
   edit,
   profile,
 }: {
-  openPdf: () => void
   call: (target: CallTarget) => void
   edit: () => void
   profile: Profile
 }) {
   const rows = buildRows(profile)
+  const pdf = useCardPdf(profile.name)
   return (
     <main className="proto-page card-page">
       <section className="page-heading">
@@ -107,9 +107,14 @@ export function ProtoCard({
         ))}
       </article>
       <div className="split-actions">
-        <ProtoButton onClick={openPdf}>PDF로 저장</ProtoButton>
-        <ProtoButton secondary onClick={openPdf}>인쇄하기</ProtoButton>
+        <ProtoButton onClick={pdf.save} disabled={pdf.busy !== null}>
+          {pdf.saveLabel}
+        </ProtoButton>
+        <ProtoButton secondary onClick={pdf.print} disabled={pdf.busy !== null}>
+          {pdf.printLabel}
+        </ProtoButton>
       </div>
+      {pdf.failed && <p className="card-export-hint">다시 눌러 주세요</p>}
     </main>
   )
 }

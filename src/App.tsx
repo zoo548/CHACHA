@@ -17,6 +17,7 @@ import {
 } from "@capacitor/status-bar"
 
 import { DemoPanel } from "./components/DemoPanel"
+import { PdfPreview } from "./components/PdfPreview"
 import { ProtoSheet, type CallTarget } from "./components/ProtoSheet"
 import { ProtoTabs } from "./components/ProtoTabs"
 import { StatusBar } from "./components/StatusBar"
@@ -395,7 +396,6 @@ function App() {
       />
     ) : screen === "card" ? (
       <ProtoCard
-        openPdf={() => setScreen("pdf")}
         call={openCall}
         edit={() => {
           setOnboardStep(3)
@@ -474,6 +474,9 @@ function App() {
           callTarget={callTarget}
         />
         {demoOpen && <DemoPanel profile={profile} close={() => setDemoOpen(false)} />}
+      </div>
+      <div className="pdf-print-sheet" aria-hidden="true">
+        <PdfPreview profile={profile} />
       </div>
     </div>
   )

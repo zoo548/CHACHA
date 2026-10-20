@@ -84,7 +84,7 @@ button:active { transform: scale(.97); transition: transform 100ms ease; }
 .done-check .icon { width: 60px; height: 60px; stroke-width: 2.5; }
 
 /* 인쇄용 PDF 레이아웃 (PdfPreview) */
-.pdf { padding: 42px 46px; color: #123c7a; }
+.pdf { box-sizing: border-box; padding: 42px 46px; color: #123c7a; background: #fff; }
 .pdf header { display: flex; align-items: flex-end; justify-content: space-between; }
 .pdf h1 { margin: 0; font-size: 28px; }
 .pdf header span { font-size: 11px; }
@@ -209,6 +209,7 @@ button:active { transform: scale(.97); transition: transform 100ms ease; }
   font-weight: 700;
 }
 .proto-button.secondary { color: var(--blue); background: var(--proto-blue-soft); }
+.proto-button:disabled { cursor: default; opacity: .7; }
 /* <a href="tel:..."> 도 같은 모양으로 보이도록. 기본 anchor 는 inline 이라 폭/패딩이 안 먹는다. */
 a.proto-button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 
@@ -451,6 +452,20 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .disaster-card > section > p button { padding: 7px; color: var(--blue); background: var(--proto-blue-soft); border-radius: 10px; }
 
 .split-actions { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.card-export-hint { margin: 10px 0 0; color: var(--muted); font-size: 15px; font-weight: 600; text-align: center; }
+
+/* html2canvas / 인쇄용. 화면에서는 숨기고, 인쇄할 때만 A4 한 장으로 보여 준다. */
+.pdf-print-sheet {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 595px;
+  height: 842px;
+  overflow: hidden;
+  background: #fff;
+  pointer-events: none;
+}
+.pdf-print-sheet .pdf { width: 595px; height: 842px; }
 
 /* ---- 7c. PDF 미리보기 화면 ----------------------------------------- */
 
@@ -755,4 +770,31 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 
   /* 떠다니는 토스트도 노치 아래로 */
   .safety-toast { top: calc(52px + var(--safe-top-extra)); }
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  html, body, #root, .prototype-stage {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+  .iphone-frame { display: none !important; }
+  .pdf-print-sheet {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+  }
+  .pdf-print-sheet .pdf {
+    width: 210mm !important;
+    height: 297mm !important;
+  }
 }
