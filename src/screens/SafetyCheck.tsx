@@ -3,10 +3,11 @@
 // 2) SafetyQuestionScreen: 질문별 선택 + 해설
 // 3) SafetyResult: 결과 요약 + 도움 보내기 + 다시 점검
 //
-// localStorage("chacha-safety-check") 에 진행 상태를 저장해서 중간에 나갔다 와도
-// 이어서 할 수 있다. 서버 전송은 하지 않는다.
+// 저장소: @capacitor/preferences (아이폰 UserDefaults, 안드로이드 SharedPreferences, 웹 localStorage).
+// 중간에 나갔다 와도 이어서 할 수 있고, 서버 전송은 하지 않는다.
 
 import { useEffect, useState } from "react"
+import { Preferences } from "@capacitor/preferences"
 import {
   Backpack,
   Building2,
@@ -24,6 +25,18 @@ import { Icon } from "../components/Icon"
 import { ProtoButton } from "../components/ProtoButton"
 import { ProtoGuardian } from "../components/ProtoGuardian"
 import { safetyQuestions, type SafetyAnswer, type SafetyQuestion } from "../data/safetyQuestions"
+import type { Contact, Profile } from "../data/profile"
+
+const SAFETY_STATE_KEY = "chacha-safety-check"
+const SAFETY_COMPLETE_KEY = "chacha-safety-complete"
+
+type SafetyState = {
+  home: string
+  index: number
+  answers: Record<number, SafetyAnswer>
+  complete: boolean
+  prepared: boolean
+}
 
 // --- 공통 작은 조각 -----------------------------------------------------
 
@@ -188,39 +201,63 @@ function SafetyDetailSheet({
   )
 }
 
+/** 보호자/이웃 중 번호가 있는 사람만 "{관계} ({이름})" 형식으로. */
+function peopleToSend(profile: Profile): { key: string; label: string; contact: Contact }[] {
+  const list: { key: string; label: string; contact: Contact }[] = []
+  const label = (c: Contact) => {
+    const relation = c.relation || "도와줄 사람"
+    return c.name ? `${c.name} (${relation})` : relation
+  }
+  if (profile.guardian.phone) list.push({ key: "guardian", label: label(profile.guardian), contact: profile.guardian })
+  if (profile.neighbor.phone) list.push({ key: "neighbor", label: label(profile.neighbor), contact: profile.neighbor })
+  return list
+}
+
 function SafetySendSheet({
   sent,
   close,
+  profile,
 }: {
   sent: (person: string) => void
   close: () => void
+  profile: Profile
 }) {
-  const [person, setPerson] = useState("김영희 (엄마)")
+  const people = peopleToSend(profile)
+  const [selected, setSelected] = useState<string>(people[0]?.label ?? "")
+  const userName = profile.name || "저"
   return (
     <div className="proto-sheet-wrap" onClick={close}>
       <section className="proto-sheet safety-send" onClick={(event) => event.stopPropagation()}>
         <i />
         <h2>누구에게 보낼까요?</h2>
-        <div className="send-people">
-          {["김영희 (엄마)", "박민수 (이웃)"].map((name) => (
-            <button
-              className={person === name ? "selected" : ""}
-              onClick={() => setPerson(name)}
-              key={name}
-            >
-              <span><Users size={24} strokeWidth={2} /></span>
-              <b>{name}</b>
-              {person === name && <Icon name="check" />}
-            </button>
-          ))}
-        </div>
-        <div className="send-preview">
-          <span>김민수님의 우리 집 안전 점검 결과예요.</span>
-          <span>준비된 것 11개, 준비할 것 4개, 같이 확인할 것 1개</span>
-          <span>준비할 것: 소화기, 물막이판, 무더위쉼터, 챙길 가방</span>
-          <span>같이 확인: 물이 차면 문이 잘 열리는지</span>
-        </div>
-        <ProtoButton onClick={() => sent(person)}>문자로 보내기</ProtoButton>
+        {people.length === 0 ? (
+          <p>내 카드에 보호자 전화번호를 적으면 여기서 보낼 수 있어요.</p>
+        ) : (
+          <>
+            <div className="send-people">
+              {people.map(({ key, label }) => (
+                <button
+                  className={selected === label ? "selected" : ""}
+                  onClick={() => setSelected(label)}
+                  key={key}
+                >
+                  <span><Users size={24} strokeWidth={2} /></span>
+                  <b>{label}</b>
+                  {selected === label && <Icon name="check" />}
+                </button>
+              ))}
+            </div>
+            <div className="send-preview">
+              <span>{userName}님의 우리 집 안전 점검 결과예요.</span>
+              <span>준비된 것 11개, 준비할 것 4개, 같이 확인할 것 1개</span>
+              <span>준비할 것: 소화기, 물막이판, 무더위쉼터, 챙길 가방</span>
+              <span>같이 확인: 물이 차면 문이 잘 열리는지</span>
+            </div>
+            <ProtoButton onClick={() => sent(selected)} disabled={!selected}>
+              문자로 보내기
+            </ProtoButton>
+          </>
+        )}
       </section>
     </div>
   )
@@ -306,37 +343,64 @@ export function SafetyCheck({
   back,
   home,
   onComplete,
+  profile,
 }: {
   back: () => void
   home: () => void
   onComplete: () => void
+  profile: Profile
 }) {
-  const saved = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("chacha-safety-check") ?? "{}")
-    } catch {
-      return {}
-    }
-  })()
-  const [view, setView] = useState<"start" | "question" | "result">(
-    saved.complete ? "result" : saved.home ? "question" : "start",
-  )
-  const [homeType, setHomeType] = useState<string>(saved.home ?? "")
-  const [index, setIndex] = useState<number>(saved.index ?? 0)
-  const [answers, setAnswers] = useState<Record<number, SafetyAnswer>>(saved.answers ?? {})
-  const [prepared, setPrepared] = useState(Boolean(saved.prepared))
+  // Preferences 는 비동기 → 로드 전까진 기본값으로 그렸다가 값이 오면 교체.
+  const [loaded, setLoaded] = useState(false)
+  const [view, setView] = useState<"start" | "question" | "result">("start")
+  const [homeType, setHomeType] = useState<string>("")
+  const [index, setIndex] = useState<number>(0)
+  const [answers, setAnswers] = useState<Record<number, SafetyAnswer>>({})
+  const [prepared, setPrepared] = useState(false)
   const [sendOpen, setSendOpen] = useState(false)
   const [toast, setToast] = useState("")
+
+  // 마운트 때 한 번: 저장된 진행 상태 복원
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { value } = await Preferences.get({ key: SAFETY_STATE_KEY })
+        if (cancelled) return
+        if (value) {
+          const saved = JSON.parse(value) as Partial<SafetyState>
+          setHomeType(saved.home ?? "")
+          setIndex(saved.index ?? 0)
+          setAnswers(saved.answers ?? {})
+          setPrepared(Boolean(saved.prepared))
+          setView(saved.complete ? "result" : saved.home ? "question" : "start")
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        if (!cancelled) setLoaded(true)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const questions = safetyQuestions.filter((question) => !question.lowerFloors || homeType !== "2층 이상")
   const question = questions[Math.min(index, questions.length - 1)]
 
+  // 상태가 바뀌면 Preferences 에 저장. 아직 로드되지 않았으면 쓰지 않는다 (덮어쓰기 방지).
   useEffect(() => {
-    localStorage.setItem(
-      "chacha-safety-check",
-      JSON.stringify({ home: homeType, index, answers, complete: view === "result", prepared }),
-    )
-  }, [homeType, index, answers, view, prepared])
+    if (!loaded) return
+    const state: SafetyState = {
+      home: homeType,
+      index,
+      answers,
+      complete: view === "result",
+      prepared,
+    }
+    Preferences.set({ key: SAFETY_STATE_KEY, value: JSON.stringify(state) }).catch(() => {})
+  }, [loaded, homeType, index, answers, view, prepared])
 
   const start = (selectedHome: string) => {
     setHomeType(selectedHome)
@@ -347,7 +411,7 @@ export function SafetyCheck({
   const next = () => {
     if (index >= questions.length - 1) {
       setView("result")
-      localStorage.setItem("chacha-safety-complete", "true")
+      Preferences.set({ key: SAFETY_COMPLETE_KEY, value: "true" }).catch(() => {})
       onComplete()
     } else setIndex(index + 1)
   }
@@ -382,6 +446,7 @@ export function SafetyCheck({
       {sendOpen && (
         <SafetySendSheet
           close={() => setSendOpen(false)}
+          profile={profile}
           sent={(person) => {
             setSendOpen(false)
             setToast(`${person.split(" ")[0]}님에게 보냈어요.`)

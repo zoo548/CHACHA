@@ -209,6 +209,8 @@ button:active { transform: scale(.97); transition: transform 100ms ease; }
   font-weight: 700;
 }
 .proto-button.secondary { color: var(--blue); background: var(--proto-blue-soft); }
+/* <a href="tel:..."> 도 같은 모양으로 보이도록. 기본 anchor 는 inline 이라 폭/패딩이 안 먹는다. */
+a.proto-button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 
 .proto-text-button {
   width: 100%;

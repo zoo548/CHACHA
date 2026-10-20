@@ -1,4 +1,4 @@
-// 차차 앱의 꼭대기. 화면 전환 상태만 들고 있고, 각 화면/위젯은 전부 다른 파일.
+// 차차 앱의 꼭대기. 화면 전환 상태 + 사용자 프로필을 들고 있고, 각 화면/위젯은 전부 다른 파일.
 //
 // 바깥 틀 (.prototype-stage > .iphone-frame) 안에
 //   - 가짜 StatusBar (노트북 미리보기용)
@@ -12,12 +12,13 @@
 
 import { useEffect, useState } from "react"
 import { Capacitor } from "@capacitor/core"
+import { Preferences } from "@capacitor/preferences"
 import {
   StatusBar as NativeStatusBar,
   Style as NativeStatusBarStyle,
 } from "@capacitor/status-bar"
 
-import { ProtoSheet } from "./components/ProtoSheet"
+import { ProtoSheet, type CallTarget } from "./components/ProtoSheet"
 import { ProtoTabs } from "./components/ProtoTabs"
 import { StatusBar } from "./components/StatusBar"
 import { CallChoice } from "./screens/CallChoice"
@@ -30,11 +31,23 @@ import { PrepScreen } from "./screens/PrepScreen"
 import { ProtoAlert } from "./screens/ProtoAlert"
 import { ProtoCard } from "./screens/ProtoCard"
 import { SafetyCheck } from "./screens/SafetyCheck"
+import {
+  emptyProfile,
+  isProfileReady,
+  loadProfile,
+  saveProfile,
+  type Profile,
+} from "./data/profile"
 import type { ActiveTab, AppScreen, Disaster, SheetKind } from "./types"
 
 const TAB_SCREENS: AppScreen[] = ["home", "help", "prep", "card"]
+const SAFETY_COMPLETE_KEY = "chacha-safety-complete"
 
 function App() {
+  // 저장된 프로필 로드가 끝날 때까지는 아무 것도 안 그린다 (깜빡임 방지).
+  const [ready, setReady] = useState(false)
+  const [profile, setProfile] = useState<Profile>(emptyProfile)
+
   // 지금 화면
   const [screen, setScreen] = useState<AppScreen>("onboarding")
   const [onboardStep, setOnboardStep] = useState(0)
@@ -45,29 +58,75 @@ function App() {
   const [danger, setDanger] = useState(false)
   const [acknowledged, setAcknowledged] = useState(false)
 
-  // 알림 종류 / 도움 상황 / 전화할 번호
+  // 알림 종류 / 도움 상황 / 전화할 대상
   const [alertType, setAlertType] = useState<Disaster>("rain")
   const [situation, setSituation] = useState("무서운 사람이 있어요")
-  const [callNumber, setCallNumber] = useState("112")
+  const [callTarget, setCallTarget] = useState<CallTarget | null>(null)
 
-  // 안전 점검 완료 여부는 localStorage 에서 복원
-  const [safetyComplete, setSafetyComplete] = useState(
-    () => localStorage.getItem("chacha-safety-complete") === "true",
-  )
+  const [safetyComplete, setSafetyComplete] = useState(false)
+
+  // --- 앱 열 때 한 번: 프로필과 안전점검 완료 플래그 복원 ---
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const [loaded, safetyFlag] = await Promise.all([
+        loadProfile(),
+        Preferences.get({ key: SAFETY_COMPLETE_KEY }),
+      ])
+      if (cancelled) return
+      setProfile(loaded)
+      setSafetyComplete(safetyFlag.value === "true")
+      // 저장된 프로필이 있으면 온보딩 건너뛰고 홈으로.
+      if (isProfileReady(loaded)) {
+        setScreen("home")
+        setTab("home")
+      }
+      setReady(true)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // 프로필 수정: 로컬 상태 바꾸고 바로 저장 (await 하지 않아도 UI 는 즉시 반영).
+  const updateProfile = (patch: Partial<Profile>) => {
+    setProfile((prev) => {
+      const next = { ...prev, ...patch }
+      saveProfile(next)
+      return next
+    })
+  }
+
+  const markSafetyComplete = () => {
+    setSafetyComplete(true)
+    Preferences.set({ key: SAFETY_COMPLETE_KEY, value: "true" }).catch(() => {})
+  }
 
   // --- 작은 네비게이션 헬퍼 ---
   const goHome = () => {
     setScreen("home")
     setTab("home")
   }
-  const openCall = (number = "김영희") => {
-    setCallNumber(number)
+  const openCall = (target: CallTarget) => {
+    setCallTarget(target)
     setSheet("call")
   }
   const setActiveTab = (nextTab: ActiveTab) => {
     setTab(nextTab)
     setScreen(nextTab === "home" ? "home" : nextTab === "help" ? "help" : nextTab === "prep" ? "prep" : "card")
   }
+
+  // 알림 화면 등에서 쓸 "기본 전화 대상" — 보호자가 있으면 보호자, 없으면 119.
+  const defaultCallTarget = (): CallTarget =>
+    profile.guardian.phone
+      ? {
+          label: profile.guardian.relation || profile.guardian.name || "도와줄 사람",
+          phone: profile.guardian.phone,
+          description: profile.guardian.name
+            ? `${profile.guardian.name}에게 전화해요.`
+            : "내 카드에 적은 사람이에요.",
+        }
+      : { label: "119", phone: "119", description: "구해 주는 곳이에요." }
 
   // --- 화면 선택 ---
   const content =
@@ -83,12 +142,15 @@ function App() {
         }}
         finish={goHome}
         startSafety={() => setScreen("safety")}
+        profile={profile}
+        updateProfile={updateProfile}
       />
     ) : screen === "safety" ? (
       <SafetyCheck
         back={() => setActiveTab("prep")}
         home={goHome}
-        onComplete={() => setSafetyComplete(true)}
+        onComplete={markSafetyComplete}
+        profile={profile}
       />
     ) : screen === "lock" ? (
       <LockScreen
@@ -110,7 +172,7 @@ function App() {
             goHome()
           }
         }}
-        call={() => openCall()}
+        call={() => openCall(defaultCallTarget())}
         source={() => setSheet("source")}
       />
     ) : screen === "help" ? (
@@ -121,7 +183,12 @@ function App() {
         }}
       />
     ) : screen === "call-choice" ? (
-      <CallChoice situation={situation} back={() => setScreen("help")} call={openCall} />
+      <CallChoice
+        situation={situation}
+        back={() => setScreen("help")}
+        call={openCall}
+        profile={profile}
+      />
     ) : screen === "prep" ? (
       <PrepScreen
         goCard={() => setActiveTab("card")}
@@ -131,14 +198,15 @@ function App() {
     ) : screen === "card" ? (
       <ProtoCard
         openPdf={() => setScreen("pdf")}
-        call={() => openCall()}
+        call={openCall}
         edit={() => {
           setOnboardStep(3)
           setScreen("onboarding")
         }}
+        profile={profile}
       />
     ) : screen === "pdf" ? (
-      <PdfScreen back={() => setActiveTab("card")} />
+      <PdfScreen back={() => setActiveTab("card")} profile={profile} />
     ) : (
       <HomeScreen
         danger={danger}
@@ -150,6 +218,7 @@ function App() {
         goCard={() => setActiveTab("card")}
         goHelp={() => setActiveTab("help")}
         goPrep={() => setActiveTab("prep")}
+        profile={profile}
       />
     )
 
@@ -162,7 +231,6 @@ function App() {
   // 네이티브(iOS/Android) 에서만 진짜 상태바 스타일을 바꾼다. 웹에서는 조용히 무시.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
-    // Capacitor: Style.Dark = 어두운 배경용(흰 글자), Style.Light = 밝은 배경용(검은 글자)
     NativeStatusBar.setStyle({
       style: lightStatusBar ? NativeStatusBarStyle.Dark : NativeStatusBarStyle.Light,
     }).catch(() => {})
@@ -173,6 +241,11 @@ function App() {
     if (!Capacitor.isNativePlatform()) return
     NativeStatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
   }, [])
+
+  // 프로필 로드 전엔 아무것도 안 그린다.
+  if (!ready) {
+    return <div className="prototype-stage" />
+  }
 
   return (
     <div className="prototype-stage">
@@ -191,7 +264,7 @@ function App() {
             setSheet(null)
             setOnboardStep(5)
           }}
-          callNumber={callNumber}
+          callTarget={callTarget}
         />
       </div>
     </div>

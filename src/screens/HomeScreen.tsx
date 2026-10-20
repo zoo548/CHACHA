@@ -4,6 +4,7 @@ import { Icon } from "../components/Icon"
 import { Logo } from "../components/Logo"
 import { ProtoButton } from "../components/ProtoButton"
 import { ProtoRow } from "../components/ProtoRow"
+import type { Profile } from "../data/profile"
 
 export function HomeScreen({
   danger,
@@ -12,6 +13,7 @@ export function HomeScreen({
   goCard,
   goHelp,
   goPrep,
+  profile,
 }: {
   danger: boolean
   acknowledged: boolean
@@ -19,6 +21,7 @@ export function HomeScreen({
   goCard: () => void
   goHelp: () => void
   goPrep: () => void
+  profile: Profile
 }) {
   return (
     <main className="proto-page home-page">
@@ -35,7 +38,7 @@ export function HomeScreen({
             </>
           ) : (
             <>
-              <span>김민수님,</span>
+              <span>{profile.name ? `${profile.name}님,` : "안녕하세요,"}</span>
               <span>지금은 괜찮아요</span>
             </>
           )}

@@ -2,13 +2,14 @@
 
 import { PdfPreview } from "../components/PdfPreview"
 import { ProtoButton } from "../components/ProtoButton"
+import type { Profile } from "../data/profile"
 
-export function PdfScreen({ back }: { back: () => void }) {
+export function PdfScreen({ back, profile }: { back: () => void; profile: Profile }) {
   return (
     <main className="pdf-preview-screen">
       <button className="proto-back" onClick={back}>‹ 뒤로</button>
       <div>
-        <PdfPreview />
+        <PdfPreview profile={profile} />
       </div>
       <footer>
         <ProtoButton onClick={back}>저장하기</ProtoButton>
