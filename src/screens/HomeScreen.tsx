@@ -6,6 +6,24 @@ import { Logo } from "../components/Logo"
 import { ProtoButton } from "../components/ProtoButton"
 import { ProtoRow } from "../components/ProtoRow"
 import type { Profile } from "../data/profile"
+import { useDevice } from "../device/DeviceContext"
+
+/** 상태 → 상단 알림표시 문구. 디자인(em 태그) 그대로. */
+function deviceStatusLabel(status: ReturnType<typeof useDevice>["state"]["status"]): string {
+  switch (status) {
+    case "connected":
+      return "차차등 연결됨"
+    case "scanning":
+      return "차차등 찾는 중"
+    case "connecting":
+      return "차차등 연결 중"
+    case "unsupported":
+      return "" // 라벨 숨김 (예: Safari)
+    case "disconnected":
+    default:
+      return "차차등 연결 끊김"
+  }
+}
 
 export function HomeScreen({
   danger,
@@ -26,11 +44,13 @@ export function HomeScreen({
   profile: Profile
   openDemo: () => void
 }) {
+  const { state: deviceState } = useDevice()
+  const label = deviceStatusLabel(deviceState.status)
   return (
     <main className="proto-page home-page">
       <header className="home-head">
         <Logo onSecretTap={openDemo} />
-        <em>차차등 연결됨</em>
+        {label && <em className={`device-badge ${deviceState.status}`}>{label}</em>}
       </header>
       <section className="page-heading">
         <h1>

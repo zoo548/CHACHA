@@ -6,7 +6,6 @@
 // 3~7단계의 입력칸·칩은 전부 profile 값과 연결돼 있다.
 // 저장은 OnboardingFlow 가 아니라 바깥 App 에서 updateProfile() 로 내려준다.
 
-import { useState } from "react"
 import { Icon } from "../components/Icon"
 import { Logo } from "../components/Logo"
 import { MiniCard } from "../components/MiniCard"
@@ -17,6 +16,7 @@ import { ProtoField } from "../components/ProtoField"
 import { ProtoGuardian } from "../components/ProtoGuardian"
 import { TogetherIllustration } from "../components/TogetherIllustration"
 import type { Contact, Institution, Profile } from "../data/profile"
+import { useDevice } from "../device/DeviceContext"
 import { ensurePermission } from "../notifications"
 import type { IconName, SheetKind } from "../types"
 
@@ -65,7 +65,7 @@ export function OnboardingFlow({
   profile: Profile
   updateProfile: (patch: Partial<Profile>) => void
 }) {
-  const [lightState, setLightState] = useState(0)
+  const device = useDevice()
   const back = step > 0 ? () => setStep(step - 1) : undefined
   const skip = [0, 1, 2, 9, 10, 11, 12].includes(step) ? finish : undefined
   const next = () => setStep(step + 1)
@@ -296,31 +296,37 @@ export function OnboardingFlow({
         )}
         {step === 10 && (
           <>
-            <div className={`proto-light ${lightState === 3 ? "lit" : ""}`}>
+            <div className={`proto-light ${device.state.status === "connected" ? "lit" : ""}`}>
               <span><Icon name="light" /></span>
               <i />
               <Icon name="phone" />
             </div>
             <h1>{titles[step]}</h1>
-            <p className="onboard-description">차차등의 손바닥 버튼을 3초 눌러요.</p>
-            {lightState > 0 && (
+            <p className="onboard-description">차차등 전원을 켜요.</p>
+            {(device.state.status === "scanning" || device.state.status === "connecting") && (
               <section className="device-result">
-                {lightState === 1 && <b>찾는 중 · · ·</b>}
-                {lightState === 2 && (
-                  <>
-                    <b>chachadeung</b>
-                    <button onClick={() => setLightState(3)}>연결하기</button>
-                  </>
-                )}
-                {lightState === 3 && (
-                  <>
-                    <b>차차등에 노란불이 켜졌나요?</b>
-                    <div>
-                      <button onClick={next}>네</button>
-                      <button onClick={next}>아니요</button>
-                    </div>
-                  </>
-                )}
+                <b>
+                  {device.state.status === "scanning" ? "찾는 중 · · ·" : "연결 중 · · ·"}
+                </b>
+              </section>
+            )}
+            {device.state.status === "connected" && (
+              <section className="device-result">
+                <b>차차등에 노란불이 켜졌나요?</b>
+                <div>
+                  <button onClick={next}>네</button>
+                  <button onClick={next}>아니요</button>
+                </div>
+              </section>
+            )}
+            {device.state.status === "disconnected" && device.state.errorMessage && (
+              <section className="device-result">
+                <b>{device.state.errorMessage}</b>
+              </section>
+            )}
+            {device.state.status === "unsupported" && (
+              <section className="device-result">
+                <b>이 기기에선 블루투스를 쓸 수 없어요.</b>
               </section>
             )}
           </>
@@ -407,13 +413,26 @@ export function OnboardingFlow({
         )}
         {step === 10 && (
           <>
-            <ProtoButton
-              onClick={() =>
-                lightState === 0 ? setLightState(1) : lightState === 1 ? setLightState(2) : setLightState(3)
-              }
-            >
-              {lightState === 0 ? "찾기" : lightState === 1 ? "찾는 중" : lightState === 2 ? "연결하기" : "다음"}
-            </ProtoButton>
+            {device.state.status !== "connected" && (
+              <ProtoButton
+                onClick={() => {
+                  device.connect().catch(() => {
+                    /* 상태는 context 에서 errorMessage 로 이미 반영됨 */
+                  })
+                }}
+                disabled={
+                  device.state.status === "scanning" ||
+                  device.state.status === "connecting" ||
+                  device.state.status === "unsupported"
+                }
+              >
+                {device.state.status === "scanning"
+                  ? "찾는 중"
+                  : device.state.status === "connecting"
+                    ? "연결 중"
+                    : "차차등 찾기"}
+              </ProtoButton>
+            )}
             <ProtoButton text onClick={next}>차차등이 없어요</ProtoButton>
           </>
         )}

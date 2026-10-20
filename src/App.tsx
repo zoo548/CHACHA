@@ -38,6 +38,7 @@ import {
   type Profile,
 } from "./data/profile"
 import { getAlertView, rawTextView, type AlertView } from "./data/alertTemplate"
+import { useDevice } from "./device/DeviceContext"
 import { onNotificationTap, type NotificationPayload } from "./notifications"
 import type { ActiveTab, AppScreen, SheetKind } from "./types"
 
@@ -51,6 +52,9 @@ type AlertState =
   | { kind: "raw"; text: string }
 
 function App() {
+  // 차차등 BLE 연결 상태/조작
+  const device = useDevice()
+
   // 저장된 프로필 로드가 끝날 때까지는 아무 것도 안 그린다 (깜빡임 방지).
   const [ready, setReady] = useState(false)
   const [profile, setProfile] = useState<Profile>(emptyProfile)
@@ -173,6 +177,39 @@ function App() {
     return rawTextView(alertState.text)
   }, [alertState, profile])
 
+  // "알았어요" 공통 처리 — 기기에 C 보내고 화면 정리.
+  const acknowledgeAlert = () => {
+    device.send("C").catch(() => {})
+    if (alertState?.kind === "practice") {
+      setOnboardStep(12)
+      setAlertState(null)
+      setScreen("onboarding")
+    } else {
+      setAcknowledged(true)
+      setDanger(false)
+      setAlertState(null)
+      goHome()
+    }
+  }
+
+  // 알림 화면이 열릴 때 기기에 신호 보내기: evacuate→H, caution→L, practice→(안 보냄).
+  useEffect(() => {
+    if (screen !== "alert" || !alertView) return
+    if (alertState?.kind === "practice") return
+    if (alertView.uiLevel === "danger") device.send("H").catch(() => {})
+    else if (alertView.uiLevel === "caution") device.send("L").catch(() => {})
+  }, [screen, alertView, alertState, device])
+
+  // 하드웨어 버튼으로 확인했을 때(기기→앱 C): 알림 화면이 열려 있으면 "알았어요" 처리.
+  useEffect(() => {
+    return device.onButton(() => {
+      if (screen === "alert" && alertState) acknowledgeAlert()
+    })
+    // acknowledgeAlert 는 매 렌더마다 새로 만들어지지만, device.onButton 은 안정적 참조.
+    // 리스너 자체는 항상 "최신 state" 를 참조하도록 effect 를 매번 새로 등록한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, alertState, device])
+
   // --- 화면 선택 ---
   const content =
     screen === "onboarding" ? (
@@ -208,18 +245,7 @@ function App() {
     ) : screen === "alert" && alertView ? (
       <ProtoAlert
         view={alertView}
-        acknowledge={() => {
-          if (alertState?.kind === "practice") {
-            setOnboardStep(12)
-            setAlertState(null)
-            setScreen("onboarding")
-          } else {
-            setAcknowledged(true)
-            setDanger(false)
-            setAlertState(null)
-            goHome()
-          }
-        }}
+        acknowledge={acknowledgeAlert}
         call={() => openCall(defaultCallTarget())}
         source={() => setSheet("source")}
       />

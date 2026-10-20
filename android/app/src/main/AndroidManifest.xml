@@ -38,4 +38,20 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 차차등(BLE) 블루투스 — @capacitor-community/bluetooth-le 요구사항.
+         API 31+ (Android 12 이상): BLUETOOTH_SCAN / BLUETOOTH_CONNECT.
+         API 30 이하 (legacy):     BLUETOOTH / BLUETOOTH_ADMIN / ACCESS_FINE_LOCATION. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
+
+    <!-- BLE 지원 기기만 설치할 수 있게 (선택: required=false 로 두면 BLE 없는 기기도 설치 가능) -->
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 </manifest>

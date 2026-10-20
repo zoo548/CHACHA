@@ -352,6 +352,10 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   justify-content: space-between;
 }
 .home-head > em { height: 32px; padding: 0 12px; display: flex; align-items: center; color: var(--blue); background: var(--proto-blue-soft); border-radius: 16px; font-size: 15px; font-style: normal; font-weight: 600; }
+/* 끊김/연결 중은 중립 톤으로. 연결됨만 파란 뱃지 유지. */
+.home-head > em.device-badge.disconnected,
+.home-head > em.device-badge.scanning,
+.home-head > em.device-badge.connecting { color: var(--muted); background: var(--proto-bg); }
 
 .page-heading { padding: 24px 8px 22px; }
 .page-heading.compact { padding-top: 16px; }

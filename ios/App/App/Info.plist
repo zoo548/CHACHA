@@ -66,5 +66,10 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- 블루투스 사용 설명 — 처음 BLE 를 쓸 때 iOS 가 이 문구를 다이얼로그로 보여줌 -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>차차등에 불빛과 진동 신호를 보내기 위해 블루투스를 사용해요.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>차차등에 불빛과 진동 신호를 보내기 위해 블루투스를 사용해요.</string>
 </dict>
 </plist>
