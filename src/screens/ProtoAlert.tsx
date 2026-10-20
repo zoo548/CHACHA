@@ -1,43 +1,42 @@
 // 알림 상세 화면. 재난 종류별로 색이 다르다 (danger 빨강, caution 노랑, practice 파랑).
 // 전화해야 하는 행동들은 한 그룹으로 묶어서 보여 준다.
+// 알림 내용은 상위 App 에서 AlertView 로 미리 만들어 넘겨준다.
 
-import { alertData } from "../data/alerts"
 import { Icon } from "../components/Icon"
 import { Lines } from "../components/Lines"
 import { ProtoButton } from "../components/ProtoButton"
-import type { Disaster } from "../types"
+import type { AlertView } from "../data/alertTemplate"
 
 export function ProtoAlert({
-  type,
+  view,
   acknowledge,
   call,
   source,
 }: {
-  type: Disaster
+  view: AlertView
   acknowledge: () => void
   call: () => void
   source: () => void
 }) {
-  const data = alertData[type]
-  const calls = data.actions.filter((a) => a.phone)
-  const first = data.actions.findIndex((a) => a.phone)
+  const calls = view.actions.filter((a) => a.phone)
+  const first = view.actions.findIndex((a) => a.phone)
   return (
-    <article className={`prototype-alert ${data.level}`}>
+    <article className={`prototype-alert ${view.uiLevel}`}>
       <header>
         <b>
-          {data.level === "danger" ? "▲ 위험" : data.level === "caution" ? "● 주의" : "● 연습"}
+          {view.uiLevel === "danger" ? "▲ 위험" : view.uiLevel === "caution" ? "● 주의" : "● 연습"}
         </b>
         <div>
-          <span><Icon name={data.hero} /></span>
-          <h1>{data.title}</h1>
+          <span><Icon name={view.hero} /></span>
+          <h1>{view.title}</h1>
         </div>
       </header>
       <main>
         <section className="alert-card">
-          <p>{data.situation}</p>
+          <p>{view.situation}</p>
           <h2>이렇게 해요</h2>
           <div className="proto-actions">
-            {data.actions.map((action, index) => {
+            {view.actions.map((action, index) => {
               if (action.phone && index !== first) return null
               if (action.phone) {
                 return (
@@ -65,7 +64,7 @@ export function ProtoAlert({
       </main>
       <footer>
         <ProtoButton onClick={acknowledge}>알았어요</ProtoButton>
-        {type !== "practice" && (
+        {view.uiLevel !== "practice" && (
           <button onClick={source}>행정안전부 · 오후 2:20 · 원문 보기 ⌄</button>
         )}
       </footer>

@@ -668,6 +668,26 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 
 .safety-toast { position: absolute; z-index: 110; top: 52px; right: 16px; left: 16px; min-height: 48px; padding: 13px 16px; color: var(--blue); background: var(--proto-blue-soft); border-radius: 14px; font-size: 16px; font-weight: 600; text-align: center; }
 
+/* 시연 패널 (숨은 입구) — 평소 UI 톤 안에서 수수하게. */
+.demo-panel { max-height: 760px; overflow-y: auto; }
+.demo-panel > h2 { font-size: 20px; }
+.demo-mode { margin: 14px 0 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px; background: var(--proto-bg); border-radius: 14px; }
+.demo-mode > button { min-height: 36px; color: var(--proto-copy); background: transparent; border-radius: 10px; font-size: 14px; font-weight: 600; }
+.demo-mode > button.active { color: var(--blue); background: white; }
+.demo-row { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+.demo-row > b { font-size: 14px; font-weight: 700; color: var(--proto-copy); }
+.demo-row > small { color: var(--muted); font-size: 12px; }
+.demo-row select,
+.demo-row textarea { padding: 12px 14px; border: 1px solid var(--proto-line); border-radius: 12px; font-size: 15px; background: white; }
+.demo-row textarea { resize: vertical; min-height: 90px; font-family: inherit; }
+.demo-level { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.demo-level.three { grid-template-columns: repeat(3, 1fr); }
+.demo-level > button { min-height: 42px; color: var(--proto-copy); background: var(--proto-bg); border-radius: 12px; font-size: 15px; font-weight: 600; }
+.demo-level > button.active { color: white; background: var(--blue); }
+.demo-level > button:disabled { color: var(--muted); background: var(--proto-bg); opacity: .5; cursor: default; }
+.demo-note { margin: 6px 0 14px; color: var(--proto-copy); font-size: 14px; }
+.demo-status { margin-top: 12px; padding: 10px 12px; color: var(--blue); background: var(--proto-blue-soft); border-radius: 10px; font-size: 14px; text-align: center; }
+
 /* ---- 10. 좁은 폭에서 iphone-frame 꽉 채움 --------------------------- */
 
 @media (max-width: 700px) {

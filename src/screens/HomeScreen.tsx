@@ -1,4 +1,5 @@
 // 홈 화면. 지금 알림(위험이 있으면 빨간 카드, 없으면 조용한 카드) + 내 카드 바로가기 + 지난 알림.
+// 상단 로고를 2초 안에 5번 누르면 시연 패널이 열린다 (openDemo 호출).
 
 import { Icon } from "../components/Icon"
 import { Logo } from "../components/Logo"
@@ -14,6 +15,7 @@ export function HomeScreen({
   goHelp,
   goPrep,
   profile,
+  openDemo,
 }: {
   danger: boolean
   acknowledged: boolean
@@ -22,11 +24,12 @@ export function HomeScreen({
   goHelp: () => void
   goPrep: () => void
   profile: Profile
+  openDemo: () => void
 }) {
   return (
     <main className="proto-page home-page">
       <header className="home-head">
-        <Logo />
+        <Logo onSecretTap={openDemo} />
         <em>차차등 연결됨</em>
       </header>
       <section className="page-heading">

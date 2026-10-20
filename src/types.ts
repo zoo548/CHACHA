@@ -2,9 +2,6 @@
 // - 이 파일은 데이터/UI 를 가리지 않는 "뼈대" 타입만 모은다.
 // - UI 전용 props 는 각 컴포넌트 파일 안에 둔다.
 
-/** 재난 종류. 알림 데이터 테이블의 키이기도 하다. */
-export type Disaster = "rain" | "earthquake" | "heat" | "practice"
-
 /** 하단 탭. 홈 / 대비 / 도움 / 내 카드. */
 export type ActiveTab = "home" | "prep" | "help" | "card"
 

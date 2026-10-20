@@ -17,6 +17,7 @@ import { ProtoField } from "../components/ProtoField"
 import { ProtoGuardian } from "../components/ProtoGuardian"
 import { TogetherIllustration } from "../components/TogetherIllustration"
 import type { Contact, Institution, Profile } from "../data/profile"
+import { ensurePermission } from "../notifications"
 import type { IconName, SheetKind } from "../types"
 
 const titles = [
@@ -393,7 +394,17 @@ export function OnboardingFlow({
             <ProtoButton text onClick={openPdf}>카드 PDF로 저장하기</ProtoButton>
           </>
         )}
-        {step === 9 && <ProtoButton onClick={next}>알림 켜기</ProtoButton>}
+        {step === 9 && (
+          <ProtoButton
+            onClick={async () => {
+              // 권한을 요청하고 결과와 상관없이 다음으로. 거절해도 나중에 설정에서 켤 수 있음.
+              await ensurePermission()
+              next()
+            }}
+          >
+            알림 켜기
+          </ProtoButton>
+        )}
         {step === 10 && (
           <>
             <ProtoButton
