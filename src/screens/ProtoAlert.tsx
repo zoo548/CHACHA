@@ -3,7 +3,7 @@
 // 위 색 띠와 아래 버튼은 고정, 가운데만 한 덩어리로 스크롤한다.
 
 import { useEffect, useRef, useState } from "react"
-import { Icon } from "../components/Icon"
+import { hasAssetIcon, Icon } from "../components/Icon"
 import { Lines } from "../components/Lines"
 import { ProtoButton } from "../components/ProtoButton"
 import type { AlertAction, AlertView } from "../data/alertTemplate"
@@ -52,8 +52,10 @@ function useLongPress(onLong: () => void, ms = 550) {
 
 function PicCard({
   action,
+  heroArt,
 }: {
   action: AlertAction
+  heroArt: string
 }) {
   const longPress = useLongPress(() => speak(action.text))
   const label = action.short ? (
@@ -61,7 +63,11 @@ function PicCard({
   ) : (
     <small>{action.text}</small>
   )
-  const art = action.art ? <Icon name={action.art} /> : <i className="pic-ph" />
+  const art = hasAssetIcon(action.art) ? (
+    <Icon name={action.art} />
+  ) : hasAssetIcon(heroArt) ? (
+    <Icon name={heroArt} className="icon-faded" />
+  ) : null
   const inner = (
     <>
       <span className="pic-card-art">{art}</span>
@@ -137,7 +143,9 @@ function Level2Actions({ view, call }: { view: AlertView; call: (action: AlertAc
       {view.actions.map((action) => {
         const body = (
           <>
-            <i className="action-art">{action.art ? <Icon name={action.art} /> : null}</i>
+            <i className="action-art">
+              {hasAssetIcon(action.art) ? <Icon name={action.art} /> : null}
+            </i>
             <span><Lines text={action.text} /></span>
           </>
         )
@@ -167,7 +175,7 @@ function Level3Actions({ view }: { view: AlertView }) {
   return (
     <div className="pic-cards">
       {view.actions.map((action) => (
-        <PicCard action={action} key={action.text} />
+        <PicCard action={action} heroArt={view.heroArt} key={action.text} />
       ))}
     </div>
   )

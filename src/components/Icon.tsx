@@ -43,7 +43,7 @@ const paths: Record<IconName, ReactNode> = {
   water: <><path d="M6 4h12l-2 17H8Z" /><path d="M7 12c3-2 7 2 10 0" /></>,
 }
 
-export function hasAssetIcon(name: string | undefined): boolean {
+export function hasAssetIcon(name: string | undefined): name is string {
   return !!name && !!assets[name]
 }
 
