@@ -18,6 +18,7 @@ export type AppScreen =
   | "alert"
   | "safety"
   | "settings"
+  | "credits"
 
 /** 올라오는 바텀시트 종류. null 이면 안 올라옴. */
 export type SheetKind = "phone-permission" | "location" | "call" | "source" | null

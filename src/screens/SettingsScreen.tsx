@@ -5,10 +5,12 @@ import type { Profile, ReadingLevel } from "../data/profile"
 
 export function SettingsScreen({
   back,
+  openCredits,
   profile,
   updateProfile,
 }: {
   back: () => void
+  openCredits: () => void
   profile: Profile
   updateProfile: (patch: Partial<Profile>) => void
 }) {
@@ -33,6 +35,9 @@ export function SettingsScreen({
           onChange={(soundSensitive) => updateProfile({ soundSensitive })}
         />
       </section>
+      <button className="credits-link" type="button" onClick={openCredits}>
+        그림 일부: Mulberry Symbols © Steve Lee, CC BY-SA 4.0
+      </button>
     </main>
   )
 }

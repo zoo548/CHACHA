@@ -1,1 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 46 20 18l8 16 8-22 8 20 12 14"/><path d="M6 52h52"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+<g transform="rotate(-8 48 60)">
+<path d="M26 44 L48 26 L70 44 V78 H26 Z" fill="#FFFFFF" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="42" y="58" width="12" height="20" fill="#DCE8FB" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="31" y="47" width="10" height="9" fill="#DCE8FB" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="55" y="47" width="10" height="9" fill="#DCE8FB" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<path d="M8 82 H34 L40 88 L46 80 L52 86 L58 82 H88" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<g stroke="#D92D20" stroke-width="3" stroke-linecap="round" fill="none">
+<path d="M14 40 Q10 48 14 56"/><path d="M8 36 Q3 48 8 60"/>
+<path d="M82 40 Q86 48 82 56"/><path d="M88 36 Q93 48 88 60"/>
+</g>
+</svg>

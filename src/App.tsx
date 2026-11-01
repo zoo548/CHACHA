@@ -31,6 +31,7 @@ import { PrepScreen } from "./screens/PrepScreen"
 import { ProtoAlert } from "./screens/ProtoAlert"
 import { ProtoCard } from "./screens/ProtoCard"
 import { SafetyCheck } from "./screens/SafetyCheck"
+import { CreditsScreen } from "./screens/CreditsScreen"
 import { SettingsScreen } from "./screens/SettingsScreen"
 import {
   emptyProfile,
@@ -418,9 +419,12 @@ function App() {
     ) : screen === "settings" ? (
       <SettingsScreen
         back={() => setActiveTab("prep")}
+        openCredits={() => setScreen("credits")}
         profile={profile}
         updateProfile={updateProfile}
       />
+    ) : screen === "credits" ? (
+      <CreditsScreen back={() => setScreen("settings")} />
     ) : screen === "card" ? (
       <ProtoCard
         call={openCall}

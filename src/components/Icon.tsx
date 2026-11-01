@@ -1,21 +1,22 @@
 // 아이콘.
 // - JSON 의 icon / hero_icon 이름(rain_heavy, stay_home 등)은 src/assets/icons/{이름}.svg
+//   을 <img src> 로 보여 준다. 안에 data URI 그림이 있어도 웹·네이티브에서 그대로 보인다.
 // - 화면 장식용 선 아이콘(bell, call, home 등)은 아래 paths
-// 두 종류를 같은 <Icon name="..." /> 로 부른다.
+// - 둘 다 없는 이름은 회색 자리표시
 
 import type { ReactNode } from "react"
 import type { IconName } from "../types"
 
 const files = import.meta.glob("../assets/icons/*.svg", {
   eager: true,
-  query: "?raw",
+  query: "?url",
   import: "default",
 }) as Record<string, string>
 
 const assets: Record<string, string> = {}
-for (const [path, svg] of Object.entries(files)) {
+for (const [path, url] of Object.entries(files)) {
   const base = path.split(/[/\\]/).pop()?.replace(/\.svg$/i, "")
-  if (base) assets[base] = svg
+  if (base) assets[base] = url
 }
 
 const paths: Record<IconName, ReactNode> = {
@@ -47,14 +48,12 @@ export function hasAssetIcon(name: string | undefined): boolean {
 }
 
 export function Icon({ name, className = "" }: { name: string; className?: string }) {
-  const raw = assets[name]
-  if (raw) {
+  const url = assets[name]
+  if (url) {
     return (
-      <span
-        aria-hidden="true"
-        className={`icon icon-asset ${className}`.trim()}
-        dangerouslySetInnerHTML={{ __html: raw }}
-      />
+      <span aria-hidden="true" className={`icon icon-asset ${className}`.trim()}>
+        <img src={url} alt="" draggable={false} />
+      </span>
     )
   }
   const path = paths[name as IconName]
@@ -74,5 +73,5 @@ export function Icon({ name, className = "" }: { name: string; className?: strin
       </svg>
     )
   }
-  return <span aria-hidden="true" className={`icon ${className}`.trim()} />
+  return <span aria-hidden="true" className={`icon icon-ph ${className}`.trim()} />
 }
