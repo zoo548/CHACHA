@@ -31,6 +31,7 @@ import { PrepScreen } from "./screens/PrepScreen"
 import { ProtoAlert } from "./screens/ProtoAlert"
 import { ProtoCard } from "./screens/ProtoCard"
 import { SafetyCheck } from "./screens/SafetyCheck"
+import { SettingsScreen } from "./screens/SettingsScreen"
 import {
   emptyProfile,
   isProfileReady,
@@ -38,7 +39,7 @@ import {
   saveProfile,
   type Profile,
 } from "./data/profile"
-import { getAlertView, rawTextView, type AlertView } from "./data/alertTemplate"
+import { getAlertView, rawTextView, type AlertAction, type AlertView } from "./data/alertTemplate"
 import { matchAlert } from "./matching/matchAlert"
 import { useDevice } from "./device/DeviceContext"
 import { onNotificationTap, type NotificationPayload } from "./notifications"
@@ -235,7 +236,7 @@ function App() {
   const acknowledgeAlert = () => {
     device.send("C").catch(() => {})
     if (alertState?.kind === "practice") {
-      setOnboardStep(12)
+      setOnboardStep(14)
       setAlertState(null)
       setScreen("onboarding")
     } else {
@@ -370,8 +371,27 @@ function App() {
     ) : screen === "alert" && alertView ? (
       <ProtoAlert
         view={alertView}
+        readingLevel={profile.readingLevel}
+        soundSensitive={profile.soundSensitive}
         acknowledge={acknowledgeAlert}
-        call={() => openCall(defaultCallTarget())}
+        call={(action?: AlertAction) => {
+          if (action?.phoneNumber) {
+            const num = action.phoneNumber
+            const label =
+              num === "119"
+                ? "119"
+                : num === "112"
+                  ? "112"
+                  : profile.guardian.phone === num
+                    ? profile.guardian.relation || profile.guardian.name || "도와줄 사람"
+                    : profile.neighbor.phone === num
+                      ? profile.neighbor.relation || profile.neighbor.name || "이웃"
+                      : "전화"
+            openCall({ label, phone: num })
+            return
+          }
+          openCall(defaultCallTarget())
+        }}
         source={() => setSheet("source")}
       />
     ) : screen === "help" ? (
@@ -392,7 +412,14 @@ function App() {
       <PrepScreen
         goCard={() => setActiveTab("card")}
         startSafety={() => setScreen("safety")}
+        goSettings={() => setScreen("settings")}
         safetyComplete={safetyComplete}
+      />
+    ) : screen === "settings" ? (
+      <SettingsScreen
+        back={() => setActiveTab("prep")}
+        profile={profile}
+        updateProfile={updateProfile}
       />
     ) : screen === "card" ? (
       <ProtoCard

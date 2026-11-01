@@ -1,8 +1,22 @@
-// 자체 선 아이콘. lucide 를 쓰지 않고 디자인에 맞춘 작은 SVG 세트.
-// 새 아이콘 추가하려면 types.ts 의 IconName 과 아래 paths 를 함께 늘려야 한다.
+// 아이콘.
+// - JSON 의 icon / hero_icon 이름(rain_heavy, stay_home 등)은 src/assets/icons/{이름}.svg
+// - 화면 장식용 선 아이콘(bell, call, home 등)은 아래 paths
+// 두 종류를 같은 <Icon name="..." /> 로 부른다.
 
 import type { ReactNode } from "react"
 import type { IconName } from "../types"
+
+const files = import.meta.glob("../assets/icons/*.svg", {
+  eager: true,
+  query: "?raw",
+  import: "default",
+}) as Record<string, string>
+
+const assets: Record<string, string> = {}
+for (const [path, svg] of Object.entries(files)) {
+  const base = path.split(/[/\\]/).pop()?.replace(/\.svg$/i, "")
+  if (base) assets[base] = svg
+}
 
 const paths: Record<IconName, ReactNode> = {
   alert: <><path d="M12 3 2.8 20h18.4Z" /><path d="M12 9v5m0 3h.01" /></>,
@@ -28,19 +42,37 @@ const paths: Record<IconName, ReactNode> = {
   water: <><path d="M6 4h12l-2 17H8Z" /><path d="M7 12c3-2 7 2 10 0" /></>,
 }
 
-export function Icon({ name, className = "" }: { name: IconName; className?: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={`icon ${className}`}
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      {paths[name]}
-    </svg>
-  )
+export function hasAssetIcon(name: string | undefined): boolean {
+  return !!name && !!assets[name]
+}
+
+export function Icon({ name, className = "" }: { name: string; className?: string }) {
+  const raw = assets[name]
+  if (raw) {
+    return (
+      <span
+        aria-hidden="true"
+        className={`icon icon-asset ${className}`.trim()}
+        dangerouslySetInnerHTML={{ __html: raw }}
+      />
+    )
+  }
+  const path = paths[name as IconName]
+  if (path) {
+    return (
+      <svg
+        aria-hidden="true"
+        className={`icon ${className}`.trim()}
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        {path}
+      </svg>
+    )
+  }
+  return <span aria-hidden="true" className={`icon ${className}`.trim()} />
 }

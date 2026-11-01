@@ -1,6 +1,7 @@
 // JSON 템플릿(docs/disaster_templates.json) → 알림 화면이 쓰기 좋은 형태로 변환.
 //
 // 생성형 AI 쓰지 않는다. 문구는 JSON 그대로, 슬롯({보호자}/{이웃})만 profile 로 채운다.
+// short 필드는 타입이 받을 수 있게만 열어 두고, JSON 에는 넣지 않는다.
 
 import templates from "../../docs/disaster_templates.json"
 import type { Profile } from "./profile"
@@ -8,9 +9,16 @@ import type { IconName } from "../types"
 
 export type AlertAction = {
   text: string
+  /** JSON 에 short 가 있으면 쓰고, 없으면 화면에서 원래 문장으로 폴백. */
+  short?: string
+  /** 1단계용 선 아이콘. */
   icon?: IconName
+  /** JSON icon 이름. 2·3단계 그림. 없으면 자리만 비운다. */
+  art?: string
   phone?: boolean
   disabled?: boolean
+  /** 3단계에서 바로 걸 번호. */
+  phoneNumber?: string
 }
 
 /** 알림 뷰가 그대로 쓰는 알림 데이터. UI 레벨은 danger/caution/practice. */
@@ -18,7 +26,10 @@ export type AlertView = {
   uiLevel: "danger" | "caution" | "practice"
   title: string
   situation: string
+  /** 1단계 헤더용 선 아이콘. */
   hero: IconName
+  /** JSON hero_icon. 2·3단계 대표 그림. */
+  heroArt: string
   actions: AlertAction[]
   /** 참고용 (원문보기 시트, 디버그) */
   sourceType?: string
@@ -28,6 +39,7 @@ export type AlertView = {
 type JsonAction = {
   text: string
   icon?: string
+  short?: string
   hide_if_empty?: string
 }
 type JsonVariant = {
@@ -104,6 +116,14 @@ const ACTION_ICON_MAP: Record<string, IconName | undefined> = {
 
 const PHONE_ICON_KEYS = new Set(["phone_119", "phone_112", "phone_guardian", "phone_neighbor"])
 
+function phoneNumberFor(iconKey: string, profile: Profile): string | undefined {
+  if (iconKey === "phone_119") return "119"
+  if (iconKey === "phone_112") return "112"
+  if (iconKey === "phone_guardian") return profile.guardian.phone || undefined
+  if (iconKey === "phone_neighbor") return profile.neighbor.phone || undefined
+  return undefined
+}
+
 /** JSON actions → UI actions. {보호자}/{이웃} 치환, 번호 없으면 전화 액션은 비활성. */
 function materializeActions(actions: JsonAction[], profile: Profile): AlertAction[] {
   const guardianLabel = profile.guardian.relation || profile.guardian.name || "보호자"
@@ -120,16 +140,18 @@ function materializeActions(actions: JsonAction[], profile: Profile): AlertActio
         .replace(/\{이웃\}/g, neighborLabel)
       const iconKey = a.icon ?? ""
       const phone = PHONE_ICON_KEYS.has(iconKey)
-      // 전화 액션인데 해당 번호가 등록 안 돼 있으면 비활성화 (리스트에 두되 눌러도 전화 안 감).
       const disabled =
         (iconKey === "phone_guardian" && !profile.guardian.phone) ||
         (iconKey === "phone_neighbor" && !profile.neighbor.phone) ||
         false
       return {
         text,
+        short: a.short,
         icon: ACTION_ICON_MAP[iconKey],
+        art: a.icon,
         phone: phone || undefined,
         disabled: disabled || undefined,
+        phoneNumber: phoneNumberFor(iconKey, profile),
       }
     })
 }
@@ -152,6 +174,7 @@ export function getAlertView(
     title: variant.title,
     situation: variant.situation,
     hero: HERO_MAP[d.hero_icon] ?? "bell",
+    heroArt: d.hero_icon,
     actions: materializeActions(variant.actions, profile),
     sourceType: variant.source_type,
   }
@@ -174,12 +197,16 @@ function practiceView(profile: Profile): AlertView {
     title: "연습 알림이에요",
     situation: "진짜 재난이 아니에요.",
     hero: "bell",
+    heroArt: "bell",
     actions: [
       { text: "이 화면을 끝까지 읽어요." },
       {
         text: `${guardianLabel}에게 전화해요.`,
         phone: true,
         disabled: !profile.guardian.phone,
+        phoneNumber: profile.guardian.phone || undefined,
+        icon: "call",
+        art: "phone_guardian",
       },
       { text: '아래 "알았어요"를 눌러요.' },
     ],
@@ -193,9 +220,10 @@ export function rawTextView(rawText: string): AlertView {
     title: "재난문자가 왔어요",
     situation: rawText || "",
     hero: "bell",
+    heroArt: "bell",
     actions: [
       { text: "내용을 끝까지 읽어요." },
-      { text: "잘 모르면 보호자에게 전화해요.", phone: true },
+      { text: "잘 모르면 보호자에게 전화해요.", phone: true, icon: "call", art: "phone_guardian" },
     ],
     rawText,
   }

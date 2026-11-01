@@ -48,6 +48,8 @@ button, .proto-row { -webkit-tap-highlight-color: transparent; }
 button:active { transform: scale(.97); transition: transform 100ms ease; }
 
 .icon { width: 24px; height: 24px; flex: 0 0 auto; }
+.icon-asset { display: inline-grid; place-items: center; }
+.icon-asset svg { width: 100%; height: 100%; display: block; }
 
 /* ---- 2. 공유 조각 ---------------------------------------------------- */
 
@@ -537,6 +539,136 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 
 .prototype-alert > footer { padding: 10px 16px 20px; }
 .prototype-alert > footer > button:last-child:not(.proto-button) { width: 100%; height: 26px; color: var(--proto-copy); background: transparent; font-size: 14px; }
+
+.prototype-alert.level-2 > header.alert-hero-mid,
+.prototype-alert.level-3 > header.alert-hero-big {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.prototype-alert.level-2 > header.alert-hero-mid > span,
+.prototype-alert.level-3 > header.alert-hero-big > span {
+  width: 88px;
+  height: 88px;
+}
+.prototype-alert.level-2 > header.alert-hero-mid .icon { width: 64px; height: 64px; }
+.prototype-alert.level-3 > header.alert-hero-big {
+  align-items: center;
+  text-align: center;
+}
+.prototype-alert.level-3 > header.alert-hero-big > span {
+  width: 148px;
+  height: 148px;
+}
+.prototype-alert.level-3 > header.alert-hero-big .icon { width: 112px; height: 112px; }
+.prototype-alert.level-3 > header.alert-hero-big h1 { width: 100%; }
+
+.proto-action.pictured {
+  grid-template-columns: 60px minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+.proto-action.pictured > .action-art {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border-radius: 12px;
+}
+.proto-action.pictured > .action-art .icon { width: 60px; height: 60px; }
+.proto-actions.level-2 .proto-action.pictured:disabled,
+.proto-actions.level-2 .proto-action.pictured:disabled span { color: var(--proto-copy); }
+
+.pic-cards { display: flex; flex-direction: column; gap: 12px; }
+.pic-card {
+  width: 100%;
+  min-height: 132px;
+  padding: 12px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--proto-ink);
+  background: var(--proto-bg);
+  border-radius: 20px;
+  text-decoration: none;
+}
+.pic-card-art {
+  width: 100%;
+  height: 88px;
+  display: grid;
+  place-items: center;
+}
+.pic-card-art .icon { width: 80px; height: 80px; }
+.pic-ph {
+  width: 80px;
+  height: 80px;
+  background: #e8eaed;
+  border-radius: 16px;
+}
+.pic-card > b { font-size: 22px; font-weight: 700; line-height: 1.3; }
+.pic-card > small { color: var(--proto-copy); font-size: 16px; font-weight: 600; line-height: 1.4; text-align: center; }
+.pic-card.disabled { opacity: .55; }
+
+.choice-stack { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.choice-card {
+  width: 100%;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--proto-ink);
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  text-align: left;
+}
+.choice-card.active { border-color: var(--blue); background: var(--proto-blue-soft); }
+.choice-card > strong { font-size: 18px; font-weight: 700; }
+.choice-card > span { color: var(--proto-copy); font-size: 15px; font-weight: 500; line-height: 1.45; }
+
+.view-mini {
+  padding: 10px 12px;
+  background: white;
+  border-radius: 14px;
+  color: var(--proto-ink);
+}
+.choice-card.active .view-mini { background: #fff; }
+.view-mini > b,
+.view-mini header b { display: block; font-size: 14px; font-weight: 700; line-height: 1.35; }
+.view-mini.level-1 > span { display: block; margin-top: 4px; color: var(--proto-copy); font-size: 12px; font-weight: 600; line-height: 1.4; }
+.view-mini.level-2 header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.view-mini.level-2 header .icon { width: 28px; height: 28px; }
+.view-mini.level-2 > div { display: grid; grid-template-columns: 24px 1fr; align-items: center; gap: 8px; margin-top: 6px; }
+.view-mini.level-2 > div > i { width: 24px; height: 24px; display: grid; place-items: center; font-style: normal; }
+.view-mini.level-2 > div .icon { width: 24px; height: 24px; }
+.view-mini.level-2 > div > span { font-size: 12px; font-weight: 600; line-height: 1.35; }
+.view-mini.level-3 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.view-mini.level-3 > .icon { width: 40px; height: 40px; }
+.view-mini.level-3 > div { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.view-mini.level-3 em {
+  min-height: 44px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--proto-bg);
+  border-radius: 10px;
+  font-style: normal;
+}
+.view-mini.level-3 em .icon { width: 28px; height: 28px; }
+.view-mini.level-3 em > i { width: 28px; height: 28px; background: #e8eaed; border-radius: 8px; }
+.view-mini.level-3 em > span { font-size: 12px; font-weight: 700; }
+
+.settings-page { padding-bottom: 28px; }
+.settings-block { margin: 0 0 28px; }
+.settings-block h2 { margin: 0 8px 4px; font-size: 18px; font-weight: 700; }
 
 /* ---- 8. 바텀시트 (ProtoSheet) --------------------------------------- */
 

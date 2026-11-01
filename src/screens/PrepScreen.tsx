@@ -6,10 +6,12 @@ import { ProtoButton } from "../components/ProtoButton"
 export function PrepScreen({
   goCard,
   startSafety,
+  goSettings,
   safetyComplete,
 }: {
   goCard: () => void
   startSafety: () => void
+  goSettings: () => void
   safetyComplete: boolean
 }) {
   return (
@@ -35,6 +37,12 @@ export function PrepScreen({
           <ProtoButton secondary onClick={startSafety}>
             {safetyComplete ? "결과 보기" : "점검하기"}
           </ProtoButton>
+        </article>
+        <article className="task-card">
+          <span><Icon name="list" /></span>
+          <h2>알림 보기 방법</h2>
+          <p>글만, 그림과 글, 큰 그림을 골라요.</p>
+          <ProtoButton secondary onClick={goSettings}>바꾸기</ProtoButton>
         </article>
       </div>
     </main>

@@ -26,6 +26,9 @@ export type Institution = {
   phone: string
 }
 
+/** 알림 화면을 어떻게 볼지. 1 글만 / 2 그림+글 / 3 큰 그림. */
+export type ReadingLevel = 1 | 2 | 3
+
 /** 저장되는 사용자 정보 전부. */
 export type Profile = {
   name: string
@@ -40,6 +43,10 @@ export type Profile = {
   mobility: string
   hardThing: string
   bring: string
+  /** 알림 화면 보기 방법. 기본은 글만. */
+  readingLevel: ReadingLevel
+  /** true 이면 알림 소리·자동 읽어주기 없음. */
+  soundSensitive: boolean
 }
 
 /** 아무것도 입력하지 않은 초기 값. */
@@ -54,6 +61,8 @@ export const emptyProfile: Profile = {
   mobility: "",
   hardThing: "",
   bring: "",
+  readingLevel: 1,
+  soundSensitive: false,
 }
 
 const PROFILE_KEY = "chacha-profile-v1"
@@ -72,6 +81,8 @@ export async function loadProfile(): Promise<Profile> {
       neighbor: { ...emptyProfile.neighbor, ...(parsed.neighbor ?? {}) },
       institution: { ...emptyProfile.institution, ...(parsed.institution ?? {}) },
       communication: Array.isArray(parsed.communication) ? parsed.communication : [],
+      readingLevel: parsed.readingLevel === 2 || parsed.readingLevel === 3 ? parsed.readingLevel : 1,
+      soundSensitive: parsed.soundSensitive === true,
     }
   } catch {
     return emptyProfile

@@ -1,9 +1,10 @@
-// 처음 쓰는 사람 안내 (13단계).
+// 처음 쓰는 사람 안내 (15단계).
 // 0: 시작 / 1: 소개 / 2: 보호자와 함께 /
-// 3~7: 내 카드 만들기 5단계 / 8: 카드 완성 /
-// 9: 알림 켜기 / 10: 차차등 연결 / 11: 연습 알림 / 12: 끝
+// 3: 이름 / 4: 보호자 / 5: 어떻게 볼래요 / 6: 큰 소리 /
+// 7~9: 이웃·기관·나에 대해 / 10: 카드 완성 /
+// 11: 알림 켜기 / 12: 차차등 연결 / 13: 연습 알림 / 14: 끝
 //
-// 3~7단계의 입력칸·칩은 전부 profile 값과 연결돼 있다.
+// 3~9단계의 입력칸·칩은 전부 profile 값과 연결돼 있다.
 // 저장은 OnboardingFlow 가 아니라 바깥 App 에서 updateProfile() 로 내려준다.
 
 import { Icon } from "../components/Icon"
@@ -14,6 +15,7 @@ import { ProtoButton } from "../components/ProtoButton"
 import { ProtoChips } from "../components/ProtoChips"
 import { ProtoField } from "../components/ProtoField"
 import { ProtoGuardian } from "../components/ProtoGuardian"
+import { ReadingLevelPicker, SoundSensitivePicker } from "../components/ViewModePicker"
 import { TogetherIllustration } from "../components/TogetherIllustration"
 import type { Contact, Institution, Profile } from "../data/profile"
 import { useDevice } from "../device/DeviceContext"
@@ -26,6 +28,8 @@ const titles = [
   "보호자와 함께 해요",
   "내 이름을 적어요",
   "도와줄 사람",
+  "어떻게 볼래요?",
+  "큰 소리가 싫어요?",
   "또 다른 사람",
   "기관",
   "나에 대해",
@@ -67,10 +71,9 @@ export function OnboardingFlow({
 }) {
   const device = useDevice()
   const back = step > 0 ? () => setStep(step - 1) : undefined
-  const skip = [0, 1, 2, 9, 10, 11, 12].includes(step) ? finish : undefined
+  const skip = [0, 1, 2, 11, 12, 13, 14].includes(step) ? finish : undefined
   const next = () => setStep(step + 1)
 
-  // 짧은 이름 — 보호자/이웃 중첩 필드 업데이트 헬퍼
   const setGuardian = (patch: Partial<Contact>) =>
     updateProfile({ guardian: { ...profile.guardian, ...patch } })
   const setNeighbor = (patch: Partial<Contact>) =>
@@ -78,9 +81,11 @@ export function OnboardingFlow({
   const setInstitution = (patch: Partial<Institution>) =>
     updateProfile({ institution: { ...profile.institution, ...patch } })
 
-  // 다음 버튼이 켜져야 하는 조건 (필수 입력)
+  const cardStep = step <= 4 ? step - 2 : step - 4
+  const showCardProgress = (step >= 3 && step <= 4) || (step >= 7 && step <= 9)
+
   const canNext =
-    step !== 3 && step !== 4 && step !== 7
+    step !== 3 && step !== 4 && step !== 9
       ? true
       : step === 3
         ? profile.name.trim().length > 0
@@ -88,12 +93,12 @@ export function OnboardingFlow({
           ? profile.guardian.name.trim().length > 0 &&
             profile.guardian.relation.trim().length > 0 &&
             profile.guardian.phone.trim().length > 0
-          : /* step 7 */ profile.address.trim().length > 0
+          : /* step 9 */ profile.address.trim().length > 0
 
   return (
     <section className="onboard-screen">
       <OnboardHeader step={step} back={back} skip={skip} />
-      <main className={`onboard-body ${step === 7 ? "scrolling" : ""}`}>
+      <main className={`onboard-body ${step === 5 || step === 6 || step === 9 ? "scrolling" : ""}`}>
         {step === 0 && (
           <div className="onboard-start">
             <Logo large />
@@ -103,9 +108,9 @@ export function OnboardingFlow({
             </p>
           </div>
         )}
-        {step > 0 && step < 8 && (
+        {step > 0 && step < 10 && (
           <>
-            {step >= 3 && <b className="card-progress">내 카드 {step - 2}/5</b>}
+            {showCardProgress && <b className="card-progress">내 카드 {cardStep}/5</b>}
             <h1>{titles[step]}</h1>
           </>
         )}
@@ -178,6 +183,24 @@ export function OnboardingFlow({
         )}
         {step === 5 && (
           <>
+            <p className="onboard-description">같은 재난을 세 가지 방법으로 보여 줘요.</p>
+            <ReadingLevelPicker
+              profile={profile}
+              onChange={(readingLevel) => updateProfile({ readingLevel })}
+            />
+          </>
+        )}
+        {step === 6 && (
+          <>
+            <p className="onboard-description">큰 소리가 싫으면 소리 없이 알려 줘요.</p>
+            <SoundSensitivePicker
+              value={profile.soundSensitive}
+              onChange={(soundSensitive) => updateProfile({ soundSensitive })}
+            />
+          </>
+        )}
+        {step === 7 && (
+          <>
             <p className="onboard-description">첫 번째 사람이 전화를 안 받을 때 걸어요.</p>
             <div className="proto-fields">
               <ProtoField
@@ -209,7 +232,7 @@ export function OnboardingFlow({
             </div>
           </>
         )}
-        {step === 6 && (
+        {step === 8 && (
           <>
             <p className="onboard-description">복지관이나 센터를 적어요.</p>
             <div className="proto-fields">
@@ -229,7 +252,7 @@ export function OnboardingFlow({
             </div>
           </>
         )}
-        {step === 7 && (
+        {step === 9 && (
           <div className="proto-fields">
             <ProtoField
               label="우리 집 주소"
@@ -274,14 +297,14 @@ export function OnboardingFlow({
             />
           </div>
         )}
-        {step === 8 && (
+        {step === 10 && (
           <>
             <MiniCard />
             <h1>{titles[step]}</h1>
             <p className="onboard-description">이제 휴대폰을 준비해요.</p>
           </>
         )}
-        {step === 9 && (
+        {step === 11 && (
           <>
             <div className="phone-drawing">
               <Icon name="phone" />
@@ -294,7 +317,7 @@ export function OnboardingFlow({
             <p className="onboard-description">재난문자가 오면 바로 알려줘요.</p>
           </>
         )}
-        {step === 10 && (
+        {step === 12 && (
           <>
             <div className={`proto-light ${device.state.status === "connected" ? "lit" : ""}`}>
               <span><Icon name="light" /></span>
@@ -331,7 +354,7 @@ export function OnboardingFlow({
             )}
           </>
         )}
-        {step === 11 && (
+        {step === 13 && (
           <>
             <span className="practice-icon"><Icon name="bell" /></span>
             <h1>{titles[step]}</h1>
@@ -341,7 +364,7 @@ export function OnboardingFlow({
             </p>
           </>
         )}
-        {step === 12 && (
+        {step === 14 && (
           <>
             <span className="done-check"><Icon name="check" /></span>
             <h1>{titles[step]}</h1>
@@ -355,7 +378,7 @@ export function OnboardingFlow({
         )}
       </main>
       <footer className="proto-fixed">
-        {step === 7 && (
+        {step === 9 && (
           <p className="privacy">
             <Icon name="lock" />
             적은 내용은 내 휴대폰에만 저장돼요.
@@ -377,33 +400,34 @@ export function OnboardingFlow({
             다음
           </ProtoButton>
         )}
-        {step === 5 && (
-          <>
-            <ProtoButton onClick={next}>다음</ProtoButton>
-            <ProtoButton text onClick={next}>지금은 건너뛸게요</ProtoButton>
-          </>
-        )}
-        {step === 6 && (
-          <>
-            <ProtoButton onClick={next}>다음</ProtoButton>
-            <ProtoButton text onClick={next}>지금은 건너뛸게요</ProtoButton>
-          </>
-        )}
+        {step === 5 && <ProtoButton onClick={next}>다음</ProtoButton>}
+        {step === 6 && <ProtoButton onClick={next}>다음</ProtoButton>}
         {step === 7 && (
+          <>
+            <ProtoButton onClick={next}>다음</ProtoButton>
+            <ProtoButton text onClick={next}>지금은 건너뛸게요</ProtoButton>
+          </>
+        )}
+        {step === 8 && (
+          <>
+            <ProtoButton onClick={next}>다음</ProtoButton>
+            <ProtoButton text onClick={next}>지금은 건너뛸게요</ProtoButton>
+          </>
+        )}
+        {step === 9 && (
           <ProtoButton onClick={canNext ? next : undefined} disabled={!canNext}>
             카드 저장하기
           </ProtoButton>
         )}
-        {step === 8 && (
+        {step === 10 && (
           <>
             <ProtoButton onClick={next}>다음</ProtoButton>
             <ProtoButton text onClick={openPdf}>카드 PDF로 저장하기</ProtoButton>
           </>
         )}
-        {step === 9 && (
+        {step === 11 && (
           <ProtoButton
             onClick={async () => {
-              // 권한을 요청하고 결과와 상관없이 다음으로. 거절해도 나중에 설정에서 켤 수 있음.
               await ensurePermission()
               next()
             }}
@@ -411,7 +435,7 @@ export function OnboardingFlow({
             알림 켜기
           </ProtoButton>
         )}
-        {step === 10 && (
+        {step === 12 && (
           <>
             {device.state.status !== "connected" && (
               <ProtoButton
@@ -436,8 +460,8 @@ export function OnboardingFlow({
             <ProtoButton text onClick={next}>차차등이 없어요</ProtoButton>
           </>
         )}
-        {step === 11 && <ProtoButton onClick={openPractice}>연습 알림 보내기</ProtoButton>}
-        {step === 12 && <ProtoButton onClick={finish}>홈으로</ProtoButton>}
+        {step === 13 && <ProtoButton onClick={openPractice}>연습 알림 보내기</ProtoButton>}
+        {step === 14 && <ProtoButton onClick={finish}>홈으로</ProtoButton>}
       </footer>
     </section>
   )

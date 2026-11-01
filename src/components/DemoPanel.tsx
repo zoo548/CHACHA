@@ -72,7 +72,7 @@ export function DemoPanel({
       }
     }
 
-    const ok = await scheduleDemoAlert(title, body, payload, DELAY_SEC)
+    const ok = await scheduleDemoAlert(title, body, payload, DELAY_SEC, profile.soundSensitive)
     if (!ok) {
       setStatus("알림 권한이 필요해요. 설정에서 '차차'의 알림을 켜 주세요.")
       return

@@ -17,6 +17,7 @@ export type NotificationPayload =
   | { kind: "raw"; text: string; broadcastType: "위급" | "긴급" | "안전안내" }
 
 const CHANNEL_ID = "chacha-alert"
+const CHANNEL_SILENT_ID = "chacha-alert-silent"
 const NOTIFICATION_ID = 7000
 
 /** 권한 요청. 이미 허락됐으면 바로 성공. 거절되면 false. */
@@ -31,16 +32,24 @@ export async function ensurePermission(): Promise<boolean> {
   }
 }
 
-/** 안드로이드용 알림 채널 (iOS 는 무시). 처음 한 번 만들어 두면 재사용. */
-async function ensureChannel() {
+/** 안드로이드용 알림 채널 (iOS 는 무시). 소리 있는 채널과 진동만 있는 채널. */
+async function ensureChannels() {
   if (!Capacitor.isNativePlatform()) return
   try {
     await LocalNotifications.createChannel({
       id: CHANNEL_ID,
       name: "차차 재난 알림",
-      importance: 5, // 최고 우선순위 — 잠금화면 표시
-      visibility: 1, // 공개
+      importance: 5,
+      visibility: 1,
       sound: "default",
+      vibration: true,
+    })
+    await LocalNotifications.createChannel({
+      id: CHANNEL_SILENT_ID,
+      name: "차차 재난 알림 (소리 없음)",
+      importance: 5,
+      visibility: 1,
+      sound: undefined,
       vibration: true,
     })
   } catch {
@@ -57,10 +66,11 @@ export async function scheduleDemoAlert(
   body: string,
   payload: NotificationPayload,
   delaySec = 10,
+  silent = false,
 ): Promise<boolean> {
   const ok = await ensurePermission()
   if (!ok) return false
-  await ensureChannel()
+  await ensureChannels()
   const at = new Date(Date.now() + delaySec * 1000)
   try {
     await LocalNotifications.schedule({
@@ -70,10 +80,9 @@ export async function scheduleDemoAlert(
           title,
           body,
           schedule: { at },
-          channelId: CHANNEL_ID,
+          channelId: silent ? CHANNEL_SILENT_ID : CHANNEL_ID,
           extra: { payload },
-          // iOS: 잠금화면 표시 + 소리
-          sound: "default",
+          sound: silent ? undefined : "default",
         },
       ],
     })
