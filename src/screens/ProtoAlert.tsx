@@ -1,7 +1,8 @@
 // 알림 상세 화면. 재난 종류별로 색이 다르다 (danger 빨강, caution 노랑, practice 파랑).
-// readingLevel 1 은 예전 글 화면, 2 는 그림+글, 3 은 큰 그림 카드.
+// readingLevel 1 은 글 화면, 2 는 그림+글, 3 은 큰 그림 카드.
+// 위 색 띠와 아래 버튼은 고정, 가운데만 한 덩어리로 스크롤한다.
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Icon } from "../components/Icon"
 import { Lines } from "../components/Lines"
 import { ProtoButton } from "../components/ProtoButton"
@@ -98,118 +99,77 @@ function PicCard({
   )
 }
 
-function Level1({ view, call }: { view: AlertView; call: () => void }) {
+function Level1Actions({ view, call }: { view: AlertView; call: () => void }) {
   const calls = view.actions.filter((a) => a.phone)
   const first = view.actions.findIndex((a) => a.phone)
   return (
-    <>
-      <header>
-        <b>{badge(view.uiLevel)}</b>
-        <div>
-          <span><Icon name={view.hero} /></span>
-          <h1>{view.title}</h1>
-        </div>
-      </header>
-      <main>
-        <section className="alert-card">
-          <p>{view.situation}</p>
-          <h2>이렇게 해요</h2>
-          <div className="proto-actions">
-            {view.actions.map((action, index) => {
-              if (action.phone && index !== first) return null
-              if (action.phone) {
-                return (
-                  <div className="proto-call-group" key="phones">
-                    {calls.map((item, n) => (
-                      <button disabled={item.disabled} onClick={call} key={item.text}>
-                        <i>{first + n + 1}</i>
-                        <span><Lines text={item.text} /></span>
-                        <Icon name="call" />
-                      </button>
-                    ))}
-                  </div>
-                )
-              }
-              return (
-                <div className="proto-action" key={action.text}>
-                  <i>{index + 1}</i>
-                  <span><Lines text={action.text} /></span>
-                  {action.icon && <Icon name={action.icon} />}
-                </div>
-              )
-            })}
+    <div className="proto-actions">
+      {view.actions.map((action, index) => {
+        if (action.phone && index !== first) return null
+        if (action.phone) {
+          return (
+            <div className="proto-call-group" key="phones">
+              {calls.map((item, n) => (
+                <button disabled={item.disabled} onClick={call} key={item.text}>
+                  <i>{first + n + 1}</i>
+                  <span><Lines text={item.text} /></span>
+                  <Icon name="call" />
+                </button>
+              ))}
+            </div>
+          )
+        }
+        return (
+          <div className="proto-action" key={action.text}>
+            <i>{index + 1}</i>
+            <span><Lines text={action.text} /></span>
+            {action.icon && <Icon name={action.icon} />}
           </div>
-        </section>
-      </main>
-    </>
+        )
+      })}
+    </div>
   )
 }
 
-function Level2({ view, call }: { view: AlertView; call: (action: AlertAction) => void }) {
+function Level2Actions({ view, call }: { view: AlertView; call: (action: AlertAction) => void }) {
   return (
-    <>
-      <header className="alert-hero-mid">
-        <b>{badge(view.uiLevel)}</b>
-        <span><Icon name={view.heroArt} /></span>
-        <h1>{view.title}</h1>
-      </header>
-      <main>
-        <section className="alert-card">
-          <p>{view.situation}</p>
-          <h2>이렇게 해요</h2>
-          <div className="proto-actions level-2">
-            {view.actions.map((action) => {
-              const body = (
-                <>
-                  <i className="action-art">{action.art ? <Icon name={action.art} /> : null}</i>
-                  <span><Lines text={action.text} /></span>
-                </>
-              )
-              if (action.phone) {
-                return (
-                  <button
-                    className="proto-action pictured"
-                    disabled={action.disabled}
-                    onClick={() => call(action)}
-                    key={action.text}
-                  >
-                    {body}
-                  </button>
-                )
-              }
-              return (
-                <div className="proto-action pictured" key={action.text}>
-                  {body}
-                </div>
-              )
-            })}
+    <div className="proto-actions level-2">
+      {view.actions.map((action) => {
+        const body = (
+          <>
+            <i className="action-art">{action.art ? <Icon name={action.art} /> : null}</i>
+            <span><Lines text={action.text} /></span>
+          </>
+        )
+        if (action.phone) {
+          return (
+            <button
+              className="proto-action pictured"
+              disabled={action.disabled}
+              onClick={() => call(action)}
+              key={action.text}
+            >
+              {body}
+            </button>
+          )
+        }
+        return (
+          <div className="proto-action pictured" key={action.text}>
+            {body}
           </div>
-        </section>
-      </main>
-    </>
+        )
+      })}
+    </div>
   )
 }
 
-function Level3({ view }: { view: AlertView }) {
+function Level3Actions({ view }: { view: AlertView }) {
   return (
-    <>
-      <header className="alert-hero-big">
-        <b>{badge(view.uiLevel)}</b>
-        <span><Icon name={view.heroArt} /></span>
-        <h1>{view.title}</h1>
-      </header>
-      <main>
-        <section className="alert-card level-3">
-          <p>{view.situation}</p>
-          <h2>이렇게 해요</h2>
-          <div className="pic-cards">
-            {view.actions.map((action) => (
-              <PicCard action={action} key={action.text} />
-            ))}
-          </div>
-        </section>
-      </main>
-    </>
+    <div className="pic-cards">
+      {view.actions.map((action) => (
+        <PicCard action={action} key={action.text} />
+      ))}
+    </div>
   )
 }
 
@@ -228,6 +188,9 @@ export function ProtoAlert({
   call: (action?: AlertAction) => void
   source: () => void
 }) {
+  const mainRef = useRef<HTMLElement>(null)
+  const [compact, setCompact] = useState(false)
+
   useEffect(() => {
     vibrateAlert()
     if (!soundSensitive) {
@@ -237,15 +200,38 @@ export function ProtoAlert({
     return () => stopSpeak()
   }, [view, soundSensitive])
 
+  useEffect(() => {
+    setCompact(false)
+    if (mainRef.current) mainRef.current.scrollTop = 0
+  }, [view, readingLevel])
+
   return (
-    <article className={`prototype-alert ${view.uiLevel} level-${readingLevel}`}>
-      {readingLevel === 2 ? (
-        <Level2 view={view} call={(action) => call(action)} />
-      ) : readingLevel === 3 ? (
-        <Level3 view={view} />
-      ) : (
-        <Level1 view={view} call={() => call()} />
-      )}
+    <article className={`prototype-alert ${view.uiLevel} level-${readingLevel}${compact ? " compact" : ""}`}>
+      <header>
+        <b>{badge(view.uiLevel)}</b>
+        <h1>{view.title}</h1>
+      </header>
+      <main
+        ref={mainRef}
+        onScroll={(event) => {
+          setCompact(event.currentTarget.scrollTop > 4)
+        }}
+      >
+        {readingLevel >= 2 && (
+          <div className="alert-hero-inline" aria-hidden="true">
+            <Icon name={view.heroArt} />
+          </div>
+        )}
+        <p>{view.situation}</p>
+        <h2>이렇게 해요</h2>
+        {readingLevel === 2 ? (
+          <Level2Actions view={view} call={(action) => call(action)} />
+        ) : readingLevel === 3 ? (
+          <Level3Actions view={view} />
+        ) : (
+          <Level1Actions view={view} call={() => call()} />
+        )}
+      </main>
       <footer>
         <ProtoButton text onClick={() => speakHeadline(view)}>다시 듣기</ProtoButton>
         <ProtoButton onClick={acknowledge}>알았어요</ProtoButton>
