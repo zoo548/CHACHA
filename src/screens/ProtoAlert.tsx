@@ -3,10 +3,11 @@
 // 위 색 띠와 아래 버튼은 고정, 가운데만 한 덩어리로 스크롤한다.
 
 import { useEffect, useRef, useState } from "react"
+import { CallActionButton, CallMark, CallMissing, FingerHint } from "../components/CallAction"
 import { hasAssetIcon, Icon } from "../components/Icon"
 import { Lines } from "../components/Lines"
 import { ProtoButton } from "../components/ProtoButton"
-import type { AlertAction, AlertView } from "../data/alertTemplate"
+import type { AlertAction, AlertView, PhoneKind } from "../data/alertTemplate"
 import { toTelDigits } from "../data/profile"
 import type { ReadingLevel } from "../data/profile"
 import { playAlertTone, speak, stopSpeak, vibrateAlert } from "../speech"
@@ -53,9 +54,17 @@ function useLongPress(onLong: () => void, ms = 550) {
 function PicCard({
   action,
   heroArt,
+  practice,
+  practiced,
+  onPractice,
+  onEmergency,
 }: {
   action: AlertAction
   heroArt: string
+  practice?: boolean
+  practiced?: boolean
+  onPractice?: () => void
+  onEmergency?: (kind: Extract<PhoneKind, "119" | "112">) => void
 }) {
   const longPress = useLongPress(() => speak(action.text))
   const label = action.short ? (
@@ -68,30 +77,61 @@ function PicCard({
   ) : hasAssetIcon(heroArt) ? (
     <Icon name={heroArt} className="icon-faded" />
   ) : null
-  const inner = (
-    <>
-      <span className="pic-card-art">{art}</span>
-      {label}
-    </>
-  )
-  const digits = action.phoneNumber ? toTelDigits(action.phoneNumber) : ""
-  if (action.phone && digits && !action.disabled) {
+
+  if (action.phoneKind) {
+    if (action.disabled || !action.phoneNumber) {
+      return (
+        <div className="pic-card">
+          <span className="pic-card-art">{art}</span>
+          {label}
+          <CallMissing />
+        </div>
+      )
+    }
+
+    const inner = (
+      <>
+        <CallMark className="call-badge" />
+        <span className="pic-card-art">{art}</span>
+        {label}
+        <em className="call-card-hint">누르면 전화해요</em>
+      </>
+    )
+
+    const onClick = (event: { preventDefault: () => void }) => {
+      if (practice) {
+        event.preventDefault()
+        onPractice?.()
+      } else if (action.phoneKind === "119" || action.phoneKind === "112") {
+        event.preventDefault()
+        onEmergency?.(action.phoneKind)
+      }
+    }
+
+    const digits = toTelDigits(action.phoneNumber)
+    const clickable = practice || action.phoneKind === "119" || action.phoneKind === "112"
     return (
-      <a
-        className="pic-card"
-        href={`tel:${digits}`}
-        onPointerDown={longPress.onPointerDown}
-        onPointerUp={longPress.onPointerUp}
-        onPointerCancel={longPress.onPointerCancel}
-        onPointerLeave={longPress.onPointerLeave}
-        onClick={(event) => {
-          longPress.swallowClick(event)
-        }}
-      >
-        {inner}
-      </a>
+      <div className="call-wrap">
+        {clickable ? (
+          <button className="pic-card call-card" type="button" onClick={onClick}>
+            {inner}
+          </button>
+        ) : (
+          <a className="pic-card call-card" href={`tel:${digits}`}>
+            {inner}
+          </a>
+        )}
+        {practice && !practiced && <FingerHint />}
+        {practice && practiced && (
+          <p className="call-practice-ok">
+            <span>잘했어요!</span>
+            <span>진짜 알림에서는 전화가 걸려요.</span>
+          </p>
+        )}
+      </div>
     )
   }
+
   return (
     <div
       className={`pic-card ${action.disabled ? "disabled" : ""}`}
@@ -100,70 +140,83 @@ function PicCard({
       onPointerCancel={longPress.onPointerCancel}
       onPointerLeave={longPress.onPointerLeave}
     >
-      {inner}
+      <span className="pic-card-art">{art}</span>
+      {label}
     </div>
   )
 }
 
-function Level1Actions({ view, call }: { view: AlertView; call: () => void }) {
-  const calls = view.actions.filter((a) => a.phone)
-  const first = view.actions.findIndex((a) => a.phone)
+type PhoneHandlers = {
+  practice?: boolean
+  practiced?: boolean
+  onPractice?: () => void
+  onEmergency?: (kind: Extract<PhoneKind, "119" | "112">) => void
+}
+
+function Level1Actions({
+  view,
+  ...phone
+}: {
+  view: AlertView
+} & PhoneHandlers) {
   return (
     <div className="proto-actions">
-      {view.actions.map((action, index) => {
-        if (action.phone && index !== first) return null
-        if (action.phone) {
+      {(() => {
+        let step = 0
+        return view.actions.map((action) => {
+          if (action.phoneKind) {
+            return (
+              <CallActionButton
+                action={action}
+                key={action.text}
+                practice={phone.practice}
+                practiced={phone.practiced}
+                onPractice={phone.onPractice}
+                onEmergency={phone.onEmergency}
+              />
+            )
+          }
+          step += 1
           return (
-            <div className="proto-call-group" key="phones">
-              {calls.map((item, n) => (
-                <button disabled={item.disabled} onClick={call} key={item.text}>
-                  <i>{first + n + 1}</i>
-                  <span><Lines text={item.text} /></span>
-                  <Icon name="call" />
-                </button>
-              ))}
+            <div className="proto-action" key={action.text}>
+              <i>{step}</i>
+              <span><Lines text={action.text} /></span>
+              {action.icon && <Icon name={action.icon} />}
             </div>
           )
-        }
-        return (
-          <div className="proto-action" key={action.text}>
-            <i>{index + 1}</i>
-            <span><Lines text={action.text} /></span>
-            {action.icon && <Icon name={action.icon} />}
-          </div>
-        )
-      })}
+        })
+      })()}
     </div>
   )
 }
 
-function Level2Actions({ view, call }: { view: AlertView; call: (action: AlertAction) => void }) {
+function Level2Actions({
+  view,
+  ...phone
+}: {
+  view: AlertView
+} & PhoneHandlers) {
   return (
     <div className="proto-actions level-2">
       {view.actions.map((action) => {
-        const body = (
-          <>
-            <i className="action-art">
-              {hasAssetIcon(action.art) ? <Icon name={action.art} /> : null}
-            </i>
-            <span><Lines text={action.text} /></span>
-          </>
-        )
-        if (action.phone) {
+        if (action.phoneKind) {
           return (
-            <button
-              className="proto-action pictured"
-              disabled={action.disabled}
-              onClick={() => call(action)}
+            <CallActionButton
+              action={action}
               key={action.text}
-            >
-              {body}
-            </button>
+              practice={phone.practice}
+              practiced={phone.practiced}
+              onPractice={phone.onPractice}
+              onEmergency={phone.onEmergency}
+            />
           )
         }
         return (
           <div className="proto-action pictured" key={action.text}>
-            {body}
+            <i className="action-art">
+              {hasAssetIcon(action.art) ? <Icon name={action.art} /> : null}
+            </i>
+            <span><Lines text={action.text} /></span>
           </div>
         )
       })}
@@ -171,11 +224,24 @@ function Level2Actions({ view, call }: { view: AlertView; call: (action: AlertAc
   )
 }
 
-function Level3Actions({ view }: { view: AlertView }) {
+function Level3Actions({
+  view,
+  ...phone
+}: {
+  view: AlertView
+} & PhoneHandlers) {
   return (
     <div className="pic-cards">
       {view.actions.map((action) => (
-        <PicCard action={action} heroArt={view.heroArt} key={action.text} />
+        <PicCard
+          action={action}
+          heroArt={view.heroArt}
+          key={action.text}
+          practice={phone.practice}
+          practiced={phone.practiced}
+          onPractice={phone.onPractice}
+          onEmergency={phone.onEmergency}
+        />
       ))}
     </div>
   )
@@ -186,18 +252,26 @@ export function ProtoAlert({
   readingLevel,
   soundSensitive,
   acknowledge,
-  call,
+  openEmergency,
   source,
 }: {
   view: AlertView
   readingLevel: ReadingLevel
   soundSensitive: boolean
   acknowledge: () => void
-  call: (action?: AlertAction) => void
+  openEmergency: (kind: Extract<PhoneKind, "119" | "112">) => void
   source: () => void
 }) {
   const mainRef = useRef<HTMLElement>(null)
   const [compact, setCompact] = useState(false)
+  const [practiced, setPracticed] = useState(false)
+  const practice = view.uiLevel === "practice"
+  const phone: PhoneHandlers = {
+    practice,
+    practiced,
+    onPractice: () => setPracticed(true),
+    onEmergency: openEmergency,
+  }
 
   useEffect(() => {
     vibrateAlert()
@@ -233,11 +307,11 @@ export function ProtoAlert({
         <p>{view.situation}</p>
         <h2>이렇게 해요</h2>
         {readingLevel === 2 ? (
-          <Level2Actions view={view} call={(action) => call(action)} />
+          <Level2Actions view={view} {...phone} />
         ) : readingLevel === 3 ? (
-          <Level3Actions view={view} />
+          <Level3Actions view={view} {...phone} />
         ) : (
-          <Level1Actions view={view} call={() => call()} />
+          <Level1Actions view={view} {...phone} />
         )}
       </main>
       <footer>

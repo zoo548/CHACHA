@@ -32,6 +32,7 @@ import { ProtoAlert } from "./screens/ProtoAlert"
 import { ProtoCard } from "./screens/ProtoCard"
 import { SafetyCheck } from "./screens/SafetyCheck"
 import { CreditsScreen } from "./screens/CreditsScreen"
+import { EmergencyScript } from "./screens/EmergencyScript"
 import { SettingsScreen } from "./screens/SettingsScreen"
 import {
   emptyProfile,
@@ -40,7 +41,7 @@ import {
   saveProfile,
   type Profile,
 } from "./data/profile"
-import { getAlertView, rawTextView, type AlertAction, type AlertView } from "./data/alertTemplate"
+import { getAlertView, rawTextView, type AlertView } from "./data/alertTemplate"
 import { matchAlert } from "./matching/matchAlert"
 import { useDevice } from "./device/DeviceContext"
 import { onNotificationTap, type NotificationPayload } from "./notifications"
@@ -116,6 +117,7 @@ function App() {
 
   // 알림 / 도움 상황 / 전화할 대상
   const [alertState, setAlertState] = useState<AlertState | null>(null)
+  const [emergencyNumber, setEmergencyNumber] = useState<"119" | "112">("119")
   const [situation, setSituation] = useState("무서운 사람이 있어요")
   const [callTarget, setCallTarget] = useState<CallTarget | null>(null)
 
@@ -230,7 +232,7 @@ function App() {
     if (alertState.kind === "practice") {
       return getAlertView("practice", "caution", profile)
     }
-    return rawTextView(alertState.text)
+    return rawTextView(alertState.text, profile)
   }, [alertState, profile])
 
   // "알았어요" 공통 처리 — 기기에 C 보내고 화면 정리.
@@ -369,29 +371,20 @@ function App() {
           setScreen("alert")
         }}
       />
+    ) : screen === "emergency-script" ? (
+      <EmergencyScript
+        number={emergencyNumber}
+        back={() => setScreen("alert")}
+      />
     ) : screen === "alert" && alertView ? (
       <ProtoAlert
         view={alertView}
         readingLevel={profile.readingLevel}
         soundSensitive={profile.soundSensitive}
         acknowledge={acknowledgeAlert}
-        call={(action?: AlertAction) => {
-          if (action?.phoneNumber) {
-            const num = action.phoneNumber
-            const label =
-              num === "119"
-                ? "119"
-                : num === "112"
-                  ? "112"
-                  : profile.guardian.phone === num
-                    ? profile.guardian.relation || profile.guardian.name || "도와줄 사람"
-                    : profile.neighbor.phone === num
-                      ? profile.neighbor.relation || profile.neighbor.name || "이웃"
-                      : "전화"
-            openCall({ label, phone: num })
-            return
-          }
-          openCall(defaultCallTarget())
+        openEmergency={(kind) => {
+          setEmergencyNumber(kind)
+          setScreen("emergency-script")
         }}
         source={() => setSheet("source")}
       />

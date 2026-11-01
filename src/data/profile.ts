@@ -108,6 +108,17 @@ export function toTelDigits(raw: string): string {
   return (raw ?? "").replace(/[^\d+]/g, "")
 }
 
+/** 끝 네 자리만 보여 주는 번호. 119·112 는 그대로. */
+export function maskPhone(raw: string): string {
+  const digits = toTelDigits(raw)
+  if (!digits) return ""
+  if (digits === "119" || digits === "112") return digits
+  const last4 = digits.slice(-4)
+  if (digits.startsWith("010") && digits.length >= 10) return `010-○○○○-${last4}`
+  if (digits.length > 4) return `○○○○-${last4}`
+  return digits
+}
+
 /** 사람(보호자/이웃) 소개 문구. 비어 있는 필드는 자동으로 건너뛴다. */
 export function describeContact(contact: Contact): string {
   const bits: string[] = []

@@ -4,8 +4,10 @@
 // short 필드는 타입이 받을 수 있게만 열어 두고, JSON 에는 넣지 않는다.
 
 import templates from "../../docs/disaster_templates.json"
-import type { Profile } from "./profile"
+import { maskPhone, type Profile } from "./profile"
 import type { IconName } from "../types"
+
+export type PhoneKind = "guardian" | "neighbor" | "119" | "112"
 
 export type AlertAction = {
   text: string
@@ -19,6 +21,12 @@ export type AlertAction = {
   disabled?: boolean
   /** 3단계에서 바로 걸 번호. */
   phoneNumber?: string
+  /** 문장 또는 JSON icon 으로 알아낸 전화 대상. */
+  phoneKind?: PhoneKind
+  /** 버튼 둘째 줄에 쓸 이름. 예: 엄마, 119 */
+  who?: string
+  /** 끝 네 자리만 남긴 번호. */
+  maskedNumber?: string
 }
 
 /** 알림 뷰가 그대로 쓰는 알림 데이터. UI 레벨은 danger/caution/practice. */
@@ -114,14 +122,43 @@ const ACTION_ICON_MAP: Record<string, IconName | undefined> = {
   phone_neighbor: "call",
 }
 
-const PHONE_ICON_KEYS = new Set(["phone_119", "phone_112", "phone_guardian", "phone_neighbor"])
-
-function phoneNumberFor(iconKey: string, profile: Profile): string | undefined {
+function detectPhoneKind(rawText: string, iconKey: string): PhoneKind | undefined {
   if (iconKey === "phone_119") return "119"
   if (iconKey === "phone_112") return "112"
-  if (iconKey === "phone_guardian") return profile.guardian.phone || undefined
-  if (iconKey === "phone_neighbor") return profile.neighbor.phone || undefined
+  if (iconKey === "phone_guardian") return "guardian"
+  if (iconKey === "phone_neighbor") return "neighbor"
+  if (rawText.includes("119")) return "119"
+  if (rawText.includes("112")) return "112"
+  if (rawText.includes("{이웃}") || rawText.includes("이웃에게")) return "neighbor"
+  if (rawText.includes("{보호자}") || rawText.includes("보호자에게")) return "guardian"
   return undefined
+}
+
+function phoneNumberFor(kind: PhoneKind, profile: Profile): string | undefined {
+  if (kind === "119") return "119"
+  if (kind === "112") return "112"
+  if (kind === "guardian") return profile.guardian.phone || undefined
+  return profile.neighbor.phone || undefined
+}
+
+function whoFor(kind: PhoneKind, profile: Profile): string {
+  if (kind === "119" || kind === "112") return kind
+  if (kind === "guardian") return profile.guardian.relation || profile.guardian.name || "보호자"
+  return profile.neighbor.relation || profile.neighbor.name || "이웃"
+}
+
+function phoneFields(kind: PhoneKind | undefined, profile: Profile) {
+  if (!kind) return {}
+  const phoneNumber = phoneNumberFor(kind, profile)
+  const missing = (kind === "guardian" || kind === "neighbor") && !phoneNumber
+  return {
+    phone: true as const,
+    phoneKind: kind,
+    phoneNumber,
+    who: whoFor(kind, profile),
+    maskedNumber: phoneNumber ? maskPhone(phoneNumber) : undefined,
+    disabled: missing || undefined,
+  }
 }
 
 /** JSON actions → UI actions. {보호자}/{이웃} 치환, 번호 없으면 전화 액션은 비활성. */
@@ -130,28 +167,25 @@ function materializeActions(actions: JsonAction[], profile: Profile): AlertActio
   const neighborLabel = profile.neighbor.relation || profile.neighbor.name || "이웃"
   return actions
     .filter((a) => {
+      const kind = detectPhoneKind(a.text, a.icon ?? "")
+      // 전화 줄은 번호가 없어도 남겨 두고, 화면에서 안내한다.
+      if (kind) return true
       if (a.hide_if_empty === "이웃") return !!profile.neighbor.phone
       if (a.hide_if_empty === "보호자") return !!profile.guardian.phone
       return true
     })
     .map((a) => {
+      const iconKey = a.icon ?? ""
+      const kind = detectPhoneKind(a.text, iconKey)
       const text = a.text
         .replace(/\{보호자\}/g, guardianLabel)
         .replace(/\{이웃\}/g, neighborLabel)
-      const iconKey = a.icon ?? ""
-      const phone = PHONE_ICON_KEYS.has(iconKey)
-      const disabled =
-        (iconKey === "phone_guardian" && !profile.guardian.phone) ||
-        (iconKey === "phone_neighbor" && !profile.neighbor.phone) ||
-        false
       return {
         text,
         short: a.short,
         icon: ACTION_ICON_MAP[iconKey],
         art: a.icon,
-        phone: phone || undefined,
-        disabled: disabled || undefined,
-        phoneNumber: phoneNumberFor(iconKey, profile),
+        ...phoneFields(kind, profile),
       }
     })
 }
@@ -202,11 +236,9 @@ function practiceView(profile: Profile): AlertView {
       { text: "이 화면을 끝까지 읽어요." },
       {
         text: `${guardianLabel}에게 전화해요.`,
-        phone: true,
-        disabled: !profile.guardian.phone,
-        phoneNumber: profile.guardian.phone || undefined,
         icon: "call",
         art: "phone_guardian",
+        ...phoneFields("guardian", profile),
       },
       { text: '아래 "알았어요"를 눌러요.' },
     ],
@@ -214,7 +246,7 @@ function practiceView(profile: Profile): AlertView {
 }
 
 /** 매칭 실패/원문 테스트 — 원문을 그대로 보여주고 주의로. */
-export function rawTextView(rawText: string): AlertView {
+export function rawTextView(rawText: string, profile: Profile): AlertView {
   return {
     uiLevel: "caution",
     title: "재난문자가 왔어요",
@@ -223,7 +255,12 @@ export function rawTextView(rawText: string): AlertView {
     heroArt: "bell",
     actions: [
       { text: "내용을 끝까지 읽어요." },
-      { text: "잘 모르면 보호자에게 전화해요.", phone: true, icon: "call", art: "phone_guardian" },
+      {
+        text: "잘 모르면 보호자에게 전화해요.",
+        icon: "call",
+        art: "phone_guardian",
+        ...phoneFields("guardian", profile),
+      },
     ],
     rawText,
   }

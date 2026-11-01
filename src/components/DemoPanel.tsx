@@ -65,7 +65,7 @@ export function DemoPanel({
         title = view?.title ?? "재난문자가 왔어요"
         body = view?.situation ?? rawText.slice(0, 60)
       } else {
-        const view = rawTextView(rawText)
+        const view = rawTextView(rawText, profile)
         payload = { kind: "raw", text: rawText, broadcastType: broadcast }
         title = view.title
         body = view.situation.slice(0, 120)
