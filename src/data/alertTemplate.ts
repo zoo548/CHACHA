@@ -15,7 +15,7 @@ export type AlertAction = {
   short?: string
   /** 1단계용 선 아이콘. */
   icon?: IconName
-  /** JSON icon 이름. 2·3단계 그림. 없으면 자리만 비운다. */
+  /** JSON icon 이름. 2·3단계 그림. 없으면 2단계는 빈 자리, 3단계는 글만. */
   art?: string
   phone?: boolean
   disabled?: boolean

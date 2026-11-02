@@ -51,39 +51,59 @@ function useLongPress(onLong: () => void, ms = 550) {
   }
 }
 
+function picCardClass(action: AlertAction, extra = "") {
+  const hasArt = hasAssetIcon(action.art)
+  return [
+    "pic-card",
+    hasArt ? "" : "text-only",
+    action.disabled ? "disabled" : "",
+    extra,
+  ]
+    .filter(Boolean)
+    .join(" ")
+}
+
+function PicCardBody({ action }: { action: AlertAction }) {
+  const hasArt = hasAssetIcon(action.art)
+  const label = hasArt && action.short ? (
+    <b>{action.short}</b>
+  ) : hasArt ? (
+    <small>{action.text}</small>
+  ) : (
+    <b>{action.text}</b>
+  )
+  return (
+    <>
+      {hasArt && (
+        <span className="pic-card-art">
+          <Icon name={action.art} />
+        </span>
+      )}
+      {label}
+    </>
+  )
+}
+
 function PicCard({
   action,
-  heroArt,
   practice,
   practiced,
   onPractice,
   onEmergency,
 }: {
   action: AlertAction
-  heroArt: string
   practice?: boolean
   practiced?: boolean
   onPractice?: () => void
   onEmergency?: (kind: Extract<PhoneKind, "119" | "112">) => void
 }) {
   const longPress = useLongPress(() => speak(action.text))
-  const label = action.short ? (
-    <b>{action.short}</b>
-  ) : (
-    <small>{action.text}</small>
-  )
-  const art = hasAssetIcon(action.art) ? (
-    <Icon name={action.art} />
-  ) : hasAssetIcon(heroArt) ? (
-    <Icon name={heroArt} className="icon-faded" />
-  ) : null
 
   if (action.phoneKind) {
     if (action.disabled || !action.phoneNumber) {
       return (
-        <div className="pic-card">
-          <span className="pic-card-art">{art}</span>
-          {label}
+        <div className={picCardClass(action)}>
+          <PicCardBody action={action} />
           <CallMissing />
         </div>
       )
@@ -92,8 +112,7 @@ function PicCard({
     const inner = (
       <>
         <CallMark className="call-badge" />
-        <span className="pic-card-art">{art}</span>
-        {label}
+        <PicCardBody action={action} />
         <em className="call-card-hint">누르면 전화해요</em>
       </>
     )
@@ -113,11 +132,11 @@ function PicCard({
     return (
       <div className="call-wrap">
         {clickable ? (
-          <button className="pic-card call-card" type="button" onClick={onClick}>
+          <button className={picCardClass(action, "call-card")} type="button" onClick={onClick}>
             {inner}
           </button>
         ) : (
-          <a className="pic-card call-card" href={`tel:${digits}`}>
+          <a className={picCardClass(action, "call-card")} href={`tel:${digits}`}>
             {inner}
           </a>
         )}
@@ -134,14 +153,13 @@ function PicCard({
 
   return (
     <div
-      className={`pic-card ${action.disabled ? "disabled" : ""}`}
+      className={picCardClass(action)}
       onPointerDown={longPress.onPointerDown}
       onPointerUp={longPress.onPointerUp}
       onPointerCancel={longPress.onPointerCancel}
       onPointerLeave={longPress.onPointerLeave}
     >
-      <span className="pic-card-art">{art}</span>
-      {label}
+      <PicCardBody action={action} />
     </div>
   )
 }
@@ -235,7 +253,6 @@ function Level3Actions({
       {view.actions.map((action) => (
         <PicCard
           action={action}
-          heroArt={view.heroArt}
           key={action.text}
           practice={phone.practice}
           practiced={phone.practiced}

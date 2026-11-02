@@ -61,7 +61,6 @@ button:active { transform: scale(.97); transition: transform 100ms ease; }
   display: block;
 }
 .icon-ph { background: #e8eaed; border-radius: 8px; }
-.icon-faded { opacity: 0.35; }
 
 /* ---- 2. 공유 조각 ---------------------------------------------------- */
 
@@ -657,6 +656,23 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .pic-card-art .icon { width: 80px; height: 80px; }
 .pic-card > b { font-size: 22px; font-weight: 700; line-height: 1.3; }
 .pic-card > small { color: var(--proto-copy); font-size: 16px; font-weight: 600; line-height: 1.4; text-align: center; }
+.pic-card.text-only {
+  min-height: 96px;
+  justify-content: center;
+  padding: 18px 16px;
+  gap: 6px;
+}
+.pic-card.text-only > b {
+  width: 100%;
+  font-size: 26px;
+  line-height: 1.35;
+  text-align: center;
+  word-break: keep-all;
+}
+.pic-card.text-only.call-card {
+  padding-left: 48px;
+  padding-right: 48px;
+}
 .pic-card.disabled { opacity: .55; }
 
 .call-wrap { display: flex; flex-direction: column; gap: 8px; }
