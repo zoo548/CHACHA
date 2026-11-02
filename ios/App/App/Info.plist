@@ -71,5 +71,7 @@
 	<string>차차등에 불빛과 진동 신호를 보내기 위해 블루투스를 사용해요.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>차차등에 불빛과 진동 신호를 보내기 위해 블루투스를 사용해요.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>우리 집 사진을 남기려면 카메라가 필요해요.</string>
 </dict>
 </plist>

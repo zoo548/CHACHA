@@ -1,22 +1,17 @@
 // 우리 집 안전 점검 플로우.
-// 1) SafetyStart: 집 유형 선택 (반지하/1층/2층 이상 — 반지하면 추가 질문)
-// 2) SafetyQuestionScreen: 질문별 선택 + 해설
-// 3) SafetyResult: 결과 요약 + 도움 보내기 + 다시 점검
+// 1) SafetyStart: 집 유형 선택
+// 2) SafetyQuestionScreen: 네 / 아니요 / 몰라요. 아니요·몰라요면 할 일 한 줄.
+// 3) SafetyResult: 할 일 목록 + 보호자에게 문자 보내기
 //
-// 저장소: @capacitor/preferences (아이폰 UserDefaults, 안드로이드 SharedPreferences, 웹 localStorage).
-// 중간에 나갔다 와도 이어서 할 수 있고, 서버 전송은 하지 않는다.
+// 저장소: @capacitor/preferences. 서버 전송은 하지 않는다.
+// 예전 숫자 id 답은 읽고 버린다.
 
 import { useEffect, useState } from "react"
+import { Capacitor } from "@capacitor/core"
 import { Preferences } from "@capacitor/preferences"
 import {
-  Backpack,
   Building2,
-  DoorClosed,
-  FireExtinguisher,
   House,
-  Info,
-  Shield,
-  Users,
   Warehouse,
   type LucideIcon,
 } from "lucide-react"
@@ -24,18 +19,52 @@ import {
 import { Icon } from "../components/Icon"
 import { ProtoButton } from "../components/ProtoButton"
 import { ProtoGuardian } from "../components/ProtoGuardian"
-import { safetyQuestions, type SafetyAnswer, type SafetyQuestion } from "../data/safetyQuestions"
-import type { Contact, Profile } from "../data/profile"
+import {
+  checkGuidePhotoSrc,
+  isSafetyQuestionId,
+  safetyQuestions,
+  todosFromAnswers,
+  type SafetyAnswer,
+  type SafetyQuestion,
+  type SafetyQuestionId,
+} from "../data/safetyQuestions"
+import { toTelDigits } from "../data/profile"
+import type { Profile } from "../data/profile"
+import { loadHomePhotos, saveHomePhoto, takeHomePhoto, type HomePhotos } from "../device/homePhoto"
 
 const SAFETY_STATE_KEY = "chacha-safety-check"
 const SAFETY_COMPLETE_KEY = "chacha-safety-complete"
 
+const ANSWER_LABELS: [string, string, string] = ["네", "아니요", "몰라요"]
+
 type SafetyState = {
   home: string
   index: number
-  answers: Record<number, SafetyAnswer>
+  answers: Record<string, SafetyAnswer>
   complete: boolean
-  prepared: boolean
+}
+
+function readAnswers(raw: unknown): Record<string, SafetyAnswer> {
+  if (!raw || typeof raw !== "object") return {}
+  const next: Record<string, SafetyAnswer> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!isSafetyQuestionId(key)) continue
+    if (value === 0 || value === 1 || value === 2) next[key] = value
+  }
+  return next
+}
+
+function smsHref(phone: string, body: string): string {
+  const digits = toTelDigits(phone)
+  const encoded = encodeURIComponent(body)
+  return Capacitor.getPlatform() === "ios"
+    ? `sms:${digits}&body=${encoded}`
+    : `sms:${digits}?body=${encoded}`
+}
+
+function todoSmsBody(todos: string[]): string {
+  if (todos.length === 0) return "할 일이 없어요."
+  return ["할 일", ...todos].join("\n")
 }
 
 // --- 공통 작은 조각 -----------------------------------------------------
@@ -62,10 +91,37 @@ function SafetyTop({
   )
 }
 
-function SafetyIconTile({ icon: SafetyIcon }: { icon: LucideIcon }) {
+function SafetyIconTile({
+  question,
+  homePhoto,
+}: {
+  question: SafetyQuestion
+  homePhoto?: string
+}) {
+  const [guideOk, setGuideOk] = useState(false)
+  const GuideIcon = question.icon
+
+  useEffect(() => {
+    setGuideOk(false)
+  }, [question.id, homePhoto])
+
+  if (homePhoto) {
+    return (
+      <div className="safety-icon-tile">
+        <img src={homePhoto} alt="" />
+      </div>
+    )
+  }
   return (
     <div className="safety-icon-tile">
-      <SafetyIcon aria-hidden="true" size={56} strokeWidth={2} />
+      <img
+        src={checkGuidePhotoSrc(question.id)}
+        alt=""
+        hidden={!guideOk}
+        onLoad={() => setGuideOk(true)}
+        onError={() => setGuideOk(false)}
+      />
+      {!guideOk && <GuideIcon aria-hidden="true" size={56} strokeWidth={2} />}
     </div>
   )
 }
@@ -87,7 +143,7 @@ function SafetyStart({
   ]
   return (
     <section className="safety-screen">
-      <SafetyTop current={1} total={15} back={back} />
+      <SafetyTop current={1} total={safetyQuestions.length} back={back} />
       <main className="safety-start">
         <h1>우리 집 안전 점검</h1>
         <p>우리 집에 맞는 것만 물어볼게요. 5분이면 돼요.</p>
@@ -123,29 +179,41 @@ function SafetyQuestionScreen({
   current,
   total,
   answer,
+  homePhoto,
   choose,
   next,
   back,
+  onCapture,
 }: {
   question: SafetyQuestion
   current: number
   total: number
   answer?: SafetyAnswer
+  homePhoto?: string
   choose: (answer: SafetyAnswer) => void
   next: () => void
   back: () => void
+  onCapture: (id: SafetyQuestionId, dataUrl: string) => void
 }) {
-  const options = [...question.answers, "잘 모르겠어요"]
+  const capture = async () => {
+    const dataUrl = await takeHomePhoto()
+    if (dataUrl) onCapture(question.id, dataUrl)
+  }
+
   return (
     <section className="safety-screen">
       <SafetyTop current={current} total={total} back={back} />
       <main className="safety-question">
         <em>{question.category}</em>
-        <SafetyIconTile icon={question.icon} />
+        <SafetyIconTile question={question} homePhoto={homePhoto} />
+        {question.capturePhoto && (
+          <button className="proto-button secondary safety-photo-btn" type="button" onClick={capture}>
+            우리 집 사진 찍기
+          </button>
+        )}
         <h1>{question.question}</h1>
-        <p>{question.description}</p>
         <div className="answer-options">
-          {options.map((option, index) => (
+          {ANSWER_LABELS.map((option, index) => (
             <button
               className={answer === index ? "selected" : ""}
               onClick={() => choose(index as SafetyAnswer)}
@@ -158,10 +226,9 @@ function SafetyQuestionScreen({
         </div>
         {answer !== undefined && answer > 0 && (
           <aside className="safety-tip">
-            <Info size={24} strokeWidth={2} />
             <div>
-              <b>이렇게 해요</b>
-              <p>{question.tip}</p>
+              <b>할 일</b>
+              <p>{question.todo}</p>
             </div>
           </aside>
         )}
@@ -175,116 +242,21 @@ function SafetyQuestionScreen({
   )
 }
 
-// --- 결과 상세/보내기 바텀시트 ------------------------------------------
-
-function SafetyDetailSheet({
-  complete,
-  close,
-}: {
-  complete: () => void
-  close: () => void
-}) {
-  return (
-    <div className="proto-sheet-wrap" onClick={close}>
-      <section className="proto-sheet safety-detail" onClick={(event) => event.stopPropagation()}>
-        <i />
-        <SafetyIconTile icon={FireExtinguisher} />
-        <h2>소화기 준비하기</h2>
-        <ol>
-          <li><i>1</i><span>보호자와 함께 소화기를 사요.</span></li>
-          <li><i>2</i><span>현관 가까이에 둬요.</span></li>
-          <li><i>3</i><span>다 하면 아래 버튼을 눌러요.</span></li>
-        </ol>
-        <ProtoButton onClick={complete}>준비했어요</ProtoButton>
-      </section>
-    </div>
-  )
-}
-
-/** 보호자/이웃 중 번호가 있는 사람만 "{관계} ({이름})" 형식으로. */
-function peopleToSend(profile: Profile): { key: string; label: string; contact: Contact }[] {
-  const list: { key: string; label: string; contact: Contact }[] = []
-  const label = (c: Contact) => {
-    const relation = c.relation || "도와줄 사람"
-    return c.name ? `${c.name} (${relation})` : relation
-  }
-  if (profile.guardian.phone) list.push({ key: "guardian", label: label(profile.guardian), contact: profile.guardian })
-  if (profile.neighbor.phone) list.push({ key: "neighbor", label: label(profile.neighbor), contact: profile.neighbor })
-  return list
-}
-
-function SafetySendSheet({
-  sent,
-  close,
-  profile,
-}: {
-  sent: (person: string) => void
-  close: () => void
-  profile: Profile
-}) {
-  const people = peopleToSend(profile)
-  const [selected, setSelected] = useState<string>(people[0]?.label ?? "")
-  const userName = profile.name || "저"
-  return (
-    <div className="proto-sheet-wrap" onClick={close}>
-      <section className="proto-sheet safety-send" onClick={(event) => event.stopPropagation()}>
-        <i />
-        <h2>누구에게 보낼까요?</h2>
-        {people.length === 0 ? (
-          <p>내 카드에 보호자 전화번호를 적으면 여기서 보낼 수 있어요.</p>
-        ) : (
-          <>
-            <div className="send-people">
-              {people.map(({ key, label }) => (
-                <button
-                  className={selected === label ? "selected" : ""}
-                  onClick={() => setSelected(label)}
-                  key={key}
-                >
-                  <span><Users size={24} strokeWidth={2} /></span>
-                  <b>{label}</b>
-                  {selected === label && <Icon name="check" />}
-                </button>
-              ))}
-            </div>
-            <div className="send-preview">
-              <span>{userName}님의 우리 집 안전 점검 결과예요.</span>
-              <span>준비된 것 11개, 준비할 것 4개, 같이 확인할 것 1개</span>
-              <span>준비할 것: 소화기, 물막이판, 무더위쉼터, 챙길 가방</span>
-              <span>같이 확인: 물이 차면 문이 잘 열리는지</span>
-            </div>
-            <ProtoButton onClick={() => sent(selected)} disabled={!selected}>
-              문자로 보내기
-            </ProtoButton>
-          </>
-        )}
-      </section>
-    </div>
-  )
-}
-
 // --- 3단계: 결과 요약 ---------------------------------------------------
 
 function SafetyResult({
-  prepared,
-  completeItem,
+  todos,
   restart,
   home,
-  send,
+  guardianPhone,
 }: {
-  prepared: boolean
-  completeItem: () => void
+  todos: string[]
   restart: () => void
   home: () => void
-  send: () => void
+  guardianPhone: string
 }) {
-  const [detail, setDetail] = useState(false)
-  const prepareItems: [LucideIcon, string][] = [
-    [FireExtinguisher, "소화기 준비하기"],
-    [Shield, "물막이판 물어보기"],
-    [Building2, "무더위쉼터 알아보기"],
-    [Backpack, "챙길 가방 만들기"],
-  ]
+  const digits = toTelDigits(guardianPhone)
+  const href = digits ? smsHref(digits, todoSmsBody(todos)) : ""
   return (
     <section className="safety-screen result-screen">
       <header className="result-close">
@@ -293,46 +265,30 @@ function SafetyResult({
       <main>
         <span className="result-check"><Icon name="check" /></span>
         <h1>안전 점검을 다 했어요</h1>
-        <p>2026년 10월 9일 · 반지하</p>
-        <div className="result-counts">
-          <section><b>준비된 것</b><strong>{prepared ? 12 : 11}개</strong></section>
-          <section><b>준비할 것</b><strong>{prepared ? 3 : 4}개</strong></section>
-          <section><b>같이 확인</b><strong>1개</strong></section>
-        </div>
         <article className="result-card">
-          <h2>준비할 것</h2>
-          {prepareItems
-            .filter(([, title]) => !prepared || title !== "소화기 준비하기")
-            .map(([ItemIcon, title]) => (
-              <button onClick={() => setDetail(true)} key={title}>
-                <span><ItemIcon size={24} strokeWidth={2} /></span>
-                <b>{title}</b>
-                <i>›</i>
-              </button>
-            ))}
-        </article>
-        <article className="result-card">
-          <h2>같이 확인해요</h2>
-          <button onClick={() => setDetail(true)}>
-            <span><DoorClosed size={24} strokeWidth={2} /></span>
-            <b>물이 차면 문이 잘 열리는지</b>
-            <i>›</i>
-          </button>
+          <h2>할 일</h2>
+          {todos.length === 0 ? (
+            <p className="result-empty">할 일이 없어요.</p>
+          ) : (
+            todos.map((todo) => (
+              <div className="result-todo" key={todo}>
+                <b>{todo}</b>
+              </div>
+            ))
+          )}
         </article>
       </main>
       <footer className="safety-fixed">
-        <ProtoButton onClick={send}>도와주는 사람에게 보내기</ProtoButton>
+        {href ? (
+          <a className="proto-button" href={href}>보호자에게 보내기</a>
+        ) : (
+          <>
+            <button className="proto-button" disabled>보호자에게 보내기</button>
+            <p className="result-send-hint">내 카드에 보호자 전화번호를 적으면 여기서 보낼 수 있어요.</p>
+          </>
+        )}
         <ProtoButton secondary onClick={restart}>다시 점검하기</ProtoButton>
       </footer>
-      {detail && (
-        <SafetyDetailSheet
-          close={() => setDetail(false)}
-          complete={() => {
-            completeItem()
-            setDetail(false)
-          }}
-        />
-      )}
     </section>
   )
 }
@@ -350,33 +306,35 @@ export function SafetyCheck({
   onComplete: () => void
   profile: Profile
 }) {
-  // Preferences 는 비동기 → 로드 전까진 기본값으로 그렸다가 값이 오면 교체.
   const [loaded, setLoaded] = useState(false)
   const [view, setView] = useState<"start" | "question" | "result">("start")
   const [homeType, setHomeType] = useState<string>("")
   const [index, setIndex] = useState<number>(0)
-  const [answers, setAnswers] = useState<Record<number, SafetyAnswer>>({})
-  const [prepared, setPrepared] = useState(false)
-  const [sendOpen, setSendOpen] = useState(false)
-  const [toast, setToast] = useState("")
+  const [answers, setAnswers] = useState<Record<string, SafetyAnswer>>({})
+  const [photos, setPhotos] = useState<HomePhotos>({})
 
-  // 마운트 때 한 번: 저장된 진행 상태 복원
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       try {
-        const { value } = await Preferences.get({ key: SAFETY_STATE_KEY })
+        const [{ value }, homePhotos] = await Promise.all([
+          Preferences.get({ key: SAFETY_STATE_KEY }),
+          loadHomePhotos(),
+        ])
         if (cancelled) return
+        setPhotos(homePhotos)
         if (value) {
           const saved = JSON.parse(value) as Partial<SafetyState>
+          const restored = readAnswers(saved.answers)
+          const last = Math.max(safetyQuestions.length - 1, 0)
+          const nextIndex = Math.min(Math.max(saved.index ?? 0, 0), last)
           setHomeType(saved.home ?? "")
-          setIndex(saved.index ?? 0)
-          setAnswers(saved.answers ?? {})
-          setPrepared(Boolean(saved.prepared))
+          setIndex(nextIndex)
+          setAnswers(restored)
           setView(saved.complete ? "result" : saved.home ? "question" : "start")
         }
       } catch {
-        /* ignore */
+        /* 예전 형식·깨진 값은 무시하고 처음부터 */
       } finally {
         if (!cancelled) setLoaded(true)
       }
@@ -386,10 +344,8 @@ export function SafetyCheck({
     }
   }, [])
 
-  const questions = safetyQuestions.filter((question) => !question.lowerFloors || homeType !== "2층 이상")
-  const question = questions[Math.min(index, questions.length - 1)]
+  const question = safetyQuestions[Math.min(index, safetyQuestions.length - 1)]
 
-  // 상태가 바뀌면 Preferences 에 저장. 아직 로드되지 않았으면 쓰지 않는다 (덮어쓰기 방지).
   useEffect(() => {
     if (!loaded) return
     const state: SafetyState = {
@@ -397,10 +353,9 @@ export function SafetyCheck({
       index,
       answers,
       complete: view === "result",
-      prepared,
     }
     Preferences.set({ key: SAFETY_STATE_KEY, value: JSON.stringify(state) }).catch(() => {})
-  }, [loaded, homeType, index, answers, view, prepared])
+  }, [loaded, homeType, index, answers, view])
 
   const start = (selectedHome: string) => {
     setHomeType(selectedHome)
@@ -409,7 +364,7 @@ export function SafetyCheck({
     setView("question")
   }
   const next = () => {
-    if (index >= questions.length - 1) {
+    if (index >= safetyQuestions.length - 1) {
       setView("result")
       Preferences.set({ key: SAFETY_COMPLETE_KEY, value: "true" }).catch(() => {})
       onComplete()
@@ -417,44 +372,39 @@ export function SafetyCheck({
   }
 
   if (view === "start") return <SafetyStart onStart={start} back={back} />
-  if (view === "question")
+  if (view === "question" && question)
     return (
       <SafetyQuestionScreen
         question={question}
         current={index + 1}
-        total={questions.length}
+        total={safetyQuestions.length}
         answer={answers[question.id]}
+        homePhoto={photos[question.id]}
         choose={(answer) => setAnswers({ ...answers, [question.id]: answer })}
         next={next}
-        back={() => (index === 0 ? setView("start") : setIndex(index - 1))}
+        back={() => {
+          if (index === 0) {
+            setHomeType("")
+            setView("start")
+          } else setIndex(index - 1)
+        }}
+        onCapture={(id, dataUrl) => {
+          setPhotos((prev) => ({ ...prev, [id]: dataUrl }))
+          saveHomePhoto(id, dataUrl).catch(() => {})
+        }}
       />
     )
   return (
-    <>
-      <SafetyResult
-        prepared={prepared}
-        completeItem={() => setPrepared(true)}
-        restart={() => {
-          setView("start")
-          setHomeType("")
-          setIndex(0)
-          setAnswers({})
-        }}
-        home={home}
-        send={() => setSendOpen(true)}
-      />
-      {sendOpen && (
-        <SafetySendSheet
-          close={() => setSendOpen(false)}
-          profile={profile}
-          sent={(person) => {
-            setSendOpen(false)
-            setToast(`${person.split(" ")[0]}님에게 보냈어요.`)
-            window.setTimeout(() => setToast(""), 3000)
-          }}
-        />
-      )}
-      {toast && <div className="safety-toast">{toast}</div>}
-    </>
+    <SafetyResult
+      todos={todosFromAnswers(answers)}
+      restart={() => {
+        setView("start")
+        setHomeType("")
+        setIndex(0)
+        setAnswers({})
+      }}
+      home={home}
+      guardianPhone={profile.guardian.phone}
+    />
   )
 }

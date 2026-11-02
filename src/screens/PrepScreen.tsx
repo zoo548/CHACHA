@@ -30,10 +30,10 @@ export function PrepScreen({
         <article className="task-card">
           <header>
             <span><Icon name="home" /></span>
-            {safetyComplete && <em>10월 9일 점검</em>}
+            {safetyComplete && <em>점검했어요</em>}
           </header>
           <h2>우리 집 안전 점검</h2>
-          <p>{safetyComplete ? "준비할 것이 4개 있어요." : "집이 안전한지 확인해요."}</p>
+          <p>{safetyComplete ? "점검을 다 했어요." : "집이 안전한지 확인해요."}</p>
           <ProtoButton secondary onClick={startSafety}>
             {safetyComplete ? "결과 보기" : "점검하기"}
           </ProtoButton>

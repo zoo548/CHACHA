@@ -38,6 +38,7 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <!-- 차차등(BLE) 블루투스 — @capacitor-community/bluetooth-le 요구사항.
          API 31+ (Android 12 이상): BLUETOOTH_SCAN / BLUETOOTH_CONNECT.
