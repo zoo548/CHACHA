@@ -3,6 +3,7 @@
 // 생성형 AI 쓰지 않는다. 문구는 JSON 그대로, 슬롯({보호자}/{이웃})만 profile 로 채운다.
 // short 필드는 타입이 받을 수 있게만 열어 두고, JSON 에는 넣지 않는다.
 
+import { isExcludedDisaster } from "../alerts/excluded"
 import {
   resolveAlertLevel,
   type AlertLevel,
@@ -240,11 +241,13 @@ export function getAlertView(
 
 /** 재난 목록 (시연 패널 드롭다운용). */
 export function listDisasters(): { id: string; name: string; levels: TemplateVariant[] }[] {
-  return disasters.map((d) => ({
-    id: d.id,
-    name: d.name_official,
-    levels: d.variants.map((v) => v.level),
-  }))
+  return disasters
+    .filter((d) => !isExcludedDisaster(d.id))
+    .map((d) => ({
+      id: d.id,
+      name: d.name_official,
+      levels: d.variants.map((v) => v.level),
+    }))
 }
 
 /** 연습 알림 — JSON 에 없는 특별 케이스. */

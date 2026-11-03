@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { emptyProfile } from "./profile"
-import { getAlertView } from "./alertTemplate"
+import { getAlertView, listDisasters } from "./alertTemplate"
 import { SAMPLE_ALERTS } from "./sampleAlerts"
 
 describe("getAlertView 색과 행동 단계는 따로", () => {
@@ -31,6 +31,15 @@ describe("getAlertView 색과 행동 단계는 따로", () => {
 
   it("발송 유형이 없으면 evacuate 는 긴급, caution 은 안전안내", () => {
     expect(getAlertView("air_raid", "evacuate", emptyProfile)?.uiLevel).toBe("emergency")
-    expect(getAlertView("missing_person", "caution", emptyProfile)?.uiLevel).toBe("safety")
+    expect(getAlertView("heatwave", "caution", emptyProfile)?.uiLevel).toBe("safety")
+  })
+
+  it("안전안내 예시 알림은 폭염이다", () => {
+    const safety = SAMPLE_ALERTS.find((s) => s.id === "safety")
+    expect(safety?.disasterId).toBe("heatwave")
+  })
+
+  it("시연 목록에 실종경보는 없다", () => {
+    expect(listDisasters().some((d) => d.id === "missing_person")).toBe(false)
   })
 })

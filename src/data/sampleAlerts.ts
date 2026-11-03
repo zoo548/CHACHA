@@ -31,8 +31,8 @@ export const SAMPLE_ALERTS: SampleAlertSpec[] = [
   {
     id: "safety",
     button: "안전안내 예시 · 파랑",
-    name: "실종경보",
-    disasterId: "missing_person",
+    name: "폭염",
+    disasterId: "heatwave",
     variant: "caution",
     broadcast: "안전안내",
   },

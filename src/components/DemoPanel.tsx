@@ -10,6 +10,7 @@
 import { useState } from "react"
 import { ProtoButton } from "./ProtoButton"
 import { getAlertView, listDisasters, rawTextView } from "../data/alertTemplate"
+import { isExcludedDisaster } from "../alerts/excluded"
 import { matchAlert, type BroadcastType } from "../matching/matchAlert"
 import { scheduleDemoAlert, type NotificationPayload } from "../notifications"
 import type { Profile } from "../data/profile"
@@ -48,6 +49,10 @@ export function DemoPanel({
       body = "진짜 재난이 아니에요."
     } else if (mode === "preset") {
       const useLevel = canEvacuate ? level : "caution"
+      if (isExcludedDisaster(disasterId)) {
+        setStatus("이 문자는 알리지 않아요.")
+        return
+      }
       const view = getAlertView(disasterId, useLevel, profile)
       if (!view) {
         setStatus("재난 정보를 찾을 수 없어요.")
@@ -59,6 +64,10 @@ export function DemoPanel({
     } else {
       // mode === "raw"
       const result = matchAlert(rawText, broadcast)
+      if (result && isExcludedDisaster(result.id)) {
+        setStatus("이 문자는 알리지 않아요.")
+        return
+      }
       if (result) {
         const view = getAlertView(result.id, result.level, profile, {
           broadcast,

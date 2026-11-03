@@ -16,6 +16,7 @@ import {
   Style as NativeStatusBarStyle,
 } from "@capacitor/status-bar"
 
+import { isExcludedDisaster } from "./alerts/excluded"
 import {
   ALERT_LEVEL_RANK,
   deviceCommand,
@@ -117,10 +118,16 @@ function statePriority(s: AlertState | null): number {
   if (level === "practice") return 0
   return ALERT_LEVEL_RANK[level]
 }
-function payloadPriority(p: NotificationPayload): number {
+function payloadPriority(p: NotificationPayload | null): number {
+  if (!p) return 0
+  if (p.kind === "preset" && isExcludedDisaster(p.disasterId)) return 0
   const level = levelOfPayload(p)
   if (level === "practice") return 0
   return ALERT_LEVEL_RANK[level]
+}
+
+function isExcludedPayload(p: NotificationPayload): boolean {
+  return p.kind === "preset" && isExcludedDisaster(p.disasterId)
 }
 function payloadToState(p: NotificationPayload): AlertState {
   if (p.kind === "preset") {
@@ -137,10 +144,11 @@ function payloadToState(p: NotificationPayload): AlertState {
   return { kind: "raw", text: p.text, broadcastType: p.broadcastType, sample: p.sample }
 }
 
-function relayToPayload(alert: RelayAlert): NotificationPayload {
+function relayToPayload(alert: RelayAlert): NotificationPayload | null {
   const broadcast = broadcastFromLevel(alert.level)
   const result = matchAlert(alert.message, broadcast)
   if (result) {
+    if (isExcludedDisaster(result.id)) return null
     return {
       kind: "preset",
       disasterId: result.id,
@@ -225,6 +233,7 @@ function App() {
   useEffect(() => {
     let unsub: (() => void) | null = null
     onNotificationTap((payload: NotificationPayload) => {
+      if (isExcludedPayload(payload)) return
       let changed = true
       setAlertState((prev) => {
         const cur = statePriority(prev)
@@ -351,7 +360,8 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, alertState, device])
 
-  const applyIncoming = (payload: NotificationPayload) => {
+  const applyIncoming = (payload: NotificationPayload | null) => {
+    if (!payload || isExcludedPayload(payload)) return
     let changed = true
     setAlertState((prev) => {
       const cur = statePriority(prev)
