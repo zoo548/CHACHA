@@ -328,9 +328,7 @@ function App() {
     return { level: view.uiLevel, title: view.title, situation: view.situation }
   }, [lockAlert, profile])
 
-  // "알았어요" 공통 처리 — 기기에 C 보내고 화면 정리.
-  const acknowledgeAlert = () => {
-    device.send("C").catch(() => {})
+  const closeAlertAfterAck = () => {
     if (alertState?.kind === "practice") {
       setOnboardStep(14)
       setAlertState(null)
@@ -343,17 +341,36 @@ function App() {
     }
   }
 
+  // 앱에서 알았어요: 차차등에 C 를 보낸 뒤 홈으로.
+  const acknowledgeAlert = () => {
+    device.send("C").catch(() => {})
+    closeAlertAfterAck()
+  }
+
+  // 차차등 버튼: 먼저 앱 알림을 닫고 홈으로, 그다음 C 로 불을 끈다.
+  const acknowledgeFromDevice = () => {
+    closeAlertAfterAck()
+    device.send("C").catch(() => {})
+  }
+
   // 알림 화면이 열릴 때 기기에 신호 보내기. 연습은 안 보냄.
   useEffect(() => {
     if (screen !== "alert" || !alertView) return
     if (alertView.uiLevel === "practice") return
-    device.send(deviceCommand(alertView.uiLevel)).catch(() => {})
-  }, [screen, alertView, device])
+    const disasterId =
+      alertState?.kind === "preset" ? alertState.disasterId : alertView.disasterId
+    device.send(deviceCommand(alertView.uiLevel, disasterId)).catch(() => {})
+  }, [screen, alertView, alertState, device])
 
-  // 하드웨어 버튼으로 확인했을 때(기기→앱 C): 알림 화면이 열려 있으면 "알았어요" 처리.
+  useEffect(() => {
+    if (device.state.status !== "connected") return
+    device.send(profile.chachaVoice).catch(() => {})
+  }, [device, device.state.status, profile.chachaVoice])
+
+  // 하드웨어 버튼으로 확인했을 때(기기→앱 C): 알림 화면이 열려 있으면 확인 처리.
   useEffect(() => {
     return device.onButton(() => {
-      if (screen === "alert" && alertState) acknowledgeAlert()
+      if (screen === "alert" && alertState) acknowledgeFromDevice()
     })
     // acknowledgeAlert 는 매 렌더마다 새로 만들어지지만, device.onButton 은 안정적 참조.
     // 리스너 자체는 항상 "최신 state" 를 참조하도록 effect 를 매번 새로 등록한다.
@@ -419,7 +436,7 @@ function App() {
       setScreen("lock")
       setDemoOpen(false)
       setSheet(null)
-      device.send(deviceCommand(signal)).catch(() => {})
+      device.send(deviceCommand(signal, spec.disasterId)).catch(() => {})
     }, SAMPLE_DELAY_SEC * 1000)
   }
 

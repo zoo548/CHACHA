@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest"
 import { matchAlert } from "../matching/matchAlert"
+import { SAMPLE_ALERTS } from "../data/sampleAlerts"
 import {
   badgeLabel,
   broadcastFromLevel,
   deviceCommand,
+  gradeDots,
+  gradeEasyName,
+  gradeOfficialName,
   parseBroadcast,
   resolveAlertLevel,
 } from "./level"
@@ -28,7 +32,7 @@ describe("broadcastFromLevel", () => {
 })
 
 describe("resolveAlertLevel — 발송 유형", () => {
-  it("위급은 빨강(critical), 긴급은 노랑(emergency), 안전안내는 파랑(safety)", () => {
+  it("위급은 빨강(critical), 긴급은 주황(emergency), 안전안내는 파랑(safety)", () => {
     expect(resolveAlertLevel({ broadcast: "위급재난" })).toBe("critical")
     expect(resolveAlertLevel({ broadcast: "긴급재난" })).toBe("emergency")
     expect(resolveAlertLevel({ broadcast: "안전안내" })).toBe("safety")
@@ -55,16 +59,49 @@ describe("resolveAlertLevel — 발송 유형을 모를 때", () => {
 })
 
 describe("기기 신호·띠 글자", () => {
-  it("위급 H, 긴급 L, 안전안내 B", () => {
+  it("위급 H, 긴급 L, 안전안내 I, 위급 호우 R", () => {
     expect(deviceCommand("critical")).toBe("H")
     expect(deviceCommand("emergency")).toBe("L")
-    expect(deviceCommand("safety")).toBe("B")
+    expect(deviceCommand("safety")).toBe("I")
+    expect(deviceCommand("critical", "heavy_rain")).toBe("R")
+    expect(deviceCommand("critical", "air_raid")).toBe("H")
   })
 
-  it("알림 띠는 위급·긴급·안전안내", () => {
-    expect(badgeLabel("critical")).toBe("▲ 위급")
-    expect(badgeLabel("emergency")).toBe("● 긴급")
-    expect(badgeLabel("safety")).toBe("ⓘ 안전안내")
+  it("점은 안전안내 1개, 긴급 2개, 위급 3개", () => {
+    expect(gradeDots("safety")).toBe("●")
+    expect(gradeDots("emergency")).toBe("●●")
+    expect(gradeDots("critical")).toBe("●●●")
+  })
+
+  it("쉬운 이름과 정부 이름을 같이 쓴다", () => {
+    expect(gradeEasyName("safety")).toBe("알아두세요")
+    expect(gradeEasyName("emergency")).toBe("조심해요")
+    expect(gradeEasyName("critical")).toBe("지금 해야 해요")
+    expect(gradeOfficialName("safety")).toBe("안전안내문자")
+    expect(gradeOfficialName("emergency")).toBe("긴급재난문자")
+    expect(gradeOfficialName("critical")).toBe("위급재난문자")
+    expect(badgeLabel("critical")).toBe("●●● 지금 해야 해요")
+  })
+})
+
+describe("예시 알림 기기 명령", () => {
+  it("공습경보·호우 대피·폭염은 H, L, I 를 보낸다", () => {
+    const commands = SAMPLE_ALERTS.map((spec) =>
+      deviceCommand(
+        resolveAlertLevel({ broadcast: spec.broadcast, variant: spec.variant }),
+        spec.disasterId,
+      ),
+    )
+    expect(commands).toEqual(["H", "L", "I"])
+  })
+
+  it("위급 호우는 R 을 보낸다", () => {
+    expect(
+      deviceCommand(
+        resolveAlertLevel({ broadcast: "위급", variant: "evacuate" }),
+        "heavy_rain",
+      ),
+    ).toBe("R")
   })
 })
 

@@ -2,7 +2,9 @@
 
 import { ProtoButton } from "../components/ProtoButton"
 import { ReadingLevelPicker, SoundSensitivePicker } from "../components/ViewModePicker"
+import type { DeviceVoice } from "../alerts/level"
 import type { Profile, ReadingLevel } from "../data/profile"
+import { useDevice } from "../device/DeviceContext"
 
 export function SettingsScreen({
   back,
@@ -17,6 +19,13 @@ export function SettingsScreen({
   profile: Profile
   updateProfile: (patch: Partial<Profile>) => void
 }) {
+  const device = useDevice()
+
+  const setVoice = (chachaVoice: DeviceVoice) => {
+    updateProfile({ chachaVoice })
+    device.send(chachaVoice).catch(() => {})
+  }
+
   return (
     <main className="proto-page settings-page">
       <button className="proto-back" onClick={back}>‹ 뒤로</button>
@@ -39,8 +48,28 @@ export function SettingsScreen({
         />
       </section>
       <section className="settings-block">
+        <h2>차차등 목소리</h2>
+        <p>차차등이 말하는 목소리를 골라요.</p>
+        <div className="voice-pick">
+          <button
+            type="button"
+            className={profile.chachaVoice === "F" ? "active" : ""}
+            onClick={() => setVoice("F")}
+          >
+            여성
+          </button>
+          <button
+            type="button"
+            className={profile.chachaVoice === "M" ? "active" : ""}
+            onClick={() => setVoice("M")}
+          >
+            남성
+          </button>
+        </div>
+      </section>
+      <section className="settings-block">
         <h2>예시 알림 보기</h2>
-        <p>빨강·노랑·파랑 알림을 미리 봐요.</p>
+        <p>빨강·주황·파랑 알림을 미리 봐요.</p>
         <ProtoButton secondary onClick={openSamples}>예시 알림 보기</ProtoButton>
       </section>
       <button className="credits-link" type="button" onClick={openCredits}>

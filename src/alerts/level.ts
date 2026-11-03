@@ -5,9 +5,10 @@
 export type BroadcastType = "위급" | "긴급" | "안전안내"
 export type TemplateVariant = "caution" | "evacuate"
 export type AlertLevel = "critical" | "emergency" | "safety"
-export type DeviceSignal = "H" | "L" | "B" | "C"
+export type DeviceSignal = "H" | "L" | "I" | "R" | "C" | "F" | "M"
+export type DeviceVoice = "F" | "M"
 
-/** 위급(H) > 긴급(L) > 안전안내(B). 연습은 0. */
+/** 위급(H/R) > 긴급(L) > 안전안내(I). 연습은 0. */
 export const ALERT_LEVEL_RANK: Record<AlertLevel, number> = {
   critical: 3,
   emergency: 2,
@@ -46,14 +47,35 @@ export function resolveAlertLevel(opts: {
   return level
 }
 
-export function deviceCommand(level: AlertLevel): Exclude<DeviceSignal, "C"> {
+/** 앱 → 차차등 알림 명령. 위급+호우는 R, 그 외 위급은 H. */
+export function deviceCommand(
+  level: AlertLevel,
+  disasterId?: string | null,
+): Exclude<DeviceSignal, "C" | "F" | "M"> {
+  if (level === "critical" && disasterId === "heavy_rain") return "R"
   if (level === "critical") return "H"
   if (level === "emergency") return "L"
-  return "B"
+  return "I"
+}
+
+export function gradeDots(level: AlertLevel): string {
+  if (level === "critical") return "●●●"
+  if (level === "emergency") return "●●"
+  return "●"
+}
+
+export function gradeEasyName(level: AlertLevel): string {
+  if (level === "critical") return "지금 해야 해요"
+  if (level === "emergency") return "조심해요"
+  return "알아두세요"
+}
+
+export function gradeOfficialName(level: AlertLevel): string {
+  if (level === "critical") return "위급재난문자"
+  if (level === "emergency") return "긴급재난문자"
+  return "안전안내문자"
 }
 
 export function badgeLabel(level: AlertLevel): string {
-  if (level === "critical") return "▲ 위급"
-  if (level === "emergency") return "● 긴급"
-  return "ⓘ 안전안내"
+  return `${gradeDots(level)} ${gradeEasyName(level)}`
 }

@@ -22,7 +22,7 @@ export const SAMPLE_ALERTS: SampleAlertSpec[] = [
   },
   {
     id: "emergency",
-    button: "긴급 예시 · 노랑",
+    button: "긴급 예시 · 주황",
     name: "호우 대피",
     disasterId: "heavy_rain",
     variant: "evacuate",

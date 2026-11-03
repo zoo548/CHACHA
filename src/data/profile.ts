@@ -10,6 +10,7 @@
 // 2) 저장 키는 PROFILE_KEY 하나만 쓴다. 전체 JSON 을 통째로 저장/불러오기.
 
 import { Preferences } from "@capacitor/preferences"
+import type { DeviceVoice } from "../alerts/level"
 
 /** 보호자/이웃 공통 정보. */
 export type Contact = {
@@ -47,6 +48,8 @@ export type Profile = {
   readingLevel: ReadingLevel
   /** true 이면 알림 소리·자동 읽어주기 없음. */
   soundSensitive: boolean
+  /** 차차등 목소리. F 여성, M 남성. */
+  chachaVoice: DeviceVoice
 }
 
 /** 아무것도 입력하지 않은 초기 값. */
@@ -63,6 +66,7 @@ export const emptyProfile: Profile = {
   bring: "",
   readingLevel: 1,
   soundSensitive: false,
+  chachaVoice: "F",
 }
 
 const PROFILE_KEY = "chacha-profile-v1"
@@ -83,6 +87,7 @@ export async function loadProfile(): Promise<Profile> {
       communication: Array.isArray(parsed.communication) ? parsed.communication : [],
       readingLevel: parsed.readingLevel === 2 || parsed.readingLevel === 3 ? parsed.readingLevel : 1,
       soundSensitive: parsed.soundSensitive === true,
+      chachaVoice: parsed.chachaVoice === "M" ? "M" : "F",
     }
   } catch {
     return emptyProfile

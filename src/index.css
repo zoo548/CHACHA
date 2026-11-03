@@ -29,7 +29,7 @@
   --muted: #8a8a8a;
   --line: #e3ded6;
   --danger: #d92d20;
-  --caution: #f2a900;
+  --caution: #e8710a;
   --safety: #1b64da;
   /* 전화 줄만 초록. 다른 화면에서는 쓰지 않는다. */
   --call: #187a45;
@@ -335,7 +335,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .proto-light > span .icon { width: 46px; height: 46px; }
 .proto-light > i { width: 70px; margin: 0 12px; border-top: 2px dashed currentColor; }
 .proto-light > .icon { width: 58px; height: 76px; }
-.proto-light.lit > span { color: #6d4d00; background: var(--caution); }
+.proto-light.lit > span { color: #6d4d00; background: #f2a900; }
 
 .device-result { margin-top: 18px; padding: 17px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--proto-bg); border-radius: 16px; }
 .device-result > b { font-size: 17px; }
@@ -500,7 +500,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .lock-notification header { display: flex; align-items: center; color: var(--proto-copy); font-size: 14px; }
 .lock-notification header .brand-logo { transform: scale(.7); transform-origin: left center; }
 .lock-notification em { margin: 8px 0; padding: 5px 9px; color: white; background: var(--danger); border-radius: 12px; font-style: normal; font-weight: 700; }
-.lock-notification em.emergency { color: var(--proto-ink); background: var(--caution); }
+.lock-notification em.emergency { color: #1a1208; background: var(--caution); }
 .lock-notification em.safety { color: white; background: var(--safety); }
 .lock-notification > b { font-size: 19px; }
 .lock-notification p { margin: 5px 0 0; font-size: 16px; line-height: 1.4; }
@@ -526,7 +526,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   background: var(--danger);
 }
 .prototype-alert.critical > header { color: white; background: var(--danger); }
-.prototype-alert.emergency > header { color: var(--proto-ink); background: var(--caution); }
+.prototype-alert.emergency > header { color: #1a1208; background: var(--caution); }
 .prototype-alert.safety > header { color: white; background: var(--safety); }
 .prototype-alert.practice > header { color: white; background: var(--blue); }
 .prototype-alert.sample > header { padding-top: 8px; }
@@ -541,7 +541,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   font-weight: 700;
   text-align: center;
 }
-.prototype-alert > header > b { display: block; font-size: 15px; font-weight: 700; line-height: 1.2; }
+.prototype-alert > header > b { display: block; font-size: 18px; font-weight: 700; line-height: 1.2; letter-spacing: .12em; }
 .prototype-alert > header h1 {
   margin: 4px 0 0;
   font-size: 24px;
@@ -551,8 +551,16 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+.prototype-alert > header .alert-official {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  opacity: .9;
+}
 .prototype-alert.compact > header { padding-bottom: 8px; }
-.prototype-alert.compact > header > b { display: none; }
+.prototype-alert.compact > header > b { font-size: 14px; }
+.prototype-alert.compact > header .alert-official { display: none; }
 .prototype-alert.compact > header h1 {
   margin: 0;
   font-size: 18px;
@@ -578,6 +586,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   contain: layout paint;
 }
 .prototype-alert > main > p { margin: 0 0 16px; font-size: 22px; font-weight: 600; line-height: 1.5; }
+.prototype-alert > main > p.alert-disaster { margin-bottom: 8px; font-size: 24px; font-weight: 700; }
 .prototype-alert > main > h2 { margin: 0 0 12px; color: var(--proto-copy); font-size: 18px; }
 
 .alert-hero-inline {
@@ -588,7 +597,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   place-items: center;
   color: var(--danger);
 }
-.prototype-alert.emergency .alert-hero-inline { color: var(--proto-ink); }
+.prototype-alert.emergency .alert-hero-inline { color: #1a1208; }
 .prototype-alert.safety .alert-hero-inline { color: var(--safety); }
 .prototype-alert.practice .alert-hero-inline { color: var(--blue); }
 .alert-hero-inline .icon { width: 56px; height: 56px; }
@@ -884,6 +893,16 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .settings-block { margin: 0 0 28px; }
 .settings-block h2 { margin: 0 8px 4px; font-size: 18px; font-weight: 700; }
 .settings-block > p { margin: 0 8px 12px; color: var(--proto-copy); font-size: 16px; }
+.voice-pick { margin: 8px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.voice-pick > button {
+  min-height: 56px;
+  color: var(--proto-copy);
+  background: var(--proto-bg);
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.voice-pick > button.active { color: white; background: var(--blue); }
 .credits-link {
   width: 100%;
   margin: 8px 0 12px;
@@ -1107,7 +1126,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 }
 .sample-alert-btn > span { font-size: 16px; font-weight: 600; }
 .sample-alert-btn.critical { color: white; background: var(--danger); }
-.sample-alert-btn.emergency { color: var(--proto-ink); background: var(--caution); }
+.sample-alert-btn.emergency { color: #1a1208; background: var(--caution); }
 .sample-alert-btn.safety { color: white; background: var(--safety); }
 .sample-alert-btn:disabled { cursor: default; opacity: .7; }
 .sample-wait { margin: 18px 8px 0; color: var(--blue); font-size: 16px; font-weight: 700; text-align: center; }

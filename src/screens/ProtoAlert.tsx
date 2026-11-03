@@ -1,9 +1,9 @@
-// 알림 상세 화면. 색은 정부 3단계 (critical 빨강, emergency 노랑, safety 파랑).
+// 알림 상세 화면. 색은 정부 3단계 (critical 빨강, emergency 주황, safety 파랑).
 // readingLevel 1 은 글 화면, 2 는 그림+글, 3 은 큰 그림 카드.
 // 위 색 띠와 아래 버튼은 고정, 가운데만 한 덩어리로 스크롤한다.
 
 import { useEffect, useRef, useState } from "react"
-import { badgeLabel } from "../alerts/level"
+import { gradeDots, gradeEasyName, gradeOfficialName } from "../alerts/level"
 import { CallActionButton, CallMark, CallMissing, FingerHint } from "../components/CallAction"
 import { hasAssetIcon, Icon } from "../components/Icon"
 import { Lines } from "../components/Lines"
@@ -13,8 +13,12 @@ import { toTelDigits } from "../data/profile"
 import type { ReadingLevel } from "../data/profile"
 import { playAlertTone, speak, stopSpeak, vibrateAlert } from "../speech"
 
-function badge(level: AlertView["uiLevel"]) {
-  return level === "practice" ? "● 연습" : badgeLabel(level)
+function headerDots(level: AlertView["uiLevel"]) {
+  return level === "practice" ? "●" : gradeDots(level)
+}
+
+function headerEasy(level: AlertView["uiLevel"], title: string) {
+  return level === "practice" ? title : gradeEasyName(level)
 }
 
 function speakHeadline(view: AlertView) {
@@ -324,8 +328,11 @@ export function ProtoAlert({
     <article className={`prototype-alert ${view.uiLevel} level-${readingLevel}${compact ? " compact" : ""}${sample ? " sample" : ""}`}>
       {sample && <p className="sample-flag">예시 알림이에요</p>}
       <header>
-        <b>{badge(view.uiLevel)}</b>
-        <h1>{view.title}</h1>
+        <b>{headerDots(view.uiLevel)}</b>
+        <h1>{headerEasy(view.uiLevel, view.title)}</h1>
+        {view.uiLevel !== "practice" && (
+          <p className="alert-official">{gradeOfficialName(view.uiLevel)}</p>
+        )}
       </header>
       <main
         ref={mainRef}
@@ -338,6 +345,7 @@ export function ProtoAlert({
             <Icon name={view.heroArt} />
           </div>
         )}
+        {view.uiLevel !== "practice" && <p className="alert-disaster">{view.title}</p>}
         <p>{view.situation}</p>
         <h2>이렇게 해요</h2>
         {readingLevel === 2 ? (

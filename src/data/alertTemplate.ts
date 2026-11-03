@@ -50,6 +50,7 @@ export type AlertView = {
   /** 참고용 (원문보기 시트, 디버그) */
   sourceType?: string
   rawText?: string
+  disasterId?: string
 }
 
 type JsonAction = {
@@ -236,6 +237,7 @@ export function getAlertView(
     actions: materializeActions(variant.actions, profile),
     sourceType: variant.source_type,
     rawText: options?.rawText,
+    disasterId,
   }
 }
 
