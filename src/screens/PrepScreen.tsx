@@ -7,11 +7,13 @@ export function PrepScreen({
   goCard,
   startSafety,
   goSettings,
+  openSamples,
   safetyComplete,
 }: {
   goCard: () => void
   startSafety: () => void
   goSettings: () => void
+  openSamples: () => void
   safetyComplete: boolean
 }) {
   return (
@@ -43,6 +45,12 @@ export function PrepScreen({
           <h2>알림 보기 방법</h2>
           <p>글만, 그림과 글, 큰 그림을 골라요.</p>
           <ProtoButton secondary onClick={goSettings}>바꾸기</ProtoButton>
+        </article>
+        <article className="task-card">
+          <span><Icon name="bell" /></span>
+          <h2>예시 알림 보기</h2>
+          <p>빨강·노랑·파랑 알림을 미리 봐요.</p>
+          <ProtoButton secondary onClick={openSamples}>예시 알림 보기</ProtoButton>
         </article>
       </div>
     </main>

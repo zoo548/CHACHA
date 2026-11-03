@@ -22,14 +22,15 @@
 /* ---- 1. 기반 --------------------------------------------------------- */
 
 :root {
-  --blue: #1b64da;
-  --pale-blue: #eef4fd;
+  --blue: #1f2a44;
+  --pale-blue: #eef0f4;
   --cream: #faf7f2;
   --ink: #1a1a1a;
   --muted: #8a8a8a;
   --line: #e3ded6;
   --danger: #d92d20;
   --caution: #f2a900;
+  --safety: #1b64da;
   /* 전화 줄만 초록. 다른 화면에서는 쓰지 않는다. */
   --call: #187a45;
   --call-soft: #e6f6ec;
@@ -39,7 +40,7 @@
   --proto-ink: #191f28;
   --proto-copy: #4e5968;
   --proto-line: #e5e8eb;
-  --proto-blue-soft: #e8f0fd;
+  --proto-blue-soft: #e8eaef;
   font-family: "Pretendard", sans-serif;
   color: var(--ink);
 }
@@ -499,6 +500,8 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .lock-notification header { display: flex; align-items: center; color: var(--proto-copy); font-size: 14px; }
 .lock-notification header .brand-logo { transform: scale(.7); transform-origin: left center; }
 .lock-notification em { margin: 8px 0; padding: 5px 9px; color: white; background: var(--danger); border-radius: 12px; font-style: normal; font-weight: 700; }
+.lock-notification em.emergency { color: var(--proto-ink); background: var(--caution); }
+.lock-notification em.safety { color: white; background: var(--safety); }
 .lock-notification > b { font-size: 19px; }
 .lock-notification p { margin: 5px 0 0; font-size: 16px; line-height: 1.4; }
 
@@ -522,8 +525,22 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   color: white;
   background: var(--danger);
 }
-.prototype-alert.caution > header { color: var(--proto-ink); background: var(--caution); }
+.prototype-alert.critical > header { color: white; background: var(--danger); }
+.prototype-alert.emergency > header { color: var(--proto-ink); background: var(--caution); }
+.prototype-alert.safety > header { color: white; background: var(--safety); }
 .prototype-alert.practice > header { color: white; background: var(--blue); }
+.prototype-alert.sample > header { padding-top: 8px; }
+.sample-flag {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 20px;
+  padding-top: calc(8px + var(--alert-safe-top));
+  color: var(--blue);
+  background: var(--pale-blue);
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
 .prototype-alert > header > b { display: block; font-size: 15px; font-weight: 700; line-height: 1.2; }
 .prototype-alert > header h1 {
   margin: 4px 0 0;
@@ -571,7 +588,8 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   place-items: center;
   color: var(--danger);
 }
-.prototype-alert.caution .alert-hero-inline { color: var(--proto-ink); }
+.prototype-alert.emergency .alert-hero-inline { color: var(--proto-ink); }
+.prototype-alert.safety .alert-hero-inline { color: var(--safety); }
 .prototype-alert.practice .alert-hero-inline { color: var(--blue); }
 .alert-hero-inline .icon { width: 56px; height: 56px; }
 .prototype-alert.level-3 .alert-hero-inline { width: 88px; height: 88px; }
@@ -865,6 +883,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .settings-page { padding-bottom: 28px; }
 .settings-block { margin: 0 0 28px; }
 .settings-block h2 { margin: 0 8px 4px; font-size: 18px; font-weight: 700; }
+.settings-block > p { margin: 0 8px 12px; color: var(--proto-copy); font-size: 16px; }
 .credits-link {
   width: 100%;
   margin: 8px 0 12px;
@@ -1072,6 +1091,28 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .demo-note { margin: 6px 0 14px; color: var(--proto-copy); font-size: 14px; }
 .demo-status { margin-top: 12px; padding: 10px 12px; color: var(--blue); background: var(--proto-blue-soft); border-radius: 10px; font-size: 14px; text-align: center; }
 
+.sample-alert-list { display: flex; flex-direction: column; gap: 14px; }
+.sample-alert-btn {
+  width: 100%;
+  min-height: 80px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 16px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.sample-alert-btn > span { font-size: 16px; font-weight: 600; }
+.sample-alert-btn.critical { color: white; background: var(--danger); }
+.sample-alert-btn.emergency { color: var(--proto-ink); background: var(--caution); }
+.sample-alert-btn.safety { color: white; background: var(--safety); }
+.sample-alert-btn:disabled { cursor: default; opacity: .7; }
+.sample-wait { margin: 18px 8px 0; color: var(--blue); font-size: 16px; font-weight: 700; text-align: center; }
+.sample-wait.muted { color: var(--proto-copy); font-weight: 600; }
+
 /* ---- 10. 좁은 폭에서 iphone-frame 꽉 채움 --------------------------- */
 
 @media (max-width: 700px) {
@@ -1123,6 +1164,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   .safety-screen { padding-top: calc(44px + var(--safe-top-extra)); }
   .prototype-alert { --alert-safe-top: env(safe-area-inset-top, 0px); }
   .prototype-alert > header { padding-top: calc(8px + var(--alert-safe-top)); }
+  .prototype-alert.sample > header { padding-top: 8px; }
   .pdf-preview-screen { padding-top: calc(58px + var(--safe-top-extra)); }
 
   /* 하단 고정 영역: 홈 인디케이터 자리만큼 더 올려 준다 */

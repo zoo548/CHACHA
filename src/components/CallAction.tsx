@@ -1,6 +1,6 @@
 // 알림 화면의 전화 줄. 초록 버튼만 전화라는 뜻을 가진다.
 
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import type { AlertAction, PhoneKind } from "../data/alertTemplate"
 import { toTelDigits } from "../data/profile"
 import { Icon } from "./Icon"
@@ -59,15 +59,18 @@ export function CallActionButton({
   action,
   practice,
   practiced,
+  sample,
   onPractice,
   onEmergency,
 }: {
   action: AlertAction
   practice?: boolean
   practiced?: boolean
+  sample?: boolean
   onPractice?: () => void
   onEmergency?: (kind: Extract<PhoneKind, "119" | "112">) => void
 }) {
+  const [sampleTapped, setSampleTapped] = useState(false)
   if (!action.phoneKind) return null
   if (action.disabled || !action.phoneNumber) return <CallMissing />
 
@@ -82,9 +85,16 @@ export function CallActionButton({
   )
 
   let control: ReactNode
-  if (practice) {
+  if (sample || practice) {
     control = (
-      <button className="call-btn" type="button" onClick={onPractice}>
+      <button
+        className="call-btn"
+        type="button"
+        onClick={() => {
+          if (sample) setSampleTapped(true)
+          onPractice?.()
+        }}
+      >
         {inner}
       </button>
     )
@@ -113,6 +123,9 @@ export function CallActionButton({
           <span>잘했어요!</span>
           <span>진짜 알림에서는 전화가 걸려요.</span>
         </p>
+      )}
+      {sample && sampleTapped && (
+        <p className="call-practice-ok">예시에서는 전화가 걸리지 않아요</p>
       )}
     </div>
   )

@@ -8,7 +8,7 @@
 //   - 올라오는 바텀시트 / 시연 패널
 // 를 쌓는다.
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Capacitor } from "@capacitor/core"
 import { Preferences } from "@capacitor/preferences"
 import {
@@ -16,6 +16,14 @@ import {
   Style as NativeStatusBarStyle,
 } from "@capacitor/status-bar"
 
+import {
+  ALERT_LEVEL_RANK,
+  deviceCommand,
+  resolveAlertLevel,
+  type AlertLevel,
+  type BroadcastType,
+  type TemplateVariant,
+} from "./alerts/level"
 import { DemoPanel } from "./components/DemoPanel"
 import { PdfPreview } from "./components/PdfPreview"
 import { ProtoSheet, type CallTarget } from "./components/ProtoSheet"
@@ -33,6 +41,7 @@ import { ProtoCard } from "./screens/ProtoCard"
 import { SafetyCheck } from "./screens/SafetyCheck"
 import { CreditsScreen } from "./screens/CreditsScreen"
 import { EmergencyScript } from "./screens/EmergencyScript"
+import { SampleAlerts } from "./screens/SampleAlerts"
 import { SettingsScreen } from "./screens/SettingsScreen"
 import {
   emptyProfile,
@@ -42,9 +51,10 @@ import {
   type Profile,
 } from "./data/profile"
 import { getAlertView, rawTextView, type AlertView } from "./data/alertTemplate"
+import { SAMPLE_DELAY_SEC, type SampleAlertSpec } from "./data/sampleAlerts"
 import { matchAlert } from "./matching/matchAlert"
 import { useDevice } from "./device/DeviceContext"
-import { onNotificationTap, type NotificationPayload } from "./notifications"
+import { onNotificationTap, scheduleDemoAlert, type NotificationPayload } from "./notifications"
 import {
   RELAY_DISCONNECTED,
   alertsBaseUrl,
@@ -65,35 +75,80 @@ const POLL_MS = 60_000
 
 /** 지금 열려 있는 알림. null 이면 알림 화면 자체가 안 보임. */
 type AlertState =
-  | { kind: "preset"; disasterId: string; level: "caution" | "evacuate" }
+  | {
+      kind: "preset"
+      disasterId: string
+      level: TemplateVariant
+      broadcastType?: BroadcastType
+      rawText?: string
+      sample?: boolean
+    }
   | { kind: "practice" }
-  | { kind: "raw"; text: string }
+  | { kind: "raw"; text: string; broadcastType?: BroadcastType; sample?: boolean }
 
-/** 승격·무시 규칙용 우선순위.
- *  2 = 대피(H/위험), 1 = 주의(L/caution·raw), 0 = 없음/연습.
- *  규칙: 더 높은 우선순위면 교체, 같거나 낮으면 유지. */
+function levelOfState(s: AlertState): AlertLevel | "practice" {
+  if (s.kind === "practice") return "practice"
+  if (s.kind === "preset") {
+    return resolveAlertLevel({
+      broadcast: s.broadcastType,
+      variant: s.level,
+      rawText: s.rawText,
+    })
+  }
+  return resolveAlertLevel({ broadcast: s.broadcastType, rawText: s.text })
+}
+
+function levelOfPayload(p: NotificationPayload): AlertLevel | "practice" {
+  if (p.kind === "practice") return "practice"
+  if (p.kind === "preset") {
+    return resolveAlertLevel({
+      broadcast: p.broadcastType,
+      variant: p.level,
+      rawText: p.rawText,
+    })
+  }
+  return resolveAlertLevel({ broadcast: p.broadcastType, rawText: p.text })
+}
+
+/** 승격·무시 규칙용 우선순위. 위급 3 > 긴급 2 > 안전안내 1 > 연습 0. */
 function statePriority(s: AlertState | null): number {
   if (!s) return 0
-  if (s.kind === "preset") return s.level === "evacuate" ? 2 : 1
-  if (s.kind === "raw") return 1
-  return 0 // practice
+  const level = levelOfState(s)
+  if (level === "practice") return 0
+  return ALERT_LEVEL_RANK[level]
 }
 function payloadPriority(p: NotificationPayload): number {
-  if (p.kind === "preset") return p.level === "evacuate" ? 2 : 1
-  if (p.kind === "raw") return 1
-  return 0 // practice
+  const level = levelOfPayload(p)
+  if (level === "practice") return 0
+  return ALERT_LEVEL_RANK[level]
 }
 function payloadToState(p: NotificationPayload): AlertState {
-  if (p.kind === "preset")
-    return { kind: "preset", disasterId: p.disasterId, level: p.level }
+  if (p.kind === "preset") {
+    return {
+      kind: "preset",
+      disasterId: p.disasterId,
+      level: p.level,
+      broadcastType: p.broadcastType,
+      rawText: p.rawText,
+      sample: p.sample,
+    }
+  }
   if (p.kind === "practice") return { kind: "practice" }
-  return { kind: "raw", text: p.text }
+  return { kind: "raw", text: p.text, broadcastType: p.broadcastType, sample: p.sample }
 }
 
 function relayToPayload(alert: RelayAlert): NotificationPayload {
   const broadcast = broadcastFromLevel(alert.level)
   const result = matchAlert(alert.message, broadcast)
-  if (result) return { kind: "preset", disasterId: result.id, level: result.level }
+  if (result) {
+    return {
+      kind: "preset",
+      disasterId: result.id,
+      level: result.level,
+      broadcastType: broadcast,
+      rawText: alert.message,
+    }
+  }
   return { kind: "raw", text: alert.message, broadcastType: broadcast }
 }
 
@@ -117,6 +172,10 @@ function App() {
 
   // 알림 / 도움 상황 / 전화할 대상
   const [alertState, setAlertState] = useState<AlertState | null>(null)
+  const [lockAlert, setLockAlert] = useState<AlertState | null>(null)
+  const [sampleWaiting, setSampleWaiting] = useState(false)
+  const [sampleFrom, setSampleFrom] = useState<AppScreen>("prep")
+  const sampleTimerRef = useRef<number | null>(null)
   const [emergencyNumber, setEmergencyNumber] = useState<"119" | "112">("119")
   const [situation, setSituation] = useState("무서운 사람이 있어요")
   const [callTarget, setCallTarget] = useState<CallTarget | null>(null)
@@ -125,6 +184,13 @@ function App() {
   const [demoOpen, setDemoOpen] = useState(false)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
   const [relayOk, setRelayOk] = useState<boolean | null>(null)
+
+  const clearSampleTimer = () => {
+    if (sampleTimerRef.current != null) {
+      window.clearTimeout(sampleTimerRef.current)
+      sampleTimerRef.current = null
+    }
+  }
 
   // --- 앱 열 때 한 번: 프로필과 안전점검 완료 플래그 복원 ---
   useEffect(() => {
@@ -149,6 +215,8 @@ function App() {
     }
   }, [])
 
+  useEffect(() => () => clearSampleTimer(), [])
+
   // --- 로컬 알림 탭 처리: OS 알림을 누르면 그 알림 화면으로 이동 ---
   // 승격·무시 규칙:
   //   - 열린 알림이 더 높은(또는 같은) 레벨이면 유지. (예: H 보는 중 L 탭 → 무시)
@@ -169,9 +237,13 @@ function App() {
       })
       // 유지로 결정된 경우: 이미 알림 화면에 있을 테니 아무 것도 바꾸지 않음.
       if (changed) {
+        clearSampleTimer()
+        setSampleWaiting(false)
+        setLockAlert(null)
         setScreen("alert")
         setDemoOpen(false)
         setSheet(null)
+        if (levelOfPayload(payload) === "critical") setDanger(true)
       }
     })
       .then((fn) => {
@@ -210,30 +282,42 @@ function App() {
     setTab(nextTab)
     setScreen(nextTab === "home" ? "home" : nextTab === "help" ? "help" : nextTab === "prep" ? "prep" : "card")
   }
-
-  // 기본 전화 대상 (알림 안에서 "전화하기" 눌렀을 때)
-  const defaultCallTarget = (): CallTarget =>
-    profile.guardian.phone
-      ? {
-          label: profile.guardian.relation || profile.guardian.name || "도와줄 사람",
-          phone: profile.guardian.phone,
-          description: profile.guardian.name
-            ? `${profile.guardian.name}에게 전화해요.`
-            : "내 카드에 적은 사람이에요.",
-        }
-      : { label: "119", phone: "119", description: "구해 주는 곳이에요." }
+  const openSamples = (from: AppScreen) => {
+    setSampleFrom(from)
+    setScreen("sample")
+  }
 
   // 지금 alertState → 보여줄 AlertView 로 계산
   const alertView: AlertView | null = useMemo(() => {
     if (!alertState) return null
     if (alertState.kind === "preset") {
-      return getAlertView(alertState.disasterId, alertState.level, profile)
+      return getAlertView(alertState.disasterId, alertState.level, profile, {
+        broadcast: alertState.broadcastType,
+        rawText: alertState.rawText,
+        sample: alertState.sample,
+      })
     }
     if (alertState.kind === "practice") {
       return getAlertView("practice", "caution", profile)
     }
-    return rawTextView(alertState.text, profile)
+    return rawTextView(alertState.text, profile, alertState.broadcastType, alertState.sample)
   }, [alertState, profile])
+
+  const lockNotice = useMemo(() => {
+    if (!lockAlert || lockAlert.kind === "practice") return undefined
+    if (lockAlert.kind === "raw") {
+      const view = rawTextView(lockAlert.text, profile, lockAlert.broadcastType, lockAlert.sample)
+      if (view.uiLevel === "practice") return undefined
+      return { level: view.uiLevel, title: view.title, situation: view.situation }
+    }
+    const view = getAlertView(lockAlert.disasterId, lockAlert.level, profile, {
+      broadcast: lockAlert.broadcastType,
+      rawText: lockAlert.rawText,
+      sample: lockAlert.sample,
+    })
+    if (!view || view.uiLevel === "practice") return undefined
+    return { level: view.uiLevel, title: view.title, situation: view.situation }
+  }, [lockAlert, profile])
 
   // "알았어요" 공통 처리 — 기기에 C 보내고 화면 정리.
   const acknowledgeAlert = () => {
@@ -250,13 +334,12 @@ function App() {
     }
   }
 
-  // 알림 화면이 열릴 때 기기에 신호 보내기: evacuate→H, caution→L, practice→(안 보냄).
+  // 알림 화면이 열릴 때 기기에 신호 보내기. 연습은 안 보냄.
   useEffect(() => {
     if (screen !== "alert" || !alertView) return
-    if (alertState?.kind === "practice") return
-    if (alertView.uiLevel === "danger") device.send("H").catch(() => {})
-    else if (alertView.uiLevel === "caution") device.send("L").catch(() => {})
-  }, [screen, alertView, alertState, device])
+    if (alertView.uiLevel === "practice") return
+    device.send(deviceCommand(alertView.uiLevel)).catch(() => {})
+  }, [screen, alertView, device])
 
   // 하드웨어 버튼으로 확인했을 때(기기→앱 C): 알림 화면이 열려 있으면 "알았어요" 처리.
   useEffect(() => {
@@ -268,29 +351,81 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, alertState, device])
 
+  const applyIncoming = (payload: NotificationPayload) => {
+    let changed = true
+    setAlertState((prev) => {
+      const cur = statePriority(prev)
+      const next = payloadPriority(payload)
+      if (cur > 0 && cur >= next) {
+        changed = false
+        return prev
+      }
+      return payloadToState(payload)
+    })
+    if (changed) {
+      clearSampleTimer()
+      setSampleWaiting(false)
+      setLockAlert(null)
+      setScreen("alert")
+      setDemoOpen(false)
+      setSheet(null)
+      if (levelOfPayload(payload) === "critical") setDanger(true)
+    }
+  }
+
+  const startSample = (spec: SampleAlertSpec) => {
+    const view = getAlertView(spec.disasterId, spec.variant, profile, {
+      broadcast: spec.broadcast,
+      sample: true,
+    })
+    if (!view || view.uiLevel === "practice") return
+    const signal = view.uiLevel
+    const next: AlertState = {
+      kind: "preset",
+      disasterId: spec.disasterId,
+      level: spec.variant,
+      broadcastType: spec.broadcast,
+      sample: true,
+    }
+    const payload: NotificationPayload = {
+      kind: "preset",
+      disasterId: spec.disasterId,
+      level: spec.variant,
+      broadcastType: spec.broadcast,
+      sample: true,
+    }
+    setSampleWaiting(true)
+    scheduleDemoAlert(
+      view.title,
+      view.situation,
+      payload,
+      SAMPLE_DELAY_SEC,
+      profile.soundSensitive,
+    ).catch(() => {})
+    clearSampleTimer()
+    sampleTimerRef.current = window.setTimeout(() => {
+      setLockAlert(next)
+      setSampleWaiting(false)
+      setScreen("lock")
+      setDemoOpen(false)
+      setSheet(null)
+      device.send(deviceCommand(signal)).catch(() => {})
+    }, SAMPLE_DELAY_SEC * 1000)
+  }
+
+  const openLockAlert = () => {
+    if (lockAlert) {
+      setAlertState(lockAlert)
+      if (levelOfState(lockAlert) === "critical") setDanger(true)
+    }
+    setLockAlert(null)
+    setScreen("alert")
+  }
+
   // 중계 서버 1분 폴링. 처음 보는 SN 만 알림으로 올린다.
   useEffect(() => {
     if (!ready) return
     let cancelled = false
-
-    const applyIncoming = (payload: NotificationPayload) => {
-      let changed = true
-      setAlertState((prev) => {
-        const cur = statePriority(prev)
-        const next = payloadPriority(payload)
-        if (cur > 0 && cur >= next) {
-          changed = false
-          return prev
-        }
-        return payloadToState(payload)
-      })
-      if (changed) {
-        setScreen("alert")
-        setDemoOpen(false)
-        setSheet(null)
-        if (payload.kind === "preset" && payload.level === "evacuate") setDanger(true)
-      }
-    }
 
     const tick = async () => {
       if (!alertsBaseUrl()) {
@@ -364,13 +499,7 @@ function App() {
         profile={profile}
       />
     ) : screen === "lock" ? (
-      // LockScreen 은 노트북 미리보기용. 메인 네비 어디에서도 열지 않음.
-      <LockScreen
-        openAlert={() => {
-          setAlertState({ kind: "preset", disasterId: "heavy_rain", level: "evacuate" })
-          setScreen("alert")
-        }}
-      />
+      <LockScreen openAlert={openLockAlert} notice={lockNotice} />
     ) : screen === "emergency-script" ? (
       <EmergencyScript
         number={emergencyNumber}
@@ -407,14 +536,22 @@ function App() {
         goCard={() => setActiveTab("card")}
         startSafety={() => setScreen("safety")}
         goSettings={() => setScreen("settings")}
+        openSamples={() => openSamples("prep")}
         safetyComplete={safetyComplete}
       />
     ) : screen === "settings" ? (
       <SettingsScreen
         back={() => setActiveTab("prep")}
         openCredits={() => setScreen("credits")}
+        openSamples={() => openSamples("settings")}
         profile={profile}
         updateProfile={updateProfile}
+      />
+    ) : screen === "sample" ? (
+      <SampleAlerts
+        back={() => setScreen(sampleFrom)}
+        sendSample={startSample}
+        waiting={sampleWaiting}
       />
     ) : screen === "credits" ? (
       <CreditsScreen back={() => setScreen("settings")} />
@@ -454,9 +591,14 @@ function App() {
 
   const showTabs = TAB_SCREENS.includes(screen)
 
-  // 잠금화면·빨간 알림 화면은 배경이 어둡다 → 상태바 글자를 흰색으로.
+  // 잠금화면·빨간/파란 알림 화면은 배경이 어둡다 → 상태바 글자를 흰색으로.
+  // 노란 긴급·예시 띠(밝은 배경)는 검은 글자.
+  const ui = alertView?.uiLevel
   const lightStatusBar =
-    screen === "lock" || (screen === "alert" && (alertView?.uiLevel ?? "caution") === "danger")
+    screen === "lock" ||
+    (screen === "alert" &&
+      !alertView?.sample &&
+      (ui === "critical" || ui === "safety" || ui === "practice"))
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
@@ -476,7 +618,7 @@ function App() {
 
   const alertKey =
     alertState?.kind === "preset"
-      ? `${alertState.disasterId}-${alertState.level}`
+      ? `${alertState.disasterId}-${alertState.level}-${alertState.broadcastType ?? ""}`
       : alertState?.kind ?? "none"
 
   return (

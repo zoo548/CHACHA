@@ -2,7 +2,7 @@
 //
 // 아이폰/안드로이드/웹(Bluefy 포함) 전부 같은 코드로 동작한다.
 // 상태는 subscribeStatus()/subscribeButton() 로 받고,
-// 명령은 send("H"|"L"|"C") 로 보낸다.
+// 명령은 send("H"|"L"|"B"|"C") 로 보낸다.
 //
 // 저장:
 //   - 저장된 deviceId 는 다음 실행 때 자동 재연결에 사용 (Preferences).
@@ -257,10 +257,10 @@ export async function disconnect(): Promise<void> {
 }
 
 /**
- * 명령 전송 — "H" / "L" / "C". 뒤에 "\n" 를 붙여서 펌웨어가 글자 단위로 받기 좋게 함.
+ * 명령 전송 — "H" / "L" / "B" / "C". 뒤에 "\n" 를 붙여서 펌웨어가 글자 단위로 받기 좋게 함.
  * 연결 안 돼 있으면 조용히 리턴 (예: 사용자가 차차등 없이도 앱을 쓸 수 있음).
  */
-export async function send(cmd: "H" | "L" | "C"): Promise<void> {
+export async function send(cmd: "H" | "L" | "B" | "C"): Promise<void> {
   if (state.status !== "connected" || !state.deviceId) return
   try {
     const bytes = [cmd.charCodeAt(0), "\n".charCodeAt(0)]

@@ -111,9 +111,4 @@ export async function saveSeenIds(ids: Set<string>): Promise<void> {
   await Preferences.set({ key: SEEN_KEY, value: JSON.stringify(trimmed) })
 }
 
-/** 긴급단계명(EMRG_STEP_NM) → 앱 매칭이 쓰는 발송유형. */
-export function broadcastFromLevel(level: string): "위급" | "긴급" | "안전안내" {
-  if (level.includes("위급")) return "위급"
-  if (level.includes("긴급")) return "긴급"
-  return "안전안내"
-}
+export { broadcastFromLevel } from "./level"

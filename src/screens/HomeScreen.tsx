@@ -74,7 +74,7 @@ export function HomeScreen({
         {danger && (
           <article className="danger-card">
             <header>
-              <em>▲ 위험</em>
+              <em>▲ 위급</em>
               <Icon name="cloud" />
             </header>
             <h2>비가 아주 많이 와요</h2>

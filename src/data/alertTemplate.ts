@@ -3,6 +3,12 @@
 // 생성형 AI 쓰지 않는다. 문구는 JSON 그대로, 슬롯({보호자}/{이웃})만 profile 로 채운다.
 // short 필드는 타입이 받을 수 있게만 열어 두고, JSON 에는 넣지 않는다.
 
+import {
+  resolveAlertLevel,
+  type AlertLevel,
+  type BroadcastType,
+  type TemplateVariant,
+} from "../alerts/level"
 import templates from "../../docs/disaster_templates.json"
 import { maskPhone, type Profile } from "./profile"
 import type { IconName } from "../types"
@@ -29,9 +35,10 @@ export type AlertAction = {
   maskedNumber?: string
 }
 
-/** 알림 뷰가 그대로 쓰는 알림 데이터. UI 레벨은 danger/caution/practice. */
+/** 알림 뷰가 그대로 쓰는 알림 데이터. 색은 정부 3단계, 연습은 practice. */
 export type AlertView = {
-  uiLevel: "danger" | "caution" | "practice"
+  uiLevel: AlertLevel | "practice"
+  sample?: boolean
   title: string
   situation: string
   /** 1단계 헤더용 선 아이콘. */
@@ -50,8 +57,15 @@ type JsonAction = {
   short?: string
   hide_if_empty?: string
 }
+export type AlertViewOptions = {
+  broadcast?: string | null
+  rawText?: string
+  sample?: boolean
+  alertLevel?: AlertLevel
+}
+
 type JsonVariant = {
-  level: "caution" | "evacuate"
+  level: TemplateVariant
   device_signal: string
   source_type: string
   title: string
@@ -190,11 +204,12 @@ function materializeActions(actions: JsonAction[], profile: Profile): AlertActio
     })
 }
 
-/** 재난 id + 레벨 → 알림 뷰. 없으면 null. */
+/** 재난 id + 템플릿 variant → 알림 뷰. 색은 options.broadcast 로 따로 정한다. */
 export function getAlertView(
   disasterId: string,
-  level: "caution" | "evacuate",
+  level: TemplateVariant,
   profile: Profile,
+  options?: AlertViewOptions,
 ): AlertView | null {
   if (disasterId === "practice") return practiceView(profile)
   const d = disasters.find((x) => x.id === disasterId)
@@ -203,19 +218,28 @@ export function getAlertView(
   const variant: JsonVariant | undefined =
     d.variants.find((v) => v.level === level) ?? d.variants[0]
   if (!variant) return null
+  const uiLevel =
+    options?.alertLevel ??
+    resolveAlertLevel({
+      broadcast: options?.broadcast,
+      variant: variant.level,
+      rawText: options?.rawText,
+    })
   return {
-    uiLevel: variant.level === "evacuate" ? "danger" : "caution",
+    uiLevel,
+    sample: options?.sample,
     title: variant.title,
     situation: variant.situation,
     hero: HERO_MAP[d.hero_icon] ?? "bell",
     heroArt: d.hero_icon,
     actions: materializeActions(variant.actions, profile),
     sourceType: variant.source_type,
+    rawText: options?.rawText,
   }
 }
 
 /** 재난 목록 (시연 패널 드롭다운용). */
-export function listDisasters(): { id: string; name: string; levels: ("caution" | "evacuate")[] }[] {
+export function listDisasters(): { id: string; name: string; levels: TemplateVariant[] }[] {
   return disasters.map((d) => ({
     id: d.id,
     name: d.name_official,
@@ -245,10 +269,16 @@ function practiceView(profile: Profile): AlertView {
   }
 }
 
-/** 매칭 실패/원문 테스트 — 원문을 그대로 보여주고 주의로. */
-export function rawTextView(rawText: string, profile: Profile): AlertView {
+/** 매칭 실패/원문 테스트 — 원문을 그대로 보여주고, 색은 발송 유형을 따른다. */
+export function rawTextView(
+  rawText: string,
+  profile: Profile,
+  broadcast?: BroadcastType,
+  sample?: boolean,
+): AlertView {
   return {
-    uiLevel: "caution",
+    uiLevel: resolveAlertLevel({ broadcast, rawText }),
+    sample,
     title: "재난문자가 왔어요",
     situation: rawText || "",
     hero: "bell",

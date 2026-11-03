@@ -60,12 +60,21 @@ export function DemoPanel({
       // mode === "raw"
       const result = matchAlert(rawText, broadcast)
       if (result) {
-        const view = getAlertView(result.id, result.level, profile)
-        payload = { kind: "preset", disasterId: result.id, level: result.level }
+        const view = getAlertView(result.id, result.level, profile, {
+          broadcast,
+          rawText,
+        })
+        payload = {
+          kind: "preset",
+          disasterId: result.id,
+          level: result.level,
+          broadcastType: broadcast,
+          rawText,
+        }
         title = view?.title ?? "재난문자가 왔어요"
         body = view?.situation ?? rawText.slice(0, 60)
       } else {
-        const view = rawTextView(rawText, profile)
+        const view = rawTextView(rawText, profile, broadcast)
         payload = { kind: "raw", text: rawText, broadcastType: broadcast }
         title = view.title
         body = view.situation.slice(0, 120)

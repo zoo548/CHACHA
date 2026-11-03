@@ -10,11 +10,19 @@
 
 import { Capacitor } from "@capacitor/core"
 import { LocalNotifications } from "@capacitor/local-notifications"
+import type { BroadcastType, TemplateVariant } from "./alerts/level"
 
 export type NotificationPayload =
-  | { kind: "preset"; disasterId: string; level: "caution" | "evacuate" }
+  | {
+      kind: "preset"
+      disasterId: string
+      level: TemplateVariant
+      broadcastType?: BroadcastType
+      rawText?: string
+      sample?: boolean
+    }
   | { kind: "practice" }
-  | { kind: "raw"; text: string; broadcastType: "위급" | "긴급" | "안전안내" }
+  | { kind: "raw"; text: string; broadcastType: BroadcastType; sample?: boolean }
 
 const CHANNEL_ID = "chacha-alert"
 const CHANNEL_SILENT_ID = "chacha-alert-silent"

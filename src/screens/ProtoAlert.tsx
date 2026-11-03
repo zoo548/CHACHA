@@ -1,8 +1,9 @@
-// 알림 상세 화면. 재난 종류별로 색이 다르다 (danger 빨강, caution 노랑, practice 파랑).
+// 알림 상세 화면. 색은 정부 3단계 (critical 빨강, emergency 노랑, safety 파랑).
 // readingLevel 1 은 글 화면, 2 는 그림+글, 3 은 큰 그림 카드.
 // 위 색 띠와 아래 버튼은 고정, 가운데만 한 덩어리로 스크롤한다.
 
 import { useEffect, useRef, useState } from "react"
+import { badgeLabel } from "../alerts/level"
 import { CallActionButton, CallMark, CallMissing, FingerHint } from "../components/CallAction"
 import { hasAssetIcon, Icon } from "../components/Icon"
 import { Lines } from "../components/Lines"
@@ -13,7 +14,7 @@ import type { ReadingLevel } from "../data/profile"
 import { playAlertTone, speak, stopSpeak, vibrateAlert } from "../speech"
 
 function badge(level: AlertView["uiLevel"]) {
-  return level === "danger" ? "▲ 위험" : level === "caution" ? "● 주의" : "● 연습"
+  return level === "practice" ? "● 연습" : badgeLabel(level)
 }
 
 function speakHeadline(view: AlertView) {
@@ -64,7 +65,8 @@ function picCardClass(action: AlertAction, extra = "") {
 }
 
 function PicCardBody({ action }: { action: AlertAction }) {
-  const hasArt = hasAssetIcon(action.art)
+  const art = action.art
+  const hasArt = hasAssetIcon(art)
   const label = hasArt && action.short ? (
     <b>{action.short}</b>
   ) : hasArt ? (
@@ -74,9 +76,9 @@ function PicCardBody({ action }: { action: AlertAction }) {
   )
   return (
     <>
-      {hasArt && (
+      {hasArt && art && (
         <span className="pic-card-art">
-          <Icon name={action.art} />
+          <Icon name={art} />
         </span>
       )}
       {label}
@@ -88,16 +90,19 @@ function PicCard({
   action,
   practice,
   practiced,
+  sample,
   onPractice,
   onEmergency,
 }: {
   action: AlertAction
   practice?: boolean
   practiced?: boolean
+  sample?: boolean
   onPractice?: () => void
   onEmergency?: (kind: Extract<PhoneKind, "119" | "112">) => void
 }) {
   const longPress = useLongPress(() => speak(action.text))
+  const [sampleTapped, setSampleTapped] = useState(false)
 
   if (action.phoneKind) {
     if (action.disabled || !action.phoneNumber) {
@@ -118,8 +123,9 @@ function PicCard({
     )
 
     const onClick = (event: { preventDefault: () => void }) => {
-      if (practice) {
+      if (sample || practice) {
         event.preventDefault()
+        if (sample) setSampleTapped(true)
         onPractice?.()
       } else if (action.phoneKind === "119" || action.phoneKind === "112") {
         event.preventDefault()
@@ -128,7 +134,8 @@ function PicCard({
     }
 
     const digits = toTelDigits(action.phoneNumber)
-    const clickable = practice || action.phoneKind === "119" || action.phoneKind === "112"
+    const clickable =
+      sample || practice || action.phoneKind === "119" || action.phoneKind === "112"
     return (
       <div className="call-wrap">
         {clickable ? (
@@ -146,6 +153,9 @@ function PicCard({
             <span>잘했어요!</span>
             <span>진짜 알림에서는 전화가 걸려요.</span>
           </p>
+        )}
+        {sample && sampleTapped && (
+          <p className="call-practice-ok">예시에서는 전화가 걸리지 않아요</p>
         )}
       </div>
     )
@@ -167,6 +177,7 @@ function PicCard({
 type PhoneHandlers = {
   practice?: boolean
   practiced?: boolean
+  sample?: boolean
   onPractice?: () => void
   onEmergency?: (kind: Extract<PhoneKind, "119" | "112">) => void
 }
@@ -189,6 +200,7 @@ function Level1Actions({
                 key={action.text}
                 practice={phone.practice}
                 practiced={phone.practiced}
+                sample={phone.sample}
                 onPractice={phone.onPractice}
                 onEmergency={phone.onEmergency}
               />
@@ -224,6 +236,7 @@ function Level2Actions({
               key={action.text}
               practice={phone.practice}
               practiced={phone.practiced}
+              sample={phone.sample}
               onPractice={phone.onPractice}
               onEmergency={phone.onEmergency}
             />
@@ -256,6 +269,7 @@ function Level3Actions({
           key={action.text}
           practice={phone.practice}
           practiced={phone.practiced}
+          sample={phone.sample}
           onPractice={phone.onPractice}
           onEmergency={phone.onEmergency}
         />
@@ -283,11 +297,13 @@ export function ProtoAlert({
   const [compact, setCompact] = useState(false)
   const [practiced, setPracticed] = useState(false)
   const practice = view.uiLevel === "practice"
+  const sample = Boolean(view.sample)
   const phone: PhoneHandlers = {
     practice,
+    sample,
     practiced,
     onPractice: () => setPracticed(true),
-    onEmergency: openEmergency,
+    onEmergency: sample ? () => setPracticed(true) : openEmergency,
   }
 
   useEffect(() => {
@@ -305,7 +321,8 @@ export function ProtoAlert({
   }, [view, readingLevel])
 
   return (
-    <article className={`prototype-alert ${view.uiLevel} level-${readingLevel}${compact ? " compact" : ""}`}>
+    <article className={`prototype-alert ${view.uiLevel} level-${readingLevel}${compact ? " compact" : ""}${sample ? " sample" : ""}`}>
+      {sample && <p className="sample-flag">예시 알림이에요</p>}
       <header>
         <b>{badge(view.uiLevel)}</b>
         <h1>{view.title}</h1>

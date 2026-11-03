@@ -1,16 +1,19 @@
 // 알림 보기 방법과 소리를 나중에 바꾸는 화면.
 
+import { ProtoButton } from "../components/ProtoButton"
 import { ReadingLevelPicker, SoundSensitivePicker } from "../components/ViewModePicker"
 import type { Profile, ReadingLevel } from "../data/profile"
 
 export function SettingsScreen({
   back,
   openCredits,
+  openSamples,
   profile,
   updateProfile,
 }: {
   back: () => void
   openCredits: () => void
+  openSamples: () => void
   profile: Profile
   updateProfile: (patch: Partial<Profile>) => void
 }) {
@@ -34,6 +37,11 @@ export function SettingsScreen({
           value={profile.soundSensitive}
           onChange={(soundSensitive) => updateProfile({ soundSensitive })}
         />
+      </section>
+      <section className="settings-block">
+        <h2>예시 알림 보기</h2>
+        <p>빨강·노랑·파랑 알림을 미리 봐요.</p>
+        <ProtoButton secondary onClick={openSamples}>예시 알림 보기</ProtoButton>
       </section>
       <button className="credits-link" type="button" onClick={openCredits}>
         그림 일부: Mulberry Symbols © Steve Lee, CC BY-SA 4.0

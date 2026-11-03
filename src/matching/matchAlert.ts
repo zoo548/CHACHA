@@ -2,12 +2,12 @@
 //
 // 입력:
 //   - text: 재난문자 원문 (예: "[기상청] 호우경보 발효. 저지대 대피하세요")
-//   - broadcastType: 발송유형 (위급/긴급/안전안내). 지금 레벨 계산에는 쓰지 않고
-//     결과에 그대로 담아 UI/알림 쪽에서 참고하게 한다 (예: 위급은 iOS 긴급 알림 채널).
+//   - broadcastType: 발송유형 (위급/긴급/안전안내). 행동 단계(caution/evacuate)에는
+//     쓰지 않는다. 색·차차등 신호는 src/alerts/level.ts 가 이 값을 본다.
 //
 // 출력:
 //   - 매칭 성공: { id, level: 'caution' | 'evacuate', matchedKeywords, broadcastType }
-//   - 매칭 실패: null  → 호출 쪽에서 원문을 그대로 보여주고 주의(caution)로 처리.
+//   - 매칭 실패: null  → 호출 쪽에서 원문을 그대로 보여준다. 색은 alerts/level.ts.
 //
 // 매칭 규칙(docs/disaster_templates.json 를 그대로 사용, 생성형 AI 없음):
 //   1) 각 재난의 keywords 중 하나라도 본문에 있으면 후보.
@@ -23,10 +23,11 @@
 //
 // JSON 문구/키워드는 코드에서 고치지 않는다 — 매칭이 틀리면 JSON 쪽 수정안으로 제안.
 
+import type { BroadcastType, TemplateVariant } from "../alerts/level"
 import templates from "../../docs/disaster_templates.json"
 
-export type BroadcastType = "위급" | "긴급" | "안전안내"
-export type MatchLevel = "caution" | "evacuate"
+export type { BroadcastType }
+export type MatchLevel = TemplateVariant
 
 export type MatchResult = {
   id: string
