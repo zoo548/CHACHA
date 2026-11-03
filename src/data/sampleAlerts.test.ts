@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { deviceCommand, resolveAlertLevel } from "../alerts/level"
+import { deviceCommand, resolveAlertLevel } from "../alerts/tier"
 import { emptyProfile } from "./profile"
 import {
   SAMPLE_ALERTS,
@@ -8,14 +8,14 @@ import {
 } from "./sampleAlerts"
 
 describe("예시 화면", () => {
-  it("공습경보·호우 대피·폭염은 H, L, I 이다", () => {
+  it("호우 대피·폭염·미세먼지는 R, L, I 이다", () => {
     const commands = SAMPLE_ALERTS.map((spec) =>
       deviceCommand(
-        resolveAlertLevel({ broadcast: spec.broadcast, variant: spec.variant }),
+        resolveAlertLevel({ disasterId: spec.disasterId, variant: spec.variant }),
         spec.disasterId,
       ),
     )
-    expect(commands).toEqual(["H", "L", "I"])
+    expect(commands).toEqual(["R", "L", "I"])
   })
 
   it("카드 이름이 없으면 엄마와 이웃으로 보여 준다", () => {

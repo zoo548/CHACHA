@@ -612,16 +612,8 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
-.prototype-alert > header .alert-official {
-  margin: 4px 0 0;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
-  opacity: .9;
-}
 .prototype-alert.compact > header { padding-bottom: 8px; }
 .prototype-alert.compact > header > b { font-size: 14px; }
-.prototype-alert.compact > header .alert-official { display: none; }
 .prototype-alert.compact > header h1 {
   margin: 0;
   font-size: 18px;
@@ -698,7 +690,17 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   padding: 8px 16px calc(12px + var(--safe-bottom-extra));
   background: var(--proto-bg);
 }
-.prototype-alert > footer > button:last-child:not(.proto-button) { width: 100%; height: 26px; color: var(--proto-copy); background: transparent; font-size: 14px; }
+.prototype-alert > footer > button:last-child:not(.proto-button),
+.prototype-alert > footer .alert-source-meta {
+  width: 100%;
+  min-height: 24px;
+  height: auto;
+  color: var(--muted);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+}
 
 .proto-action.pictured {
   grid-template-columns: 60px minmax(0, 1fr);

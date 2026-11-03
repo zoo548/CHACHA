@@ -5,6 +5,7 @@
 
 import { isExcludedDisaster } from "../alerts/excluded"
 import {
+  parseBroadcast,
   resolveAlertLevel,
   type AlertLevel,
   type BroadcastType,
@@ -36,7 +37,7 @@ export type AlertAction = {
   maskedNumber?: string
 }
 
-/** 알림 뷰가 그대로 쓰는 알림 데이터. 색은 정부 3단계, 연습은 practice. */
+/** 알림 뷰가 그대로 쓰는 알림 데이터. 색은 차차 3단계, 연습은 practice. */
 export type AlertView = {
   uiLevel: AlertLevel | "practice"
   sample?: boolean
@@ -51,6 +52,8 @@ export type AlertView = {
   sourceType?: string
   rawText?: string
   disasterId?: string
+  /** 원래 정부 문자 종류. 색과 따로 맨 아래에 보여 준다. */
+  broadcast?: BroadcastType
 }
 
 type JsonAction = {
@@ -206,7 +209,7 @@ function materializeActions(actions: JsonAction[], profile: Profile): AlertActio
     })
 }
 
-/** 재난 id + 템플릿 variant → 알림 뷰. 색은 options.broadcast 로 따로 정한다. */
+/** 재난 id + 템플릿 variant → 알림 뷰. 색은 차차 규칙(tier.ts). */
 export function getAlertView(
   disasterId: string,
   level: TemplateVariant,
@@ -223,9 +226,8 @@ export function getAlertView(
   const uiLevel =
     options?.alertLevel ??
     resolveAlertLevel({
-      broadcast: options?.broadcast,
+      disasterId,
       variant: variant.level,
-      rawText: options?.rawText,
     })
   return {
     uiLevel,
@@ -238,6 +240,7 @@ export function getAlertView(
     sourceType: variant.source_type,
     rawText: options?.rawText,
     disasterId,
+    broadcast: parseBroadcast(options?.broadcast),
   }
 }
 
@@ -274,7 +277,7 @@ function practiceView(profile: Profile): AlertView {
   }
 }
 
-/** 매칭 실패/원문 테스트 — 원문을 그대로 보여주고, 색은 발송 유형을 따른다. */
+/** 매칭 실패/원문 테스트 — 원문을 그대로 보여주고, 색은 차차 기본(파랑). */
 export function rawTextView(
   rawText: string,
   profile: Profile,
@@ -282,7 +285,7 @@ export function rawTextView(
   sample?: boolean,
 ): AlertView {
   return {
-    uiLevel: resolveAlertLevel({ broadcast, rawText }),
+    uiLevel: resolveAlertLevel({}),
     sample,
     title: "재난문자가 왔어요",
     situation: rawText || "",
@@ -298,5 +301,6 @@ export function rawTextView(
       },
     ],
     rawText,
+    broadcast,
   }
 }

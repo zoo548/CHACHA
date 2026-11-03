@@ -18,13 +18,11 @@ import {
 
 import { isExcludedDisaster } from "./alerts/excluded"
 import {
-  ALERT_LEVEL_RANK,
-  deviceCommand,
-  resolveAlertLevel,
   type AlertLevel,
   type BroadcastType,
   type TemplateVariant,
 } from "./alerts/level"
+import { ALERT_LEVEL_RANK, deviceCommand, resolveAlertLevel } from "./alerts/tier"
 import { DemoPanel } from "./components/DemoPanel"
 import { PdfPreview } from "./components/PdfPreview"
 import { ProtoSheet, type CallTarget } from "./components/ProtoSheet"
@@ -88,28 +86,20 @@ type AlertState =
 function levelOfState(s: AlertState): AlertLevel | "practice" {
   if (s.kind === "practice") return "practice"
   if (s.kind === "preset") {
-    return resolveAlertLevel({
-      broadcast: s.broadcastType,
-      variant: s.level,
-      rawText: s.rawText,
-    })
+    return resolveAlertLevel({ disasterId: s.disasterId, variant: s.level })
   }
-  return resolveAlertLevel({ broadcast: s.broadcastType, rawText: s.text })
+  return resolveAlertLevel({})
 }
 
 function levelOfPayload(p: NotificationPayload): AlertLevel | "practice" {
   if (p.kind === "practice") return "practice"
   if (p.kind === "preset") {
-    return resolveAlertLevel({
-      broadcast: p.broadcastType,
-      variant: p.level,
-      rawText: p.rawText,
-    })
+    return resolveAlertLevel({ disasterId: p.disasterId, variant: p.level })
   }
-  return resolveAlertLevel({ broadcast: p.broadcastType, rawText: p.text })
+  return resolveAlertLevel({})
 }
 
-/** 승격·무시 규칙용 우선순위. 위급 3 > 긴급 2 > 안전안내 1 > 연습 0. */
+/** 승격·무시 규칙용 우선순위. 빨강 3 > 주황 2 > 파랑 1 > 연습 0. */
 function statePriority(s: AlertState | null): number {
   if (!s) return 0
   const level = levelOfState(s)
@@ -532,7 +522,7 @@ function App() {
   const showTabs = TAB_SCREENS.includes(screen)
 
   // 빨간/파란 알림 화면은 배경이 어둡다 → 상태바 글자를 흰색으로.
-  // 주황 긴급·예시 띠(밝은 배경)는 검은 글자.
+  // 주황 조심해요·예시 띠(밝은 배경)는 검은 글자.
   const ui = alertView?.uiLevel
   const lightStatusBar =
     screen === "alert" &&

@@ -1,7 +1,7 @@
 // 아이폰 잠금화면 데모. 재난문자 알림이 두 개 쌓인 모습 (차차 알림 + 원문 알림).
 // 차차 알림을 누르면 알림 상세로 들어간다.
 
-import { badgeLabel, gradeOfficialName, type AlertLevel } from "../alerts/level"
+import { badgeLabel, type AlertLevel } from "../alerts/level"
 import { Logo } from "../components/Logo"
 
 export type LockNotice = {
@@ -36,7 +36,7 @@ export function LockScreen({
         <p>{situation}</p>
       </button>
       <article className="lock-notification">
-        <b>{gradeOfficialName(level)}</b>
+        <b>긴급재난문자</b>
         <p>[기상청] 관악구 호우경보 발효. 하천변, 지하공간 등 위험지역 접근을 자제하고…</p>
       </article>
     </main>

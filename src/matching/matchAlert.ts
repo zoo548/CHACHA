@@ -3,11 +3,11 @@
 // 입력:
 //   - text: 재난문자 원문 (예: "[기상청] 호우경보 발효. 저지대 대피하세요")
 //   - broadcastType: 발송유형 (위급/긴급/안전안내). 행동 단계(caution/evacuate)에는
-//     쓰지 않는다. 색·차차등 신호는 src/alerts/level.ts 가 이 값을 본다.
+//     쓰지 않는다. 색·차차등 신호는 src/alerts/tier.ts 가 variant 와 재난 id 를 본다.
 //
 // 출력:
 //   - 매칭 성공: { id, level: 'caution' | 'evacuate', matchedKeywords, broadcastType }
-//   - 매칭 실패: null  → 호출 쪽에서 원문을 그대로 보여준다. 색은 alerts/level.ts.
+//   - 매칭 실패: null  → 호출 쪽에서 원문을 그대로 보여준다. 색은 alerts/tier.ts.
 //
 // 매칭 규칙(docs/disaster_templates.json 를 그대로 사용, 생성형 AI 없음):
 //   1) 각 재난의 keywords 중 하나라도 본문에 있으면 후보.

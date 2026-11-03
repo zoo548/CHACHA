@@ -1,9 +1,9 @@
-// 알림 상세 화면. 색은 정부 3단계 (critical 빨강, emergency 주황, safety 파랑).
+// 알림 상세 화면. 색은 차차 3단계 (critical 빨강, emergency 주황, safety 파랑).
 // readingLevel 1 은 글 화면, 2 는 그림+글, 3 은 큰 그림 카드.
 // 위 색 띠와 아래 버튼은 고정, 가운데만 한 덩어리로 스크롤한다.
 
 import { useEffect, useRef, useState } from "react"
-import { gradeDots, gradeEasyName, gradeOfficialName } from "../alerts/level"
+import { gradeDots, gradeEasyName, sourceCaption } from "../alerts/level"
 import { CallActionButton, CallMark, CallMissing, FingerHint } from "../components/CallAction"
 import { hasAssetIcon, Icon } from "../components/Icon"
 import { Lines } from "../components/Lines"
@@ -335,9 +335,6 @@ export function ProtoAlert({
       <header>
         <b>{headerDots(view.uiLevel)}</b>
         <h1>{headerEasy(view.uiLevel, view.title)}</h1>
-        {view.uiLevel !== "practice" && (
-          <p className="alert-official">{gradeOfficialName(view.uiLevel)}</p>
-        )}
       </header>
       <main
         ref={mainRef}
@@ -365,7 +362,9 @@ export function ProtoAlert({
         <ProtoButton text onClick={() => speakHeadline(view)}>다시 듣기</ProtoButton>
         <ProtoButton onClick={acknowledge}>알았어요</ProtoButton>
         {view.uiLevel !== "practice" && (
-          <button onClick={source}>행정안전부 · 오후 2:20 · 원문 보기 ⌄</button>
+          <button className="alert-source-meta" onClick={source}>
+            {sourceCaption(view.broadcast, view.rawText)}
+          </button>
         )}
       </footer>
     </article>
