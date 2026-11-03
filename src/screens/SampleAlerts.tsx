@@ -1,42 +1,103 @@
-// 누구나 눌러 보는 3색 예시 알림. 대비하기·설정에서 들어온다.
+// 실제 알림 화면을 바로 보여 주는 예시. 잠금화면·대기·차차등 전송은 하지 않는다.
 
-import { SAMPLE_ALERTS, type SampleAlertSpec } from "../data/sampleAlerts"
+import { useEffect, useState } from "react"
+import { deviceCommand } from "../alerts/level"
+import {
+  SAMPLE_ALERTS,
+  SAMPLE_VIEW_MODES,
+  sampleAlertView,
+  type SampleAlertSpec,
+} from "../data/sampleAlerts"
+import type { Profile, ReadingLevel } from "../data/profile"
+import { useDevice } from "../device/DeviceContext"
+import { ProtoAlert } from "./ProtoAlert"
 
 export function SampleAlerts({
   back,
-  sendSample,
-  waiting,
+  profile,
+  source,
 }: {
   back: () => void
-  sendSample: (spec: SampleAlertSpec) => void
-  waiting: boolean
+  profile: Profile
+  source: () => void
 }) {
+  const { send, state } = useDevice()
+  const [specId, setSpecId] = useState<SampleAlertSpec["id"]>(SAMPLE_ALERTS[0].id)
+  const [readingLevel, setReadingLevel] = useState<ReadingLevel>(profile.readingLevel)
+  const [sentToDevice, setSentToDevice] = useState(false)
+
+  const spec = SAMPLE_ALERTS.find((item) => item.id === specId) ?? SAMPLE_ALERTS[0]
+  const view = sampleAlertView(spec, profile)
+  const connected = state.status === "connected"
+
+  const signal =
+    view && view.uiLevel !== "practice"
+      ? deviceCommand(view.uiLevel, spec.disasterId)
+      : null
+
+  useEffect(() => {
+    if (!sentToDevice || !signal) return
+    send(signal).catch(() => {})
+  }, [send, sentToDevice, signal])
+
+  const close = () => {
+    if (sentToDevice) send("C").catch(() => {})
+    back()
+  }
+
   return (
-    <main className="proto-page sample-page">
-      <button className="proto-back" onClick={back}>‹ 뒤로</button>
-      <section className="page-heading compact">
-        <h1>예시 알림 보기</h1>
-        <p>세 가지 색 알림을 미리 봐요.</p>
-      </section>
-      <div className="sample-alert-list">
-        {SAMPLE_ALERTS.map((spec) => (
+    <div className="sample-preview">
+      <p className="sample-flag">예시 화면</p>
+      <div className="sample-grade-tabs" role="tablist" aria-label="등급">
+        {SAMPLE_ALERTS.map((item) => (
           <button
-            key={spec.id}
-            className={`sample-alert-btn ${spec.id}`}
+            key={item.id}
             type="button"
-            disabled={waiting}
-            onClick={() => sendSample(spec)}
+            role="tab"
+            aria-selected={item.id === spec.id}
+            className={`${item.id}${item.id === spec.id ? " active" : ""}`}
+            onClick={() => setSpecId(item.id)}
           >
-            <b>{spec.button}</b>
-            <span>{spec.name}</span>
+            <b>{item.tab}</b>
+            <span>{item.name}</span>
           </button>
         ))}
       </div>
-      {waiting ? (
-        <p className="sample-wait">5초 뒤에 알림이 와요.</p>
-      ) : (
-        <p className="sample-wait muted">버튼을 누르면 잠시 뒤에 알림이 와요.</p>
+      <div className="sample-view-tabs" role="tablist" aria-label="보기 방식">
+        {SAMPLE_VIEW_MODES.map((mode) => (
+          <button
+            key={mode.level}
+            type="button"
+            role="tab"
+            aria-selected={readingLevel === mode.level}
+            className={readingLevel === mode.level ? "active" : ""}
+            onClick={() => setReadingLevel(mode.level)}
+          >
+            {mode.label}
+          </button>
+        ))}
+      </div>
+      {connected && (
+        <button
+          className="sample-device-btn"
+          type="button"
+          onClick={() => setSentToDevice(true)}
+        >
+          차차등에도 보내기
+        </button>
       )}
-    </main>
+      {view && (
+        <ProtoAlert
+          key={`${spec.id}-${readingLevel}`}
+          view={view}
+          readingLevel={readingLevel}
+          soundSensitive={profile.soundSensitive}
+          acknowledge={close}
+          openEmergency={() => {}}
+          source={source}
+          hideBanner
+        />
+      )}
+    </div>
   )
 }

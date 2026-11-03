@@ -68,9 +68,9 @@ export function SettingsScreen({
         </div>
       </section>
       <section className="settings-block">
-        <h2>예시 알림 보기</h2>
-        <p>빨강·주황·파랑 알림을 미리 봐요.</p>
-        <ProtoButton secondary onClick={openSamples}>예시 알림 보기</ProtoButton>
+        <h2>예시 화면 보기</h2>
+        <p>알림 화면을 미리 봐요.</p>
+        <ProtoButton secondary onClick={openSamples}>예시 화면 보기</ProtoButton>
       </section>
       <button className="credits-link" type="button" onClick={openCredits}>
         그림 일부: Mulberry Symbols © Steve Lee, CC BY-SA 4.0

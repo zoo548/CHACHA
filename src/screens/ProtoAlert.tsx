@@ -11,6 +11,7 @@ import { ProtoButton } from "../components/ProtoButton"
 import type { AlertAction, AlertView, PhoneKind } from "../data/alertTemplate"
 import { toTelDigits } from "../data/profile"
 import type { ReadingLevel } from "../data/profile"
+import { SAMPLE_NO_CALL } from "../data/sampleAlerts"
 import { playAlertTone, speak, stopSpeak, vibrateAlert } from "../speech"
 
 function headerDots(level: AlertView["uiLevel"]) {
@@ -109,7 +110,7 @@ function PicCard({
   const [sampleTapped, setSampleTapped] = useState(false)
 
   if (action.phoneKind) {
-    if (action.disabled || !action.phoneNumber) {
+    if (!sample && (action.disabled || !action.phoneNumber)) {
       return (
         <div className={picCardClass(action)}>
           <PicCardBody action={action} />
@@ -118,10 +119,11 @@ function PicCard({
       )
     }
 
+    const cardAction = sample ? { ...action, disabled: undefined } : action
     const inner = (
       <>
         <CallMark className="call-badge" />
-        <PicCardBody action={action} />
+        <PicCardBody action={cardAction} />
         <em className="call-card-hint">누르면 전화해요</em>
       </>
     )
@@ -137,17 +139,17 @@ function PicCard({
       }
     }
 
-    const digits = toTelDigits(action.phoneNumber)
+    const digits = toTelDigits(action.phoneNumber ?? "")
     const clickable =
       sample || practice || action.phoneKind === "119" || action.phoneKind === "112"
     return (
       <div className="call-wrap">
         {clickable ? (
-          <button className={picCardClass(action, "call-card")} type="button" onClick={onClick}>
+          <button className={picCardClass(cardAction, "call-card")} type="button" onClick={onClick}>
             {inner}
           </button>
         ) : (
-          <a className={picCardClass(action, "call-card")} href={`tel:${digits}`}>
+          <a className={picCardClass(cardAction, "call-card")} href={`tel:${digits}`}>
             {inner}
           </a>
         )}
@@ -159,7 +161,7 @@ function PicCard({
           </p>
         )}
         {sample && sampleTapped && (
-          <p className="call-practice-ok">예시에서는 전화가 걸리지 않아요</p>
+          <p className="call-practice-ok">{SAMPLE_NO_CALL}</p>
         )}
       </div>
     )
@@ -289,6 +291,7 @@ export function ProtoAlert({
   acknowledge,
   openEmergency,
   source,
+  hideBanner = false,
 }: {
   view: AlertView
   readingLevel: ReadingLevel
@@ -296,6 +299,7 @@ export function ProtoAlert({
   acknowledge: () => void
   openEmergency: (kind: Extract<PhoneKind, "119" | "112">) => void
   source: () => void
+  hideBanner?: boolean
 }) {
   const mainRef = useRef<HTMLElement>(null)
   const [compact, setCompact] = useState(false)
@@ -311,13 +315,14 @@ export function ProtoAlert({
   }
 
   useEffect(() => {
+    if (sample) return
     vibrateAlert()
     if (!soundSensitive) {
       playAlertTone()
       speakHeadline(view)
     }
     return () => stopSpeak()
-  }, [view, soundSensitive])
+  }, [sample, view, soundSensitive])
 
   useEffect(() => {
     setCompact(false)
@@ -326,7 +331,7 @@ export function ProtoAlert({
 
   return (
     <article className={`prototype-alert ${view.uiLevel} level-${readingLevel}${compact ? " compact" : ""}${sample ? " sample" : ""}`}>
-      {sample && <p className="sample-flag">예시 알림이에요</p>}
+      {sample && !hideBanner && <p className="sample-flag">예시 화면</p>}
       <header>
         <b>{headerDots(view.uiLevel)}</b>
         <h1>{headerEasy(view.uiLevel, view.title)}</h1>

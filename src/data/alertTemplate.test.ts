@@ -4,7 +4,7 @@ import { getAlertView, listDisasters } from "./alertTemplate"
 import { SAMPLE_ALERTS } from "./sampleAlerts"
 
 describe("getAlertView 색과 행동 단계는 따로", () => {
-  it("예시 알림 세 가지는 발송 유형 색을 따른다", () => {
+  it("예시 화면 세 가지는 발송 유형 색을 따른다", () => {
     const expected = {
       critical: "critical",
       emergency: "emergency",
@@ -34,7 +34,7 @@ describe("getAlertView 색과 행동 단계는 따로", () => {
     expect(getAlertView("heatwave", "caution", emptyProfile)?.uiLevel).toBe("safety")
   })
 
-  it("안전안내 예시 알림은 폭염이다", () => {
+  it("안전안내 예시 화면은 폭염이다", () => {
     const safety = SAMPLE_ALERTS.find((s) => s.id === "safety")
     expect(safety?.disasterId).toBe("heatwave")
   })

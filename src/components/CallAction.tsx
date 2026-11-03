@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import type { AlertAction, PhoneKind } from "../data/alertTemplate"
+import { SAMPLE_NO_CALL } from "../data/sampleAlerts"
 import { toTelDigits } from "../data/profile"
 import { Icon } from "./Icon"
 import { Lines } from "./Lines"
@@ -72,7 +73,7 @@ export function CallActionButton({
 }) {
   const [sampleTapped, setSampleTapped] = useState(false)
   if (!action.phoneKind) return null
-  if (action.disabled || !action.phoneNumber) return <CallMissing />
+  if (!sample && (action.disabled || !action.phoneNumber)) return <CallMissing />
 
   const inner = (
     <>
@@ -106,7 +107,7 @@ export function CallActionButton({
       </button>
     )
   } else {
-    const digits = toTelDigits(action.phoneNumber)
+    const digits = toTelDigits(action.phoneNumber ?? "")
     control = (
       <a className="call-btn" href={`tel:${digits}`}>
         {inner}
@@ -125,7 +126,7 @@ export function CallActionButton({
         </p>
       )}
       {sample && sampleTapped && (
-        <p className="call-practice-ok">예시에서는 전화가 걸리지 않아요</p>
+        <p className="call-practice-ok">{SAMPLE_NO_CALL}</p>
       )}
     </div>
   )

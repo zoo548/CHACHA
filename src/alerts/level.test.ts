@@ -84,7 +84,7 @@ describe("기기 신호·띠 글자", () => {
   })
 })
 
-describe("예시 알림 기기 명령", () => {
+describe("예시 화면 기기 명령", () => {
   it("공습경보·호우 대피·폭염은 H, L, I 를 보낸다", () => {
     const commands = SAMPLE_ALERTS.map((spec) =>
       deviceCommand(

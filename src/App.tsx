@@ -8,7 +8,7 @@
 //   - 올라오는 바텀시트 / 시연 패널
 // 를 쌓는다.
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Capacitor } from "@capacitor/core"
 import { Preferences } from "@capacitor/preferences"
 import {
@@ -33,7 +33,6 @@ import { StatusBar } from "./components/StatusBar"
 import { CallChoice } from "./screens/CallChoice"
 import { HelpScreen } from "./screens/HelpScreen"
 import { HomeScreen } from "./screens/HomeScreen"
-import { LockScreen } from "./screens/LockScreen"
 import { OnboardingFlow } from "./screens/OnboardingFlow"
 import { PdfScreen } from "./screens/PdfScreen"
 import { PrepScreen } from "./screens/PrepScreen"
@@ -52,10 +51,9 @@ import {
   type Profile,
 } from "./data/profile"
 import { getAlertView, rawTextView, type AlertView } from "./data/alertTemplate"
-import { SAMPLE_DELAY_SEC, type SampleAlertSpec } from "./data/sampleAlerts"
 import { matchAlert } from "./matching/matchAlert"
 import { useDevice } from "./device/DeviceContext"
-import { onNotificationTap, scheduleDemoAlert, type NotificationPayload } from "./notifications"
+import { onNotificationTap, type NotificationPayload } from "./notifications"
 import {
   RELAY_DISCONNECTED,
   alertsBaseUrl,
@@ -180,10 +178,7 @@ function App() {
 
   // 알림 / 도움 상황 / 전화할 대상
   const [alertState, setAlertState] = useState<AlertState | null>(null)
-  const [lockAlert, setLockAlert] = useState<AlertState | null>(null)
-  const [sampleWaiting, setSampleWaiting] = useState(false)
   const [sampleFrom, setSampleFrom] = useState<AppScreen>("prep")
-  const sampleTimerRef = useRef<number | null>(null)
   const [emergencyNumber, setEmergencyNumber] = useState<"119" | "112">("119")
   const [situation, setSituation] = useState("무서운 사람이 있어요")
   const [callTarget, setCallTarget] = useState<CallTarget | null>(null)
@@ -192,13 +187,6 @@ function App() {
   const [demoOpen, setDemoOpen] = useState(false)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
   const [relayOk, setRelayOk] = useState<boolean | null>(null)
-
-  const clearSampleTimer = () => {
-    if (sampleTimerRef.current != null) {
-      window.clearTimeout(sampleTimerRef.current)
-      sampleTimerRef.current = null
-    }
-  }
 
   // --- 앱 열 때 한 번: 프로필과 안전점검 완료 플래그 복원 ---
   useEffect(() => {
@@ -223,8 +211,6 @@ function App() {
     }
   }, [])
 
-  useEffect(() => () => clearSampleTimer(), [])
-
   // --- 로컬 알림 탭 처리: OS 알림을 누르면 그 알림 화면으로 이동 ---
   // 승격·무시 규칙:
   //   - 열린 알림이 더 높은(또는 같은) 레벨이면 유지. (예: H 보는 중 L 탭 → 무시)
@@ -246,9 +232,6 @@ function App() {
       })
       // 유지로 결정된 경우: 이미 알림 화면에 있을 테니 아무 것도 바꾸지 않음.
       if (changed) {
-        clearSampleTimer()
-        setSampleWaiting(false)
-        setLockAlert(null)
         setScreen("alert")
         setDemoOpen(false)
         setSheet(null)
@@ -312,22 +295,6 @@ function App() {
     return rawTextView(alertState.text, profile, alertState.broadcastType, alertState.sample)
   }, [alertState, profile])
 
-  const lockNotice = useMemo(() => {
-    if (!lockAlert || lockAlert.kind === "practice") return undefined
-    if (lockAlert.kind === "raw") {
-      const view = rawTextView(lockAlert.text, profile, lockAlert.broadcastType, lockAlert.sample)
-      if (view.uiLevel === "practice") return undefined
-      return { level: view.uiLevel, title: view.title, situation: view.situation }
-    }
-    const view = getAlertView(lockAlert.disasterId, lockAlert.level, profile, {
-      broadcast: lockAlert.broadcastType,
-      rawText: lockAlert.rawText,
-      sample: lockAlert.sample,
-    })
-    if (!view || view.uiLevel === "practice") return undefined
-    return { level: view.uiLevel, title: view.title, situation: view.situation }
-  }, [lockAlert, profile])
-
   const closeAlertAfterAck = () => {
     if (alertState?.kind === "practice") {
       setOnboardStep(14)
@@ -390,63 +357,11 @@ function App() {
       return payloadToState(payload)
     })
     if (changed) {
-      clearSampleTimer()
-      setSampleWaiting(false)
-      setLockAlert(null)
       setScreen("alert")
       setDemoOpen(false)
       setSheet(null)
       if (levelOfPayload(payload) === "critical") setDanger(true)
     }
-  }
-
-  const startSample = (spec: SampleAlertSpec) => {
-    const view = getAlertView(spec.disasterId, spec.variant, profile, {
-      broadcast: spec.broadcast,
-      sample: true,
-    })
-    if (!view || view.uiLevel === "practice") return
-    const signal = view.uiLevel
-    const next: AlertState = {
-      kind: "preset",
-      disasterId: spec.disasterId,
-      level: spec.variant,
-      broadcastType: spec.broadcast,
-      sample: true,
-    }
-    const payload: NotificationPayload = {
-      kind: "preset",
-      disasterId: spec.disasterId,
-      level: spec.variant,
-      broadcastType: spec.broadcast,
-      sample: true,
-    }
-    setSampleWaiting(true)
-    scheduleDemoAlert(
-      view.title,
-      view.situation,
-      payload,
-      SAMPLE_DELAY_SEC,
-      profile.soundSensitive,
-    ).catch(() => {})
-    clearSampleTimer()
-    sampleTimerRef.current = window.setTimeout(() => {
-      setLockAlert(next)
-      setSampleWaiting(false)
-      setScreen("lock")
-      setDemoOpen(false)
-      setSheet(null)
-      device.send(deviceCommand(signal, spec.disasterId)).catch(() => {})
-    }, SAMPLE_DELAY_SEC * 1000)
-  }
-
-  const openLockAlert = () => {
-    if (lockAlert) {
-      setAlertState(lockAlert)
-      if (levelOfState(lockAlert) === "critical") setDanger(true)
-    }
-    setLockAlert(null)
-    setScreen("alert")
   }
 
   // 중계 서버 1분 폴링. 처음 보는 SN 만 알림으로 올린다.
@@ -525,8 +440,6 @@ function App() {
         onComplete={markSafetyComplete}
         profile={profile}
       />
-    ) : screen === "lock" ? (
-      <LockScreen openAlert={openLockAlert} notice={lockNotice} />
     ) : screen === "emergency-script" ? (
       <EmergencyScript
         number={emergencyNumber}
@@ -577,8 +490,8 @@ function App() {
     ) : screen === "sample" ? (
       <SampleAlerts
         back={() => setScreen(sampleFrom)}
-        sendSample={startSample}
-        waiting={sampleWaiting}
+        profile={profile}
+        source={() => setSheet("source")}
       />
     ) : screen === "credits" ? (
       <CreditsScreen back={() => setScreen("settings")} />
@@ -618,14 +531,13 @@ function App() {
 
   const showTabs = TAB_SCREENS.includes(screen)
 
-  // 잠금화면·빨간/파란 알림 화면은 배경이 어둡다 → 상태바 글자를 흰색으로.
-  // 노란 긴급·예시 띠(밝은 배경)는 검은 글자.
+  // 빨간/파란 알림 화면은 배경이 어둡다 → 상태바 글자를 흰색으로.
+  // 주황 긴급·예시 띠(밝은 배경)는 검은 글자.
   const ui = alertView?.uiLevel
   const lightStatusBar =
-    screen === "lock" ||
-    (screen === "alert" &&
-      !alertView?.sample &&
-      (ui === "critical" || ui === "safety" || ui === "practice"))
+    screen === "alert" &&
+    !alertView?.sample &&
+    (ui === "critical" || ui === "safety" || ui === "practice")
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
