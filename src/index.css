@@ -509,6 +509,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 
 .prototype-alert {
   --alert-safe-top: 44px;
+  position: relative;
   height: 100%;
   min-height: 0;
   display: flex;
@@ -529,23 +530,26 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .prototype-alert.emergency > header { color: #1a1208; background: var(--caution); }
 .prototype-alert.safety > header { color: white; background: var(--safety); }
 .prototype-alert.practice > header { color: white; background: var(--blue); }
-.prototype-alert.sample > header { padding-top: 8px; }
-.sample-preview {
-  --alert-safe-top: 44px;
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--proto-bg);
+.prototype-alert.sample:has(.sample-flag) > header { padding-top: 8px; }
+.sample-mark {
+  position: absolute;
+  z-index: 4;
+  top: calc(10px + var(--alert-safe-top));
+  right: 12px;
+  margin: 0;
+  padding: 3px 8px;
+  color: white;
+  background: rgba(17, 17, 17, .35);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  pointer-events: none;
 }
-.sample-preview .prototype-alert {
-  height: auto;
-  flex: 1 1 auto;
-  min-height: 0;
-  --alert-safe-top: 0;
+.prototype-alert.emergency .sample-mark {
+  color: #1a1208;
+  background: rgba(26, 18, 8, .28);
 }
-.sample-preview .prototype-alert > header { padding-top: 8px; }
 .sample-flag {
   flex: 0 0 auto;
   margin: 0;
@@ -557,51 +561,70 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   font-weight: 700;
   text-align: center;
 }
-.sample-grade-tabs,
+.sample-pick-grades { display: flex; flex-direction: column; gap: 10px; }
+.sample-pick-grades > button {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 700;
+  opacity: .55;
+}
+.sample-pick-grades > button > b { display: block; font-size: 16px; }
+.sample-pick-grades > button > span { display: block; font-size: 15px; font-weight: 600; }
+.sample-pick-grades > button.critical { color: white; background: var(--danger); }
+.sample-pick-grades > button.emergency { color: #1a1208; background: var(--caution); }
+.sample-pick-grades > button.safety { color: white; background: var(--safety); }
+.sample-pick-grades > button.active { opacity: 1; }
 .sample-view-tabs {
-  flex: 0 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
-  padding: 8px 10px 0;
 }
-.sample-view-tabs { padding: 6px 10px 8px; }
-.sample-grade-tabs > button,
 .sample-view-tabs > button {
-  min-height: 52px;
-  padding: 6px 4px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.25;
-  opacity: .55;
-}
-.sample-grade-tabs > button > b { display: block; font-size: 12px; }
-.sample-grade-tabs > button > span { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; }
-.sample-grade-tabs > button.critical { color: white; background: var(--danger); }
-.sample-grade-tabs > button.emergency { color: #1a1208; background: var(--caution); }
-.sample-grade-tabs > button.safety { color: white; background: var(--safety); }
-.sample-view-tabs > button {
-  min-height: 40px;
+  min-height: 48px;
+  padding: 8px 4px;
   color: var(--proto-copy);
   background: white;
-  font-size: 14px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  opacity: .55;
 }
-.sample-grade-tabs > button.active,
 .sample-view-tabs > button.active {
   opacity: 1;
+  color: white;
+  background: var(--blue);
 }
-.sample-view-tabs > button.active { color: white; background: var(--blue); }
+.sample-hide-switch {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  color: var(--proto-copy);
+  background: white;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+}
+.sample-hide-switch.active { color: white; background: var(--blue); }
 .sample-device-btn {
-  flex: 0 0 auto;
-  margin: 0 10px 8px;
-  min-height: 44px;
+  width: 100%;
+  margin: 0 0 16px;
+  min-height: 48px;
   color: var(--blue);
   background: var(--pale-blue);
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 16px;
   font-weight: 700;
 }
+.sample-pick-page .proto-button { margin-top: 8px; }
 .prototype-alert > header > b { display: block; font-size: 18px; font-weight: 700; line-height: 1.2; letter-spacing: .12em; }
 .prototype-alert > header h1 {
   margin: 4px 0 0;
@@ -685,8 +708,11 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 
 .prototype-alert > footer {
   flex: 0 0 auto;
-  position: relative;
+  position: absolute;
   z-index: 3;
+  right: 0;
+  bottom: 0;
+  left: 0;
   padding: 8px 16px calc(12px + var(--safe-bottom-extra));
   background: var(--proto-bg);
 }
@@ -1224,10 +1250,8 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   .onboard-screen { padding-top: calc(44px + var(--safe-top-extra)); }
   .safety-screen { padding-top: calc(44px + var(--safe-top-extra)); }
   .prototype-alert { --alert-safe-top: env(safe-area-inset-top, 0px); }
-  .sample-preview { --alert-safe-top: env(safe-area-inset-top, 0px); }
   .prototype-alert > header { padding-top: calc(8px + var(--alert-safe-top)); }
-  .prototype-alert.sample > header { padding-top: 8px; }
-  .sample-preview .prototype-alert > header { padding-top: 8px; }
+  .prototype-alert.sample:has(.sample-flag) > header { padding-top: 8px; }
   .pdf-preview-screen { padding-top: calc(58px + var(--safe-top-extra)); }
 
   /* 하단 고정 영역: 홈 인디케이터 자리만큼 더 올려 준다 */

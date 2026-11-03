@@ -1,5 +1,6 @@
 // 대비하기·설정에서 바로 보는 예시 화면. 알림을 보내지 않는다.
 
+import { Preferences } from "@capacitor/preferences"
 import type { BroadcastType, TemplateVariant } from "../alerts/level"
 import { getAlertView, type AlertView } from "./alertTemplate"
 import type { Profile, ReadingLevel } from "./profile"
@@ -47,6 +48,58 @@ export const SAMPLE_VIEW_MODES: { level: ReadingLevel; label: string }[] = [
 ]
 
 export const SAMPLE_NO_CALL = "예시 화면에서는 전화가 걸리지 않아요"
+
+const SAMPLE_PICKER_KEY = "chacha-sample-picker-v1"
+
+export type SamplePickerState = {
+  specId: SampleAlertSpec["id"]
+  readingLevel: ReadingLevel
+  hideMark: boolean
+}
+
+export const emptySamplePicker: SamplePickerState = {
+  specId: "critical",
+  readingLevel: 1,
+  hideMark: false,
+}
+
+export function parseSamplePicker(
+  raw: Partial<SamplePickerState> | null | undefined,
+  fallbackLevel: ReadingLevel = 1,
+): SamplePickerState {
+  const specId = SAMPLE_ALERTS.some((item) => item.id === raw?.specId)
+    ? (raw?.specId as SampleAlertSpec["id"])
+    : emptySamplePicker.specId
+  const readingLevel =
+    raw?.readingLevel === 2 || raw?.readingLevel === 3
+      ? raw.readingLevel
+      : raw?.readingLevel === 1
+        ? 1
+        : fallbackLevel
+  return {
+    specId,
+    readingLevel,
+    hideMark: raw?.hideMark === true,
+  }
+}
+
+export async function loadSamplePicker(fallbackLevel: ReadingLevel = 1): Promise<SamplePickerState> {
+  try {
+    const { value } = await Preferences.get({ key: SAMPLE_PICKER_KEY })
+    if (!value) return parseSamplePicker(null, fallbackLevel)
+    return parseSamplePicker(JSON.parse(value) as Partial<SamplePickerState>, fallbackLevel)
+  } catch {
+    return parseSamplePicker(null, fallbackLevel)
+  }
+}
+
+export async function saveSamplePicker(state: SamplePickerState): Promise<void> {
+  try {
+    await Preferences.set({ key: SAMPLE_PICKER_KEY, value: JSON.stringify(state) })
+  } catch {
+    /* ignore */
+  }
+}
 
 /** 카드에 이름이 없으면 엄마·이웃으로 보여 준다. */
 export function samplePreviewProfile(profile: Profile): Profile {

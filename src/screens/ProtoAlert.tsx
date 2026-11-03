@@ -2,7 +2,7 @@
 // readingLevel 1 은 글 화면, 2 는 그림+글, 3 은 큰 그림 카드.
 // 위 색 띠와 아래 버튼은 고정, 가운데만 한 덩어리로 스크롤한다.
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { gradeDots, gradeEasyName, sourceCaption } from "../alerts/level"
 import { CallActionButton, CallMark, CallMissing, FingerHint } from "../components/CallAction"
 import { hasAssetIcon, Icon } from "../components/Icon"
@@ -292,6 +292,7 @@ export function ProtoAlert({
   openEmergency,
   source,
   hideBanner = false,
+  showSampleMark = false,
 }: {
   view: AlertView
   readingLevel: ReadingLevel
@@ -300,10 +301,13 @@ export function ProtoAlert({
   openEmergency: (kind: Extract<PhoneKind, "119" | "112">) => void
   source: () => void
   hideBanner?: boolean
+  showSampleMark?: boolean
 }) {
   const mainRef = useRef<HTMLElement>(null)
+  const footerRef = useRef<HTMLElement>(null)
   const [compact, setCompact] = useState(false)
   const [practiced, setPracticed] = useState(false)
+  const [footerSpace, setFooterSpace] = useState(148)
   const practice = view.uiLevel === "practice"
   const sample = Boolean(view.sample)
   const phone: PhoneHandlers = {
@@ -329,15 +333,27 @@ export function ProtoAlert({
     if (mainRef.current) mainRef.current.scrollTop = 0
   }, [view, readingLevel])
 
+  useLayoutEffect(() => {
+    const footer = footerRef.current
+    if (!footer) return
+    const apply = () => setFooterSpace(Math.ceil(footer.getBoundingClientRect().height))
+    apply()
+    const observer = new ResizeObserver(apply)
+    observer.observe(footer)
+    return () => observer.disconnect()
+  }, [view.uiLevel])
+
   return (
     <article className={`prototype-alert ${view.uiLevel} level-${readingLevel}${compact ? " compact" : ""}${sample ? " sample" : ""}`}>
       {sample && !hideBanner && <p className="sample-flag">예시 화면</p>}
+      {showSampleMark && <p className="sample-mark">예시</p>}
       <header>
         <b>{headerDots(view.uiLevel)}</b>
         <h1>{headerEasy(view.uiLevel, view.title)}</h1>
       </header>
       <main
         ref={mainRef}
+        style={{ paddingBottom: footerSpace }}
         onScroll={(event) => {
           setCompact(event.currentTarget.scrollTop > 4)
         }}
@@ -358,7 +374,7 @@ export function ProtoAlert({
           <Level1Actions view={view} {...phone} />
         )}
       </main>
-      <footer>
+      <footer ref={footerRef}>
         <ProtoButton text onClick={() => speakHeadline(view)}>다시 듣기</ProtoButton>
         <ProtoButton onClick={acknowledge}>알았어요</ProtoButton>
         {view.uiLevel !== "practice" && (

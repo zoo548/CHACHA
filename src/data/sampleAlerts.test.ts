@@ -3,6 +3,7 @@ import { deviceCommand, resolveAlertLevel } from "../alerts/tier"
 import { emptyProfile } from "./profile"
 import {
   SAMPLE_ALERTS,
+  parseSamplePicker,
   sampleAlertView,
   samplePreviewProfile,
 } from "./sampleAlerts"
@@ -25,6 +26,16 @@ describe("예시 화면", () => {
     const view = sampleAlertView(SAMPLE_ALERTS[0], emptyProfile)
     expect(view?.sample).toBe(true)
     expect(view?.actions.some((action) => action.text.includes("엄마"))).toBe(true)
+  })
+
+  it("마지막에 고른 등급과 보기 방식을 기억한다", () => {
+    const saved = parseSamplePicker({
+      specId: "safety",
+      readingLevel: 3,
+      hideMark: true,
+    })
+    expect(saved).toEqual({ specId: "safety", readingLevel: 3, hideMark: true })
+    expect(parseSamplePicker(null, 2).readingLevel).toBe(2)
   })
 
   it("카드에 적은 보호자 이름을 쓴다", () => {
