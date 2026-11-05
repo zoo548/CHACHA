@@ -51,8 +51,19 @@ import {
 import { getAlertView, rawTextView, type AlertView } from "./data/alertTemplate"
 import { matchAlert } from "./matching/matchAlert"
 import { useDevice } from "./device/DeviceContext"
+import {
+  DEMO_OFFLINE_BANNER,
+  DEMO_WAIT_BANNER,
+  demoAudienceProfile,
+  hasDemoQuery,
+  loadDemoAudience,
+  saveDemoAudience,
+} from "./demo/audience"
+import { joinDemo, loadDemoDeviceId } from "./demo/demoClient"
 import { useDemoBroadcast } from "./demo/useDemoBroadcast"
-import { onNotificationTap, type NotificationPayload } from "./notifications"
+import { DemoJoinScreen } from "./screens/DemoJoinScreen"
+import { ensurePermission, onNotificationTap, type NotificationPayload } from "./notifications"
+import { unlockAudio } from "./speech"
 import {
   RELAY_DISCONNECTED,
   alertsBaseUrl,
@@ -184,6 +195,8 @@ function App() {
 
   const [safetyComplete, setSafetyComplete] = useState(false)
   const [demoOpen, setDemoOpen] = useState(false)
+  const [demoAudience, setDemoAudience] = useState(false)
+  const [demoLinkOk, setDemoLinkOk] = useState(true)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
   const [relayOk, setRelayOk] = useState<boolean | null>(null)
 
@@ -191,15 +204,22 @@ function App() {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const [loaded, safetyFlag] = await Promise.all([
+      const [loaded, safetyFlag, joinedDemo] = await Promise.all([
         loadProfile(),
         Preferences.get({ key: SAFETY_COMPLETE_KEY }),
+        loadDemoAudience(),
       ])
       if (cancelled) return
       setProfile(loaded)
       setSafetyComplete(safetyFlag.value === "true")
-      // 저장된 프로필이 있으면 온보딩 건너뛰고 홈으로.
-      if (isProfileReady(loaded)) {
+      if (hasDemoQuery() && !joinedDemo) {
+        setScreen("demo-join")
+        setTab("home")
+      } else if (joinedDemo) {
+        setDemoAudience(true)
+        setScreen("home")
+        setTab("home")
+      } else if (isProfileReady(loaded)) {
         setScreen("home")
         setTab("home")
       }
@@ -286,13 +306,14 @@ function App() {
         broadcast: alertState.broadcastType,
         rawText: alertState.rawText,
         sample: alertState.sample,
+        demo: demoAudience,
       })
     }
     if (alertState.kind === "practice") {
       return getAlertView("practice", "caution", profile)
     }
-    return rawTextView(alertState.text, profile, alertState.broadcastType, alertState.sample)
-  }, [alertState, profile])
+    return rawTextView(alertState.text, profile, alertState.broadcastType, alertState.sample, demoAudience)
+  }, [alertState, profile, demoAudience])
 
   const closeAlertAfterAck = () => {
     if (alertState?.kind === "practice") {
@@ -364,8 +385,7 @@ function App() {
   }
 
   useDemoBroadcast({
-    enabled: ready,
-    profile,
+    enabled: ready && demoAudience,
     onIncoming: (payload) => {
       if (isExcludedPayload(payload)) return
       setAlertState(payloadToState(payload))
@@ -374,11 +394,33 @@ function App() {
       setSheet(null)
       if (levelOfPayload(payload) === "critical") setDanger(true)
     },
+    onLink: setDemoLinkOk,
   })
+
+  const joinDemoSession = async () => {
+    const audioP = unlockAudio()
+    const permP = ensurePermission()
+    const next = demoAudienceProfile
+    setProfile(next)
+    setDemoAudience(true)
+    setDemoLinkOk(true)
+    setScreen("home")
+    setTab("home")
+    await saveProfile(next)
+    await saveDemoAudience(true)
+    await Promise.all([audioP, permP])
+    try {
+      const id = await loadDemoDeviceId()
+      const count = await joinDemo(id)
+      setDemoLinkOk(count !== null)
+    } catch {
+      setDemoLinkOk(false)
+    }
+  }
 
   // 중계 서버 1분 폴링. 처음 보는 SN 만 알림으로 올린다.
   useEffect(() => {
-    if (!ready) return
+    if (!ready || demoAudience) return
     let cancelled = false
 
     const tick = async () => {
@@ -426,11 +468,13 @@ function App() {
       cancelled = true
       window.clearInterval(id)
     }
-  }, [ready, profile.address])
+  }, [ready, demoAudience, profile.address])
 
   // --- 화면 선택 ---
   const content =
-    screen === "onboarding" ? (
+    screen === "demo-join" ? (
+      <DemoJoinScreen onJoin={joinDemoSession} />
+    ) : screen === "onboarding" ? (
       <OnboardingFlow
         step={onboardStep}
         setStep={setOnboardStep}
@@ -531,12 +575,21 @@ function App() {
         goPrep={() => setActiveTab("prep")}
         profile={profile}
         openDemo={() => setDemoOpen(true)}
+        demoBanner={
+          demoAudience
+            ? demoLinkOk
+              ? DEMO_WAIT_BANNER
+              : DEMO_OFFLINE_BANNER
+            : undefined
+        }
         lastCheckedLabel={
-          relayOk === false
-            ? RELAY_DISCONNECTED
-            : lastCheckedAt
-              ? formatLastChecked(lastCheckedAt)
-              : ""
+          demoAudience
+            ? ""
+            : relayOk === false
+              ? RELAY_DISCONNECTED
+              : lastCheckedAt
+                ? formatLastChecked(lastCheckedAt)
+                : ""
         }
       />
     )

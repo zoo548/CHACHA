@@ -11,6 +11,7 @@ import { ProtoButton } from "../components/ProtoButton"
 import type { AlertAction, AlertView, PhoneKind } from "../data/alertTemplate"
 import { toTelDigits } from "../data/profile"
 import type { ReadingLevel } from "../data/profile"
+import { DEMO_NO_CALL } from "../demo/audience"
 import { SAMPLE_NO_CALL } from "../data/sampleAlerts"
 import { playAlertTone, speak, stopSpeak, vibrateAlert } from "../speech"
 
@@ -96,6 +97,7 @@ function PicCard({
   practice,
   practiced,
   sample,
+  demo,
   onPractice,
   onEmergency,
 }: {
@@ -103,14 +105,16 @@ function PicCard({
   practice?: boolean
   practiced?: boolean
   sample?: boolean
+  demo?: boolean
   onPractice?: () => void
   onEmergency?: (kind: Extract<PhoneKind, "119" | "112">) => void
 }) {
   const longPress = useLongPress(() => speak(action.text))
   const [sampleTapped, setSampleTapped] = useState(false)
+  const noCall = Boolean(sample || demo)
 
   if (action.phoneKind) {
-    if (!sample && (action.disabled || !action.phoneNumber)) {
+    if (!noCall && (action.disabled || !action.phoneNumber)) {
       return (
         <div className={picCardClass(action)}>
           <PicCardBody action={action} />
@@ -119,7 +123,7 @@ function PicCard({
       )
     }
 
-    const cardAction = sample ? { ...action, disabled: undefined } : action
+    const cardAction = noCall ? { ...action, disabled: undefined } : action
     const inner = (
       <>
         <CallMark className="call-badge" />
@@ -129,9 +133,9 @@ function PicCard({
     )
 
     const onClick = (event: { preventDefault: () => void }) => {
-      if (sample || practice) {
+      if (noCall || practice) {
         event.preventDefault()
-        if (sample) setSampleTapped(true)
+        if (noCall) setSampleTapped(true)
         onPractice?.()
       } else if (action.phoneKind === "119" || action.phoneKind === "112") {
         event.preventDefault()
@@ -141,7 +145,7 @@ function PicCard({
 
     const digits = toTelDigits(action.phoneNumber ?? "")
     const clickable =
-      sample || practice || action.phoneKind === "119" || action.phoneKind === "112"
+      noCall || practice || action.phoneKind === "119" || action.phoneKind === "112"
     return (
       <div className="call-wrap">
         {clickable ? (
@@ -160,8 +164,8 @@ function PicCard({
             <span>진짜 알림에서는 전화가 걸려요.</span>
           </p>
         )}
-        {sample && sampleTapped && (
-          <p className="call-practice-ok">{SAMPLE_NO_CALL}</p>
+        {noCall && sampleTapped && (
+          <p className="call-practice-ok">{demo ? DEMO_NO_CALL : SAMPLE_NO_CALL}</p>
         )}
       </div>
     )
@@ -184,6 +188,7 @@ type PhoneHandlers = {
   practice?: boolean
   practiced?: boolean
   sample?: boolean
+  demo?: boolean
   onPractice?: () => void
   onEmergency?: (kind: Extract<PhoneKind, "119" | "112">) => void
 }
@@ -207,6 +212,7 @@ function Level1Actions({
                 practice={phone.practice}
                 practiced={phone.practiced}
                 sample={phone.sample}
+                demo={phone.demo}
                 onPractice={phone.onPractice}
                 onEmergency={phone.onEmergency}
               />
@@ -243,6 +249,7 @@ function Level2Actions({
               practice={phone.practice}
               practiced={phone.practiced}
               sample={phone.sample}
+              demo={phone.demo}
               onPractice={phone.onPractice}
               onEmergency={phone.onEmergency}
             />
@@ -276,6 +283,7 @@ function Level3Actions({
           practice={phone.practice}
           practiced={phone.practiced}
           sample={phone.sample}
+          demo={phone.demo}
           onPractice={phone.onPractice}
           onEmergency={phone.onEmergency}
         />
@@ -310,12 +318,15 @@ export function ProtoAlert({
   const [footerSpace, setFooterSpace] = useState(148)
   const practice = view.uiLevel === "practice"
   const sample = Boolean(view.sample)
+  const demo = Boolean(view.demo)
+  const noCall = sample || demo
   const phone: PhoneHandlers = {
     practice,
     sample,
+    demo,
     practiced,
     onPractice: () => setPracticed(true),
-    onEmergency: sample ? () => setPracticed(true) : openEmergency,
+    onEmergency: noCall ? () => setPracticed(true) : openEmergency,
   }
 
   useEffect(() => {

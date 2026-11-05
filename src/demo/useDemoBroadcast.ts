@@ -1,9 +1,8 @@
-// 차차를 열어 둔 관객 폰: 시연 문자 폴링 + 참여 기록.
+// 시연 참여 관객: 3초마다 시연 문자를 확인하고, 화면이 다시 켜지면 바로 한 번 더 본다.
 
 import { useEffect, useRef } from "react"
-import type { Profile } from "../data/profile"
+import { handleIncomingAlert } from "../alerts/handleIncomingAlert"
 import { showIncomingAlert, type NotificationPayload } from "../notifications"
-import { demoNotificationCopy } from "./broadcast"
 import {
   fetchDemoCurrent,
   joinDemo,
@@ -12,29 +11,33 @@ import {
   saveSeenDemoId,
 } from "./demoClient"
 
-const POLL_MS = 2_000
+const POLL_MS = 3_000
 const JOIN_MS = 30_000
-const MAX_AGE_MS = 30 * 60 * 1000
 
 export function useDemoBroadcast({
   enabled,
-  profile,
   onIncoming,
+  onLink,
 }: {
   enabled: boolean
-  profile: Profile
   onIncoming: (payload: NotificationPayload) => void
+  onLink?: (ok: boolean) => void
 }) {
   const onIncomingRef = useRef(onIncoming)
   onIncomingRef.current = onIncoming
+  const onLinkRef = useRef(onLink)
+  onLinkRef.current = onLink
 
   useEffect(() => {
     if (!enabled) return
     let cancelled = false
     let lastJoin = 0
     let deviceId = ""
+    let inflight = false
 
     const tick = async () => {
+      if (inflight || cancelled) return
+      inflight = true
       try {
         if (!deviceId) deviceId = await loadDemoDeviceId()
         const now = Date.now()
@@ -43,25 +46,42 @@ export function useDemoBroadcast({
           lastJoin = now
         }
         const current = await fetchDemoCurrent()
-        if (cancelled || !current) return
-        const sentAt = Date.parse(current.sentAt)
-        if (Number.isFinite(sentAt) && now - sentAt > MAX_AGE_MS) return
+        if (cancelled) return
+        onLinkRef.current?.(true)
+        if (!current) return
         const seen = await loadSeenDemoId()
         if (seen === current.id) return
+        const payload = handleIncomingAlert(current.message, {
+          broadcast: current.govType,
+          alertId: current.id,
+        })
+        if (!payload) return
         await saveSeenDemoId(current.id)
-        const copy = demoNotificationCopy(current, profile)
-        await showIncomingAlert(copy.title, copy.body, copy.payload, profile.soundSensitive)
-        if (!cancelled) onIncomingRef.current(copy.payload)
+        await showIncomingAlert("재난문자가 왔어요", current.message, payload, false)
+        if (!cancelled) onIncomingRef.current(payload)
       } catch {
-        /* 시연 서버가 없어도 앱은 그대로 쓴다 */
+        if (!cancelled) onLinkRef.current?.(false)
+      } finally {
+        inflight = false
       }
+    }
+
+    const onResume = () => {
+      if (document.visibilityState === "hidden") return
+      tick()
     }
 
     tick()
     const id = window.setInterval(tick, POLL_MS)
+    document.addEventListener("visibilitychange", onResume)
+    window.addEventListener("pageshow", onResume)
+    window.addEventListener("focus", onResume)
     return () => {
       cancelled = true
       window.clearInterval(id)
+      document.removeEventListener("visibilitychange", onResume)
+      window.removeEventListener("pageshow", onResume)
+      window.removeEventListener("focus", onResume)
     }
-  }, [enabled, profile])
+  }, [enabled])
 }

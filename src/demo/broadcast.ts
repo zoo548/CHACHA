@@ -1,10 +1,9 @@
 // 시연 문자 → 알림 payload · 차차등 명령. 생성형 AI 없이 템플릿 매칭만 쓴다.
 
-import { isExcludedDisaster } from "../alerts/excluded"
-import { deviceCommand, parseBroadcast, resolveAlertLevel } from "../alerts/level"
+import { handleIncomingAlert } from "../alerts/handleIncomingAlert"
+import { deviceCommand, resolveAlertLevel } from "../alerts/level"
 import { getAlertView, rawTextView } from "../data/alertTemplate"
 import type { Profile } from "../data/profile"
-import { matchAlert } from "../matching/matchAlert"
 import type { NotificationPayload } from "../notifications"
 import {
   DEFAULT_DEMO_GOV_TYPE,
@@ -17,29 +16,17 @@ export type { DemoMessage }
 export { DEFAULT_DEMO_GOV_TYPE, DEFAULT_DEMO_MESSAGE, DEFAULT_DEMO_SENDER }
 
 export function demoMessageToPayload(msg: DemoMessage): NotificationPayload {
-  const broadcast = parseBroadcast(msg.govType) ?? "안전안내"
-  // 기본 시연 문자는 '급경사지'가 산사태 키워드라 호우보다 길게 잡힌다.
-  // 발표용 호우 대피 화면·차차등 R 을 위해 호우+대피가 있으면 호우로 본다.
-  const rainDemo = msg.message.includes("호우") && msg.message.includes("대피")
-  const result = rainDemo
-    ? { id: "heavy_rain" as const, level: "evacuate" as const }
-    : matchAlert(msg.message, broadcast)
-  if (result && !isExcludedDisaster(result.id)) {
-    return {
-      kind: "preset",
-      disasterId: result.id,
-      level: result.level,
-      broadcastType: broadcast,
-      rawText: msg.message,
+  return (
+    handleIncomingAlert(msg.message, {
+      broadcast: msg.govType,
+      alertId: msg.id,
+    }) ?? {
+      kind: "raw",
+      text: msg.message,
+      broadcastType: "안전안내",
       alertId: msg.id,
     }
-  }
-  return {
-    kind: "raw",
-    text: msg.message,
-    broadcastType: broadcast,
-    alertId: msg.id,
-  }
+  )
 }
 
 export function demoDeviceCommand(msg: Pick<DemoMessage, "message" | "govType">): "H" | "L" | "I" | "R" {

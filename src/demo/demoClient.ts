@@ -13,16 +13,25 @@ export function demoApiUrl(path: string): string {
   return `${base}${suffix}`
 }
 
+const FETCH_MS = 4_000
+
 async function fetchDemo(path: string, init: RequestInit = {}): Promise<Response> {
-  return fetch(demoApiUrl(path), {
-    cache: "no-store",
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
-      ...(init.headers ?? {}),
-    },
-  })
+  const ctrl = new AbortController()
+  const timer = globalThis.setTimeout(() => ctrl.abort(), FETCH_MS)
+  try {
+    return await fetch(demoApiUrl(path), {
+      cache: "no-store",
+      ...init,
+      signal: ctrl.signal,
+      headers: {
+        Accept: "application/json",
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        ...(init.headers ?? {}),
+      },
+    })
+  } finally {
+    globalThis.clearTimeout(timer)
+  }
 }
 
 function newDeviceId(): string {

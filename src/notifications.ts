@@ -29,13 +29,24 @@ const CHANNEL_ID = "chacha-alert"
 const CHANNEL_SILENT_ID = "chacha-alert-silent"
 const NOTIFICATION_ID = 7000
 
-/** 권한 요청. 이미 허락됐으면 바로 성공. 거절되면 false. */
+/** 권한 요청. 이미 허락됐으면 바로 성공. 거절되면 false. 웹은 브라우저 알림. */
 export async function ensurePermission(): Promise<boolean> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const check = await LocalNotifications.checkPermissions()
+      if (check.display === "granted") return true
+      const req = await LocalNotifications.requestPermissions()
+      return req.display === "granted"
+    } catch {
+      return false
+    }
+  }
+  if (typeof Notification === "undefined") return false
   try {
-    const check = await LocalNotifications.checkPermissions()
-    if (check.display === "granted") return true
-    const req = await LocalNotifications.requestPermissions()
-    return req.display === "granted"
+    if (Notification.permission === "granted") return true
+    if (Notification.permission === "denied") return false
+    const result = await Notification.requestPermission()
+    return result === "granted"
   } catch {
     return false
   }

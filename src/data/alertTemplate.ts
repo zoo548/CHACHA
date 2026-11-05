@@ -41,6 +41,8 @@ export type AlertAction = {
 export type AlertView = {
   uiLevel: AlertLevel | "practice"
   sample?: boolean
+  /** 시연 관객. 전화는 걸리지 않고, 소리·진동은 난다. */
+  demo?: boolean
   title: string
   situation: string
   /** 1단계 헤더용 선 아이콘. */
@@ -66,6 +68,7 @@ export type AlertViewOptions = {
   broadcast?: string | null
   rawText?: string
   sample?: boolean
+  demo?: boolean
   alertLevel?: AlertLevel
 }
 
@@ -232,6 +235,7 @@ export function getAlertView(
   return {
     uiLevel,
     sample: options?.sample,
+    demo: options?.demo,
     title: variant.title,
     situation: variant.situation,
     hero: HERO_MAP[d.hero_icon] ?? "bell",
@@ -283,10 +287,12 @@ export function rawTextView(
   profile: Profile,
   broadcast?: BroadcastType,
   sample?: boolean,
+  demo?: boolean,
 ): AlertView {
   return {
     uiLevel: resolveAlertLevel({}),
     sample,
+    demo,
     title: "재난문자가 왔어요",
     situation: rawText || "",
     hero: "bell",

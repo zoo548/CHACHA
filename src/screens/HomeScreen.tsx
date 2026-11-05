@@ -35,6 +35,7 @@ export function HomeScreen({
   profile,
   openDemo,
   lastCheckedLabel,
+  demoBanner,
 }: {
   danger: boolean
   acknowledged: boolean
@@ -45,6 +46,7 @@ export function HomeScreen({
   profile: Profile
   openDemo: () => void
   lastCheckedLabel: string
+  demoBanner?: string
 }) {
   const { state: deviceState } = useDevice()
   const label = deviceStatusLabel(deviceState.status)
@@ -54,6 +56,11 @@ export function HomeScreen({
         <Logo onSecretTap={openDemo} />
         {label && <em className={`device-badge ${deviceState.status}`}>{label}</em>}
       </header>
+      {demoBanner && (
+        <p className={`demo-home-banner${demoBanner.includes("끊겼") ? " offline" : ""}`}>
+          {demoBanner}
+        </p>
+      )}
       <section className="page-heading">
         <h1>
           {danger ? (

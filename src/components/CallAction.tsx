@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import type { AlertAction, PhoneKind } from "../data/alertTemplate"
+import { DEMO_NO_CALL } from "../demo/audience"
 import { SAMPLE_NO_CALL } from "../data/sampleAlerts"
 import { toTelDigits } from "../data/profile"
 import { Icon } from "./Icon"
@@ -61,6 +62,7 @@ export function CallActionButton({
   practice,
   practiced,
   sample,
+  demo,
   onPractice,
   onEmergency,
 }: {
@@ -68,12 +70,14 @@ export function CallActionButton({
   practice?: boolean
   practiced?: boolean
   sample?: boolean
+  demo?: boolean
   onPractice?: () => void
   onEmergency?: (kind: Extract<PhoneKind, "119" | "112">) => void
 }) {
+  const noCall = Boolean(sample || demo)
   const [sampleTapped, setSampleTapped] = useState(false)
   if (!action.phoneKind) return null
-  if (!sample && (action.disabled || !action.phoneNumber)) return <CallMissing />
+  if (!noCall && (action.disabled || !action.phoneNumber)) return <CallMissing />
 
   const inner = (
     <>
@@ -86,13 +90,13 @@ export function CallActionButton({
   )
 
   let control: ReactNode
-  if (sample || practice) {
+  if (noCall || practice) {
     control = (
       <button
         className="call-btn"
         type="button"
         onClick={() => {
-          if (sample) setSampleTapped(true)
+          if (noCall) setSampleTapped(true)
           onPractice?.()
         }}
       >
@@ -125,8 +129,8 @@ export function CallActionButton({
           <span>진짜 알림에서는 전화가 걸려요.</span>
         </p>
       )}
-      {sample && sampleTapped && (
-        <p className="call-practice-ok">{SAMPLE_NO_CALL}</p>
+      {noCall && sampleTapped && (
+        <p className="call-practice-ok">{demo ? DEMO_NO_CALL : SAMPLE_NO_CALL}</p>
       )}
     </div>
   )
