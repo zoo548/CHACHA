@@ -6,3 +6,9 @@ export { OPTIONS }
 export function GET() {
   return wrap(async () => json({ current: await getCurrent() }))
 }
+
+export default {
+  fetch() {
+    return GET()
+  },
+}

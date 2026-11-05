@@ -3,6 +3,12 @@ import { clearCurrent } from "./_lib/store"
 
 export { OPTIONS }
 
+export default {
+  fetch(request: Request) {
+    return POST(request)
+  },
+}
+
 export function POST(req: Request) {
   return wrap(async () => {
     const body = await readJson(req)

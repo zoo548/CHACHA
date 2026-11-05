@@ -6,3 +6,9 @@ export { OPTIONS }
 export function GET() {
   return wrap(async () => json({ count: await pruneJoins() }))
 }
+
+export default {
+  fetch() {
+    return GET()
+  },
+}

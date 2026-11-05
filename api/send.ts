@@ -10,6 +10,12 @@ import { setCurrent } from "./_lib/store"
 
 export { OPTIONS }
 
+export default {
+  fetch(request: Request) {
+    return POST(request)
+  },
+}
+
 function clip(value: unknown, fallback: string, max: number): string {
   const text = typeof value === "string" ? value.trim() : ""
   if (!text) return fallback

@@ -1,25 +1,22 @@
 {
-  "framework": "vite",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
   "installCommand": "pnpm install --frozen-lockfile --ignore-scripts",
   "env": {
     "VITE_DEMO_DEFAULT": "true"
   },
-  "functions": {
-    "api/current.ts": { "maxDuration": 10 },
-    "api/count.ts": { "maxDuration": 10 },
-    "api/join.ts": { "maxDuration": 10 },
-    "api/send.ts": { "maxDuration": 10 },
-    "api/reset.ts": { "maxDuration": 10 }
-  },
   "rewrites": [
-    { "source": "/api/demo/current", "destination": "/api/current" },
-    { "source": "/api/demo/count", "destination": "/api/count" },
-    { "source": "/api/demo/join", "destination": "/api/join" },
-    { "source": "/api/demo/send", "destination": "/api/send" },
-    { "source": "/api/demo/reset", "destination": "/api/reset" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/api/demo/current", "destination": "/api?op=current" },
+    { "source": "/api/demo/count", "destination": "/api?op=count" },
+    { "source": "/api/demo/join", "destination": "/api?op=join" },
+    { "source": "/api/demo/send", "destination": "/api?op=send" },
+    { "source": "/api/demo/reset", "destination": "/api?op=reset" },
+    { "source": "/api/current", "destination": "/api?op=current" },
+    { "source": "/api/count", "destination": "/api?op=count" },
+    { "source": "/api/join", "destination": "/api?op=join" },
+    { "source": "/api/send", "destination": "/api?op=send" },
+    { "source": "/api/reset", "destination": "/api?op=reset" },
+    { "source": "/((?!api(?:/|$)).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
