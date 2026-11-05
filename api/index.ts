@@ -70,6 +70,9 @@ async function route(request: Request): Promise<Response> {
   return json({ error: "not_found", op, method }, 404)
 }
 
+export const config = { runtime: "nodejs" }
+export const runtime = "nodejs"
+
 export function GET(request: Request) {
   return wrap(() => route(request))
 }
@@ -79,9 +82,3 @@ export function POST(request: Request) {
 }
 
 export { OPTIONS }
-
-export default {
-  fetch(request: Request) {
-    return wrap(() => route(request))
-  },
-}

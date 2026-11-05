@@ -7,7 +7,7 @@
   },
   "functions": {
     "api/index.ts": {
-      "excludeFiles": "{src,android,ios,server,public,docs,dist}/**"
+      "excludeFiles": "{android,ios,server,docs,dist}/**"
     }
   },
   "rewrites": [
