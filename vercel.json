@@ -6,7 +6,7 @@
     "VITE_DEMO_DEFAULT": "true"
   },
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
       "excludeFiles": "{android,ios,server,docs,dist}/**"
     }
   },
