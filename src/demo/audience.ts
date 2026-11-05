@@ -21,6 +21,16 @@ export function isDemoDefault(): boolean {
   return value === "true" || value === "1"
 }
 
+export function hasDemoQuery(): boolean {
+  if (typeof window === "undefined") return false
+  return new URLSearchParams(window.location.search).get("demo") === "1"
+}
+
+/** QR(?demo=1) 이거나 발표 기간 기본 주소. */
+export function isDemoOn(): boolean {
+  return isDemoDefault() || hasDemoQuery()
+}
+
 export type DemoEntry = {
   screen: "demo-join" | "home" | "onboarding"
   audience: boolean
@@ -39,8 +49,7 @@ export function resolveDemoEntry(input: {
     return { screen: "home", audience: true, clearSaved: false }
   }
   const clearSaved = input.joined && !demoOn
-  if (input.demoQuery) return { screen: "demo-join", audience: false, clearSaved }
-  if (input.demoPeriod && !input.profileReady) {
+  if (demoOn && !input.profileReady) {
     return { screen: "demo-join", audience: false, clearSaved }
   }
   if (input.profileReady) return { screen: "home", audience: false, clearSaved }
@@ -66,11 +75,6 @@ export const demoAudienceProfile: Profile = {
   },
   readingLevel: 2,
   soundSensitive: false,
-}
-
-export function hasDemoQuery(): boolean {
-  if (typeof window === "undefined") return false
-  return new URLSearchParams(window.location.search).get("demo") === "1"
 }
 
 export async function loadDemoAudience(): Promise<boolean> {

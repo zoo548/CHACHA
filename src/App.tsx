@@ -57,6 +57,7 @@ import {
   demoAudienceProfile,
   hasDemoQuery,
   isDemoDefault,
+  isDemoOn,
   loadDemoAudience,
   resolveDemoEntry,
   saveDemoAudience,
@@ -213,34 +214,48 @@ function App() {
   // --- 앱 열 때 한 번: 프로필과 안전점검 완료 플래그 복원 ---
   useEffect(() => {
     let cancelled = false
+    const finish = () => {
+      if (!cancelled) setReady(true)
+    }
+    const timer = window.setTimeout(finish, 2500)
     ;(async () => {
-      const [loaded, safetyFlag, joinedDemo] = await Promise.all([
-        loadProfile(),
-        Preferences.get({ key: SAFETY_COMPLETE_KEY }),
-        loadDemoAudience(),
-      ])
-      if (cancelled) return
-      setProfile(loaded)
-      setSafetyComplete(safetyFlag.value === "true")
-      const entry = resolveDemoEntry({
-        demoPeriod: isDemoDefault(),
-        demoQuery: hasDemoQuery(),
-        joined: joinedDemo,
-        profileReady: isProfileReady(loaded),
-      })
-      if (entry.clearSaved) await saveDemoAudience(false)
-      setDemoAudience(entry.audience)
-      if (entry.screen === "demo-join") {
-        setScreen("demo-join")
-        setTab("home")
-      } else if (entry.screen === "home") {
-        setScreen("home")
-        setTab("home")
+      try {
+        const [loaded, safetyFlag, joinedDemo] = await Promise.all([
+          loadProfile(),
+          Preferences.get({ key: SAFETY_COMPLETE_KEY }).catch(() => ({ value: null })),
+          loadDemoAudience(),
+        ])
+        if (cancelled) return
+        setProfile(loaded)
+        setSafetyComplete(safetyFlag.value === "true")
+        const entry = resolveDemoEntry({
+          demoPeriod: isDemoDefault(),
+          demoQuery: hasDemoQuery(),
+          joined: joinedDemo,
+          profileReady: isProfileReady(loaded),
+        })
+        if (entry.clearSaved) await saveDemoAudience(false)
+        setDemoAudience(entry.audience)
+        if (entry.screen === "demo-join") {
+          setScreen("demo-join")
+          setTab("home")
+        } else if (entry.screen === "home") {
+          setScreen("home")
+          setTab("home")
+        }
+      } catch {
+        if (!cancelled && isDemoOn()) {
+          setScreen("demo-join")
+          setTab("home")
+        }
+      } finally {
+        window.clearTimeout(timer)
+        finish()
       }
-      setReady(true)
     })()
     return () => {
       cancelled = true
+      window.clearTimeout(timer)
     }
   }, [])
 
@@ -495,7 +510,7 @@ function App() {
       <DemoJoinScreen
         onJoin={() => joinDemoSession("sample")}
         onStartFresh={
-          isDemoDefault() && !isProfileReady(profile)
+          !isProfileReady(profile)
             ? () => {
                 setScreen("onboarding")
                 setOnboardStep(0)
@@ -623,7 +638,7 @@ function App() {
         locationLabel={locationBanner(displayRegion(gps, profile.address, geo))}
         openRegionPick={() => setSheet("region-source")}
         onDemoInvite={
-          isDemoDefault() && !demoAudience && isProfileReady(profile)
+          isDemoOn() && !demoAudience && isProfileReady(profile)
             ? () => joinDemoSession("keep")
             : undefined
         }

@@ -374,6 +374,7 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
 .demo-join-page {
   display: flex;
   flex-direction: column;
+  padding-bottom: calc(32px + var(--safe-bottom-extra));
 }
 .demo-join-page .page-heading { flex: 1; }
 .demo-join-btn {
@@ -1270,10 +1271,11 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
   .prototype-stage {
     padding: 0;
     display: block;
+    min-height: 100svh;
   }
   .iphone-frame {
     width: 100%;
-    height: 100dvh;
+    height: 100svh;
     border: 0;
     border-radius: 0;
   }

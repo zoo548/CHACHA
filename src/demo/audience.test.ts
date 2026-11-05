@@ -68,7 +68,7 @@ describe("시연 기간 첫 화면", () => {
     ).toEqual({ screen: "onboarding", audience: false, clearSaved: false })
   })
 
-  it("QR 이면 기간과 관계없이 시연 참여 화면이다", () => {
+  it("QR 이고 프로필이 없으면 시연 참여 화면이다", () => {
     expect(
       resolveDemoEntry({
         demoPeriod: false,
@@ -77,5 +77,16 @@ describe("시연 기간 첫 화면", () => {
         profileReady: false,
       }),
     ).toEqual({ screen: "demo-join", audience: false, clearSaved: false })
+  })
+
+  it("QR 이고 프로필이 있으면 홈에서 시연에 참여한다", () => {
+    expect(
+      resolveDemoEntry({
+        demoPeriod: false,
+        demoQuery: true,
+        joined: false,
+        profileReady: true,
+      }),
+    ).toEqual({ screen: "home", audience: false, clearSaved: false })
   })
 })
