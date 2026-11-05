@@ -10,7 +10,7 @@
     "dev:server": "pnpm --dir server start",
     "server": "pnpm --dir server start",
     "latency": "pnpm --dir server latency",
-    "postinstall": "pnpm --dir server install",
+    "postinstall": "node ./scripts/install-server.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "format": "oxfmt",
