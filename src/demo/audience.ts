@@ -11,6 +11,42 @@ export const DEMO_WAIT_BANNER = "시연 참여 중 · 발표를 기다리고 있
 
 export const DEMO_OFFLINE_BANNER = "연결이 끊겼어요 · 다시 연결 중"
 
+export const DEMO_INVITE_LABEL = "지금 시연에 참여하기"
+
+export const DEMO_START_FRESH = "처음부터 시작하기"
+
+/** 발표 기간에만 Vercel 에서 VITE_DEMO_DEFAULT=true. 빌드에 들어간다. */
+export function isDemoDefault(): boolean {
+  const value = import.meta.env.VITE_DEMO_DEFAULT
+  return value === "true" || value === "1"
+}
+
+export type DemoEntry = {
+  screen: "demo-join" | "home" | "onboarding"
+  audience: boolean
+  clearSaved: boolean
+}
+
+/** 시연 기간·QR·저장된 참여·프로필로 첫 화면을 고른다. */
+export function resolveDemoEntry(input: {
+  demoPeriod: boolean
+  demoQuery: boolean
+  joined: boolean
+  profileReady: boolean
+}): DemoEntry {
+  const demoOn = input.demoPeriod || input.demoQuery
+  if (input.joined && demoOn) {
+    return { screen: "home", audience: true, clearSaved: false }
+  }
+  const clearSaved = input.joined && !demoOn
+  if (input.demoQuery) return { screen: "demo-join", audience: false, clearSaved }
+  if (input.demoPeriod && !input.profileReady) {
+    return { screen: "demo-join", audience: false, clearSaved }
+  }
+  if (input.profileReady) return { screen: "home", audience: false, clearSaved }
+  return { screen: "onboarding", audience: false, clearSaved }
+}
+
 /** 가짜 번호. 화면에서 전화가 걸리지 않게 막는다. */
 export const demoAudienceProfile: Profile = {
   ...emptyProfile,

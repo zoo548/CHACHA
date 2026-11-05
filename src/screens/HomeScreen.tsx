@@ -1,10 +1,12 @@
 // 홈 화면. 지금 알림(위험이 있으면 빨간 카드, 없으면 조용한 카드) + 내 카드 바로가기 + 지난 알림.
 // 상단 로고를 2초 안에 5번 누르면 시연 패널이 열린다 (openDemo 호출).
 
+import { useState } from "react"
 import { Icon } from "../components/Icon"
 import { Logo } from "../components/Logo"
 import { ProtoButton } from "../components/ProtoButton"
 import { ProtoRow } from "../components/ProtoRow"
+import { DEMO_INVITE_LABEL } from "../demo/audience"
 import type { Profile } from "../data/profile"
 import { useDevice } from "../device/DeviceContext"
 
@@ -38,6 +40,7 @@ export function HomeScreen({
   demoBanner,
   locationLabel,
   openRegionPick,
+  onDemoInvite,
 }: {
   danger: boolean
   acknowledged: boolean
@@ -51,11 +54,27 @@ export function HomeScreen({
   demoBanner?: string
   locationLabel?: string
   openRegionPick?: () => void
+  onDemoInvite?: () => Promise<void>
 }) {
   const { state: deviceState } = useDevice()
   const label = deviceStatusLabel(deviceState.status)
+  const [inviteBusy, setInviteBusy] = useState(false)
   return (
     <main className="proto-page home-page">
+      {onDemoInvite && (
+        <button
+          type="button"
+          className="demo-home-invite"
+          disabled={inviteBusy}
+          onClick={() => {
+            if (inviteBusy) return
+            setInviteBusy(true)
+            onDemoInvite().finally(() => setInviteBusy(false))
+          }}
+        >
+          {DEMO_INVITE_LABEL}
+        </button>
+      )}
       <header className="home-head">
         <Logo onSecretTap={openDemo} />
         {label && <em className={`device-badge ${deviceState.status}`}>{label}</em>}

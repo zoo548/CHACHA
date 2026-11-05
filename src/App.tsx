@@ -56,7 +56,9 @@ import {
   DEMO_WAIT_BANNER,
   demoAudienceProfile,
   hasDemoQuery,
+  isDemoDefault,
   loadDemoAudience,
+  resolveDemoEntry,
   saveDemoAudience,
 } from "./demo/audience"
 import { joinDemo, loadDemoDeviceId } from "./demo/demoClient"
@@ -220,14 +222,18 @@ function App() {
       if (cancelled) return
       setProfile(loaded)
       setSafetyComplete(safetyFlag.value === "true")
-      if (hasDemoQuery() && !joinedDemo) {
+      const entry = resolveDemoEntry({
+        demoPeriod: isDemoDefault(),
+        demoQuery: hasDemoQuery(),
+        joined: joinedDemo,
+        profileReady: isProfileReady(loaded),
+      })
+      if (entry.clearSaved) await saveDemoAudience(false)
+      setDemoAudience(entry.audience)
+      if (entry.screen === "demo-join") {
         setScreen("demo-join")
         setTab("home")
-      } else if (joinedDemo) {
-        setDemoAudience(true)
-        setScreen("home")
-        setTab("home")
-      } else if (isProfileReady(loaded)) {
+      } else if (entry.screen === "home") {
         setScreen("home")
         setTab("home")
       }
@@ -405,16 +411,18 @@ function App() {
     onLink: setDemoLinkOk,
   })
 
-  const joinDemoSession = async () => {
+  const joinDemoSession = async (mode: "sample" | "keep") => {
     const audioP = unlockAudio()
     const permP = ensurePermission()
-    const next = demoAudienceProfile
-    setProfile(next)
+    if (mode === "sample") {
+      const next = demoAudienceProfile
+      setProfile(next)
+      await saveProfile(next)
+    }
     setDemoAudience(true)
     setDemoLinkOk(true)
     setScreen("home")
     setTab("home")
-    await saveProfile(next)
     await saveDemoAudience(true)
     await Promise.all([audioP, permP])
     try {
@@ -481,7 +489,17 @@ function App() {
   // --- 화면 선택 ---
   const content =
     screen === "demo-join" ? (
-      <DemoJoinScreen onJoin={joinDemoSession} />
+      <DemoJoinScreen
+        onJoin={() => joinDemoSession("sample")}
+        onStartFresh={
+          isDemoDefault() && !isProfileReady(profile)
+            ? () => {
+                setScreen("onboarding")
+                setOnboardStep(0)
+              }
+            : undefined
+        }
+      />
     ) : screen === "onboarding" ? (
       <OnboardingFlow
         step={onboardStep}
@@ -601,6 +619,11 @@ function App() {
         }
         locationLabel={locationBanner(displayRegion(gps, profile.address, geo))}
         openRegionPick={() => setSheet("region-source")}
+        onDemoInvite={
+          isDemoDefault() && !demoAudience && isProfileReady(profile)
+            ? () => joinDemoSession("keep")
+            : undefined
+        }
       />
     )
 

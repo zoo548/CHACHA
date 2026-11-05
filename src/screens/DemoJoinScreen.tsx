@@ -1,8 +1,15 @@
-// QR로 들어온 관객이 시연에 참여하는 첫 화면.
+// QR 또는 시연 기간에 처음 들어온 관객이 시연에 참여하는 첫 화면.
 
 import { useState } from "react"
+import { DEMO_START_FRESH } from "../demo/audience"
 
-export function DemoJoinScreen({ onJoin }: { onJoin: () => Promise<void> }) {
+export function DemoJoinScreen({
+  onJoin,
+  onStartFresh,
+}: {
+  onJoin: () => Promise<void>
+  onStartFresh?: () => void
+}) {
   const [busy, setBusy] = useState(false)
 
   return (
@@ -22,6 +29,11 @@ export function DemoJoinScreen({ onJoin }: { onJoin: () => Promise<void> }) {
       >
         시연 참여하기
       </button>
+      {onStartFresh && (
+        <button type="button" className="demo-join-fresh" disabled={busy} onClick={onStartFresh}>
+          {DEMO_START_FRESH}
+        </button>
+      )}
     </main>
   )
 }
