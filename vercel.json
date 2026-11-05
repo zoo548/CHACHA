@@ -5,6 +5,11 @@
   "env": {
     "VITE_DEMO_DEFAULT": "true"
   },
+  "functions": {
+    "api/index.ts": {
+      "excludeFiles": "{src,android,ios,server,public,docs,dist}/**"
+    }
+  },
   "rewrites": [
     { "source": "/api/demo/current", "destination": "/api?op=current" },
     { "source": "/api/demo/count", "destination": "/api?op=count" },
