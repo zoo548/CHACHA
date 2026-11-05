@@ -36,6 +36,8 @@ export function HomeScreen({
   openDemo,
   lastCheckedLabel,
   demoBanner,
+  locationLabel,
+  openRegionPick,
 }: {
   danger: boolean
   acknowledged: boolean
@@ -47,6 +49,8 @@ export function HomeScreen({
   openDemo: () => void
   lastCheckedLabel: string
   demoBanner?: string
+  locationLabel?: string
+  openRegionPick?: () => void
 }) {
   const { state: deviceState } = useDevice()
   const label = deviceStatusLabel(deviceState.status)
@@ -60,6 +64,11 @@ export function HomeScreen({
         <p className={`demo-home-banner${demoBanner.includes("끊겼") ? " offline" : ""}`}>
           {demoBanner}
         </p>
+      )}
+      {locationLabel && (
+        <button type="button" className="home-here" onClick={openRegionPick}>
+          {locationLabel}
+        </button>
       )}
       <section className="page-heading">
         <h1>

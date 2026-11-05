@@ -6,6 +6,7 @@
 
 import { ProtoButton } from "./ProtoButton"
 import { toTelDigits } from "../data/profile"
+import type { RegionSource } from "../location/region"
 import type { SheetKind } from "../types"
 
 export type CallTarget = {
@@ -22,11 +23,13 @@ export function ProtoSheet({
   close,
   next,
   callTarget,
+  onRegionSource,
 }: {
   kind: SheetKind
   close: () => void
   next: () => void
   callTarget: CallTarget | null
+  onRegionSource?: (source: RegionSource) => void
 }) {
   if (!kind) return null
 
@@ -53,6 +56,35 @@ export function ProtoSheet({
           )}
           <ProtoButton secondary onClick={close}>
             그만하기
+          </ProtoButton>
+        </section>
+      </div>
+    )
+  }
+
+  if (kind === "region-source") {
+    return (
+      <div className="proto-sheet-wrap" onClick={close}>
+        <section className="proto-sheet" onClick={(e) => e.stopPropagation()}>
+          <i />
+          <h2>어느 동네 문자를 받을까요?</h2>
+          <p>지금 있는 곳이나 우리 집 중에서 고르세요.</p>
+          <ProtoButton
+            onClick={() => {
+              onRegionSource?.("card")
+              close()
+            }}
+          >
+            내 카드 주소로 받기
+          </ProtoButton>
+          <ProtoButton
+            secondary
+            onClick={() => {
+              onRegionSource?.("gps")
+              close()
+            }}
+          >
+            지금 위치로 받기
           </ProtoButton>
         </section>
       </div>

@@ -24,7 +24,7 @@ export type AppScreen =
   | "demo-join"
 
 /** 올라오는 바텀시트 종류. null 이면 안 올라옴. */
-export type SheetKind = "phone-permission" | "location" | "call" | "source" | null
+export type SheetKind = "phone-permission" | "location" | "call" | "source" | "region-source" | null
 
 /** 자체 SVG 아이콘 세트의 이름 모음. 새 아이콘 추가하려면 Icon.tsx 의 paths 와 함께 늘려야 한다. */
 export type IconName =

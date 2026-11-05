@@ -61,6 +61,12 @@ import {
 } from "./demo/audience"
 import { joinDemo, loadDemoDeviceId } from "./demo/demoClient"
 import { useDemoBroadcast } from "./demo/useDemoBroadcast"
+import {
+  alertRegionQuery,
+  displayRegion,
+  locationBanner,
+} from "./location/region"
+import { useDeviceRegion } from "./location/useDeviceRegion"
 import { DemoJoinScreen } from "./screens/DemoJoinScreen"
 import { ensurePermission, onNotificationTap, type NotificationPayload } from "./notifications"
 import { unlockAudio } from "./speech"
@@ -199,6 +205,8 @@ function App() {
   const [demoLinkOk, setDemoLinkOk] = useState(true)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
   const [relayOk, setRelayOk] = useState<boolean | null>(null)
+  const locateOn = ready && screen !== "onboarding" && screen !== "demo-join"
+  const { geo, gps, source, chooseSource } = useDeviceRegion(locateOn)
 
   // --- 앱 열 때 한 번: 프로필과 안전점검 완료 플래그 복원 ---
   useEffect(() => {
@@ -428,7 +436,7 @@ function App() {
         if (!cancelled) setRelayOk(false)
         return
       }
-      const region = profile.address.trim()
+      const region = alertRegionQuery(source, gps, profile.address, geo)
       try {
         if (!region) {
           const ok = await pingAlertsServer()
@@ -468,7 +476,7 @@ function App() {
       cancelled = true
       window.clearInterval(id)
     }
-  }, [ready, demoAudience, profile.address])
+  }, [ready, demoAudience, profile.address, source, gps, geo])
 
   // --- 화면 선택 ---
   const content =
@@ -591,6 +599,8 @@ function App() {
                 ? formatLastChecked(lastCheckedAt)
                 : ""
         }
+        locationLabel={locationBanner(displayRegion(gps, profile.address, geo))}
+        openRegionPick={() => setSheet("region-source")}
       />
     )
 
@@ -644,6 +654,7 @@ function App() {
             setOnboardStep(5)
           }}
           callTarget={callTarget}
+          onRegionSource={chooseSource}
         />
         {demoOpen && <DemoPanel profile={profile} close={() => setDemoOpen(false)} />}
       </div>
