@@ -4,10 +4,11 @@ import {
   DEFAULT_DEMO_MESSAGE,
   DEFAULT_DEMO_SENDER,
   type DemoMessage,
-} from "../../shared/demoDefaults"
-import { assertPresenter, demoHandler, readJsonBody } from "../_lib/http"
-import { setCurrent } from "../_lib/store"
-import type { DemoRequest, DemoResponse } from "../_lib/types"
+} from "../shared/demoDefaults"
+import { assertPresenter, json, OPTIONS, readJson, wrap } from "./_lib/http"
+import { setCurrent } from "./_lib/store"
+
+export { OPTIONS }
 
 function clip(value: unknown, fallback: string, max: number): string {
   const text = typeof value === "string" ? value.trim() : ""
@@ -15,10 +16,11 @@ function clip(value: unknown, fallback: string, max: number): string {
   return text.slice(0, max)
 }
 
-export default async function handler(req: DemoRequest, res: DemoResponse) {
-  await demoHandler(req, res, ["POST"], async () => {
-    const body = readJsonBody(req)
-    if (!assertPresenter(req, res, body)) return
+export function POST(req: Request) {
+  return wrap(async () => {
+    const body = await readJson(req)
+    const denied = assertPresenter(req, body)
+    if (denied) return denied
     const current: DemoMessage = {
       id: randomUUID(),
       sentAt: new Date().toISOString(),
@@ -27,6 +29,6 @@ export default async function handler(req: DemoRequest, res: DemoResponse) {
       govType: clip(body.govType, DEFAULT_DEMO_GOV_TYPE, 40),
     }
     await setCurrent(current)
-    res.status(200).json({ current })
+    return json({ current })
   })
 }
