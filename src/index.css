@@ -1292,3 +1292,130 @@ a.proto-button { display: inline-flex; align-items: center; justify-content: cen
     height: 297mm !important;
   }
 }
+
+/* ---- 시연 방송 발표자 페이지 --------------------------------------- */
+
+html:has(.presenter-page),
+html:has(.presenter-page) body,
+html:has(.presenter-page) #root {
+  width: 100%;
+  min-height: 100dvh;
+  background: var(--proto-bg);
+}
+
+.presenter-page {
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 28px 20px calc(28px + env(safe-area-inset-bottom, 0px));
+  padding-top: calc(28px + env(safe-area-inset-top, 0px));
+  color: var(--proto-ink);
+  background: var(--proto-bg);
+}
+.presenter-head p {
+  margin: 0 0 4px;
+  color: var(--blue);
+  font-size: 15px;
+  font-weight: 700;
+}
+.presenter-head h1 {
+  margin: 0 0 24px;
+  font-size: 32px;
+  line-height: 1.2;
+}
+.presenter-count {
+  margin: 0 0 24px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border-radius: 24px;
+  text-align: center;
+}
+.presenter-count > b {
+  font-size: 88px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.04em;
+  color: var(--blue);
+}
+.presenter-count > span {
+  color: var(--proto-copy);
+  font-size: 18px;
+  font-weight: 700;
+}
+.presenter-card {
+  margin: 0 0 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: white;
+  border-radius: 20px;
+}
+.presenter-card h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.presenter-card > p {
+  margin: 0;
+  color: var(--proto-copy);
+  font-size: 16px;
+  line-height: 1.4;
+}
+.presenter-preview {
+  width: 100%;
+  min-height: 140px;
+  padding: 14px;
+  resize: vertical;
+  color: var(--proto-ink);
+  background: var(--proto-bg);
+  border: 0;
+  border-radius: 14px;
+  outline: 0;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.presenter-preview:focus { outline: 2px solid var(--blue); }
+.presenter-meta {
+  margin: 0;
+  color: var(--proto-copy);
+  font-size: 15px;
+  font-weight: 600;
+}
+.presenter-send {
+  width: 100%;
+  min-height: 88px;
+  margin: 0 0 12px;
+  color: white;
+  background: var(--danger);
+  border-radius: 20px;
+  font-size: 28px;
+  font-weight: 800;
+}
+.presenter-send:disabled { opacity: .7; }
+.presenter-sent {
+  margin: 12px 0 0;
+  color: var(--blue);
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+.presenter-error {
+  margin: 8px 0 0;
+  color: var(--danger);
+  font-size: 16px;
+  font-weight: 600;
+}
+.presenter-page .proto-button { margin-top: 0; }
+
+@media (max-width: 700px) {
+  .presenter-page {
+    width: 100%;
+  }
+}

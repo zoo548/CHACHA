@@ -51,6 +51,7 @@ import {
 import { getAlertView, rawTextView, type AlertView } from "./data/alertTemplate"
 import { matchAlert } from "./matching/matchAlert"
 import { useDevice } from "./device/DeviceContext"
+import { useDemoBroadcast } from "./demo/useDemoBroadcast"
 import { onNotificationTap, type NotificationPayload } from "./notifications"
 import {
   RELAY_DISCONNECTED,
@@ -79,9 +80,10 @@ type AlertState =
       broadcastType?: BroadcastType
       rawText?: string
       sample?: boolean
+      alertId?: string
     }
   | { kind: "practice" }
-  | { kind: "raw"; text: string; broadcastType?: BroadcastType; sample?: boolean }
+  | { kind: "raw"; text: string; broadcastType?: BroadcastType; sample?: boolean; alertId?: string }
 
 function levelOfState(s: AlertState): AlertLevel | "practice" {
   if (s.kind === "practice") return "practice"
@@ -126,10 +128,17 @@ function payloadToState(p: NotificationPayload): AlertState {
       broadcastType: p.broadcastType,
       rawText: p.rawText,
       sample: p.sample,
+      alertId: p.alertId,
     }
   }
   if (p.kind === "practice") return { kind: "practice" }
-  return { kind: "raw", text: p.text, broadcastType: p.broadcastType, sample: p.sample }
+  return {
+    kind: "raw",
+    text: p.text,
+    broadcastType: p.broadcastType,
+    sample: p.sample,
+    alertId: p.alertId,
+  }
 }
 
 function relayToPayload(alert: RelayAlert): NotificationPayload | null {
@@ -354,6 +363,19 @@ function App() {
     }
   }
 
+  useDemoBroadcast({
+    enabled: ready,
+    profile,
+    onIncoming: (payload) => {
+      if (isExcludedPayload(payload)) return
+      setAlertState(payloadToState(payload))
+      setScreen("alert")
+      setDemoOpen(false)
+      setSheet(null)
+      if (levelOfPayload(payload) === "critical") setDanger(true)
+    },
+  })
+
   // 중계 서버 1분 폴링. 처음 보는 SN 만 알림으로 올린다.
   useEffect(() => {
     if (!ready) return
@@ -547,8 +569,10 @@ function App() {
 
   const alertKey =
     alertState?.kind === "preset"
-      ? `${alertState.disasterId}-${alertState.level}-${alertState.broadcastType ?? ""}`
-      : alertState?.kind ?? "none"
+      ? `${alertState.disasterId}-${alertState.level}-${alertState.broadcastType ?? ""}-${alertState.alertId ?? ""}`
+      : alertState?.kind === "raw"
+        ? `raw-${alertState.alertId ?? ""}`
+        : alertState?.kind ?? "none"
 
   return (
     <div className="prototype-stage">

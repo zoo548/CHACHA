@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "concurrently -n app,server -c cyan,magenta \"vite\" \"pnpm --dir server start\"",
     "dev:app": "vite",
+    "dev:demo": "npx vercel dev --listen 3000",
     "dev:server": "pnpm --dir server start",
     "server": "pnpm --dir server start",
     "latency": "pnpm --dir server latency",
@@ -36,6 +37,7 @@
     "@capacitor/status-bar": "^8.0.4",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
+    "@upstash/redis": "^1.35.6",
     "lucide-react": "^1.55.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

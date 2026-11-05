@@ -20,9 +20,10 @@ export type NotificationPayload =
       broadcastType?: BroadcastType
       rawText?: string
       sample?: boolean
+      alertId?: string
     }
   | { kind: "practice" }
-  | { kind: "raw"; text: string; broadcastType: BroadcastType; sample?: boolean }
+  | { kind: "raw"; text: string; broadcastType: BroadcastType; sample?: boolean; alertId?: string }
 
 const CHANNEL_ID = "chacha-alert"
 const CHANNEL_SILENT_ID = "chacha-alert-silent"
@@ -99,6 +100,49 @@ export async function scheduleDemoAlert(
     console.error("[chacha] scheduleDemoAlert 실패", err)
     return false
   }
+}
+
+/** 지금 바로 알림을 띄운다. 시연 방송처럼 앱을 열어 둔 폰에 쓴다. */
+export async function showIncomingAlert(
+  title: string,
+  body: string,
+  payload: NotificationPayload,
+  silent = false,
+): Promise<boolean> {
+  const ok = await ensurePermission()
+  if (ok) {
+    await ensureChannels()
+    try {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: NOTIFICATION_ID,
+            title,
+            body,
+            channelId: silent ? CHANNEL_SILENT_ID : CHANNEL_ID,
+            extra: { payload },
+            sound: silent ? undefined : "default",
+          },
+        ],
+      })
+      return true
+    } catch (err) {
+      console.error("[chacha] showIncomingAlert 실패", err)
+    }
+  }
+  if (typeof Notification !== "undefined") {
+    try {
+      let permission = Notification.permission
+      if (permission === "default") permission = await Notification.requestPermission()
+      if (permission === "granted") {
+        new Notification(title, { body, silent })
+        return true
+      }
+    } catch {
+      /* 웹 알림을 막은 환경 */
+    }
+  }
+  return false
 }
 
 /**
