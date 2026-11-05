@@ -3,16 +3,21 @@
 export type BroadcastType = "위급" | "긴급" | "안전안내"
 export type TemplateVariant = "caution" | "evacuate"
 export type AlertLevel = "critical" | "emergency" | "safety"
-export type DeviceSignal = "H" | "L" | "I" | "R" | "C" | "F" | "M"
+export type DeviceSignal = "H" | "L" | "I" | "R" | "C" | "F" | "M" | "Q" | "N"
 export type DeviceVoice = "F" | "M"
+export type DeviceSound = "Q" | "N"
+export type DeviceAlertCommand = "H" | "L" | "I" | "R"
 
 export {
   ALERT_LEVEL_RANK,
   badgeLabel,
   deviceCommand,
+  devicePrefCommands,
   gradeDots,
   gradeEasyName,
   resolveAlertLevel,
+  SIGNAL_DESCRIPTIONS,
+  soundCommand,
 } from "./tier"
 
 /** API 긴급단계명(위급재난/긴급재난/안전안내) → 발송 유형. 모르면 undefined. */

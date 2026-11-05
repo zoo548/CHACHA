@@ -3,6 +3,7 @@
 import { ProtoButton } from "../components/ProtoButton"
 import { ReadingLevelPicker, SoundSensitivePicker } from "../components/ViewModePicker"
 import type { DeviceVoice } from "../alerts/level"
+import { soundCommand } from "../alerts/tier"
 import type { Profile, ReadingLevel } from "../data/profile"
 import { useDevice } from "../device/DeviceContext"
 
@@ -26,6 +27,11 @@ export function SettingsScreen({
     device.send(chachaVoice).catch(() => {})
   }
 
+  const setSoundSensitive = (soundSensitive: boolean) => {
+    updateProfile({ soundSensitive })
+    device.send(soundCommand(soundSensitive)).catch(() => {})
+  }
+
   return (
     <main className="proto-page settings-page">
       <button className="proto-back" onClick={back}>‹ 뒤로</button>
@@ -44,7 +50,7 @@ export function SettingsScreen({
         <h2>큰 소리가 싫어요?</h2>
         <SoundSensitivePicker
           value={profile.soundSensitive}
-          onChange={(soundSensitive) => updateProfile({ soundSensitive })}
+          onChange={setSoundSensitive}
         />
       </section>
       <section className="settings-block">

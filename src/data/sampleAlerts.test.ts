@@ -9,7 +9,9 @@ import {
 } from "./sampleAlerts"
 
 describe("예시 화면", () => {
-  it("호우 대피·폭염·미세먼지는 R, L, I 이다", () => {
+  it("호우 대피는 빨강 R, 폭염은 주황 L, 미세먼지는 파랑 I 이다", () => {
+    const views = SAMPLE_ALERTS.map((spec) => sampleAlertView(spec, emptyProfile))
+    expect(views.map((view) => view?.uiLevel)).toEqual(["critical", "emergency", "safety"])
     const commands = SAMPLE_ALERTS.map((spec) =>
       deviceCommand(
         resolveAlertLevel({ disasterId: spec.disasterId, variant: spec.variant }),

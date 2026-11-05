@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { deviceCommand, resolveAlertLevel } from "../alerts/tier"
+import { deviceCommand, gradeEasyName, resolveAlertLevel } from "../alerts/tier"
+import { getAlertView } from "../data/alertTemplate"
+import { emptyProfile } from "../data/profile"
 import {
   DEFAULT_DEMO_GOV_TYPE,
   DEFAULT_DEMO_MESSAGE,
@@ -9,7 +11,7 @@ import {
 } from "./broadcast"
 
 describe("시연 방송", () => {
-  it("기본 문자는 호우 대피라서 차차등 명령이 R 이다", () => {
+  it("기본 문자는 화면이 빨강이고 차차등 명령이 R 이다", () => {
     const payload = demoMessageToPayload({
       id: "demo-1",
       sentAt: "2026-11-05T15:12:00+09:00",
@@ -28,8 +30,14 @@ describe("시연 방송", () => {
       variant: payload.level,
     })
     expect(level).toBe("critical")
+    expect(gradeEasyName(level)).toBe("지금 해야 해요")
     expect(deviceCommand(level, payload.disasterId)).toBe("R")
     expect(demoDeviceCommand({ message: DEFAULT_DEMO_MESSAGE, govType: DEFAULT_DEMO_GOV_TYPE })).toBe("R")
+    const view = getAlertView(payload.disasterId, payload.level, emptyProfile, {
+      broadcast: payload.broadcastType,
+      rawText: payload.rawText,
+    })
+    expect(view?.uiLevel).toBe("critical")
   })
 
   it("보낸 시각을 오후 3시 12분처럼 보여 준다", () => {

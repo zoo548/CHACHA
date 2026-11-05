@@ -6,6 +6,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import type { ReactNode } from "react"
+import type { DeviceSignal } from "../alerts/level"
 import {
   autoReconnect,
   connect as deviceConnect,
@@ -21,7 +22,7 @@ type DeviceContextValue = {
   state: DeviceState
   connect: () => Promise<void>
   disconnect: () => Promise<void>
-  send: (cmd: "H" | "L" | "I" | "R" | "C" | "F" | "M") => Promise<void>
+  send: (cmd: DeviceSignal) => Promise<void>
   /** 하드웨어 버튼이 눌렸을 때 호출될 콜백 등록. 반환값으로 해지. */
   onButton: (callback: () => void) => () => void
 }

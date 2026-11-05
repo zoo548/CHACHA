@@ -2,7 +2,7 @@
 //
 // 아이폰/안드로이드/웹(Bluefy 포함) 전부 같은 코드로 동작한다.
 // 상태는 subscribeStatus()/subscribeButton() 로 받고,
-// 명령은 send("H"|"L"|"I"|"R"|"C"|"F"|"M") 로 보낸다.
+// 명령은 send("H"|"L"|"I"|"R"|"C"|"F"|"M"|"Q"|"N") 로 보낸다.
 //
 // 저장:
 //   - 저장된 deviceId 는 다음 실행 때 자동 재연결에 사용 (Preferences).
@@ -13,6 +13,7 @@
 import { BleClient, numbersToDataView, type BleDevice } from "@capacitor-community/bluetooth-le"
 import { Capacitor } from "@capacitor/core"
 import { Preferences } from "@capacitor/preferences"
+import type { DeviceSignal } from "../alerts/level"
 
 const DEVICE_NAME = "chachadeung"
 
@@ -257,10 +258,10 @@ export async function disconnect(): Promise<void> {
 }
 
 /**
- * 명령 전송 — "H" / "L" / "I" / "R" / "C" / "F" / "M". 뒤에 "\n" 를 붙여서 펌웨어가 글자 단위로 받기 좋게 함.
+ * 명령 전송 — "H" / "L" / "I" / "R" / "C" / "F" / "M" / "Q" / "N". 뒤에 "\n" 를 붙여서 펌웨어가 글자 단위로 받기 좋게 함.
  * 연결 안 돼 있으면 조용히 리턴 (예: 사용자가 차차등 없이도 앱을 쓸 수 있음).
  */
-export async function send(cmd: "H" | "L" | "I" | "R" | "C" | "F" | "M"): Promise<void> {
+export async function send(cmd: DeviceSignal): Promise<void> {
   if (state.status !== "connected" || !state.deviceId) return
   try {
     const bytes = [cmd.charCodeAt(0), "\n".charCodeAt(0)]

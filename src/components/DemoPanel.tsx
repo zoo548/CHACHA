@@ -11,6 +11,7 @@ import { useState } from "react"
 import { ProtoButton } from "./ProtoButton"
 import { getAlertView, listDisasters, rawTextView } from "../data/alertTemplate"
 import { isExcludedDisaster } from "../alerts/excluded"
+import { deviceCommand, resolveAlertLevel } from "../alerts/tier"
 import { matchAlert, type BroadcastType } from "../matching/matchAlert"
 import { scheduleDemoAlert, type NotificationPayload } from "../notifications"
 import type { Profile } from "../data/profile"
@@ -36,6 +37,14 @@ export function DemoPanel({
 
   const picked = disasters.find((d) => d.id === disasterId)
   const canEvacuate = picked?.levels.includes("evacuate") ?? false
+  const cautionCmd = deviceCommand(
+    resolveAlertLevel({ disasterId, variant: "caution" }),
+    disasterId,
+  )
+  const evacuateCmd = deviceCommand(
+    resolveAlertLevel({ disasterId, variant: "evacuate" }),
+    disasterId,
+  )
 
   async function send() {
     setStatus("보내는 중…")
@@ -138,14 +147,14 @@ export function DemoPanel({
                   className={level === "caution" ? "active" : ""}
                   onClick={() => setLevel("caution")}
                 >
-                  주의 (L)
+                  주의 ({cautionCmd})
                 </button>
                 <button
                   className={level === "evacuate" ? "active" : ""}
                   onClick={() => setLevel("evacuate")}
                   disabled={!canEvacuate}
                 >
-                  대피 (H)
+                  대피 ({evacuateCmd})
                 </button>
               </div>
               {!canEvacuate && <small>이 재난은 '대피' 등급이 없어요.</small>}

@@ -3,7 +3,12 @@ import templates from "../../docs/disaster_templates.json"
 import { matchAlert } from "../matching/matchAlert"
 import { isExcludedDisaster } from "./excluded"
 import { deviceCommand, resolveAlertLevel, type TemplateVariant } from "./level"
-import { ORANGE_CAUTION_IDS } from "./tier"
+import {
+  devicePrefCommands,
+  ORANGE_CAUTION_IDS,
+  SIGNAL_DESCRIPTIONS,
+  soundCommand,
+} from "./tier"
 
 type JsonDisaster = {
   id: string
@@ -79,5 +84,29 @@ describe("차차 색 등급", () => {
     expect(deviceCommand("critical", "air_raid")).toBe("H")
     expect(deviceCommand("emergency", "heatwave")).toBe("L")
     expect(deviceCommand("safety", "fine_dust")).toBe("I")
+  })
+
+  it("소리에 예민하면 Q, 아니면 N 을 보낸다", () => {
+    expect(soundCommand(true)).toBe("Q")
+    expect(soundCommand(false)).toBe("N")
+  })
+
+  it("연결 직후 목소리와 소리를 같이 한 번 보낸다", () => {
+    expect(devicePrefCommands({ chachaVoice: "F", soundSensitive: true })).toEqual(["F", "Q"])
+    expect(devicePrefCommands({ chachaVoice: "M", soundSensitive: false })).toEqual(["M", "N"])
+  })
+
+  it("차차등 신호 설명이 앱 문구와 같다", () => {
+    expect(SIGNAL_DESCRIPTIONS).toEqual({
+      I: "파랑 점 1개, 띵 한 번",
+      L: "주황 점 2개, 1초에 1번 깜빡, 차임·진동 30초",
+      H: "빨강 점 3개, 빠르게 깜빡, 차임·음성·진동 반복",
+      R: "H와 같음, 폭우 음성",
+    })
+    const signals = templates.device_signals as Record<string, string>
+    expect(signals.I).toBe(SIGNAL_DESCRIPTIONS.I)
+    expect(signals.L).toBe(SIGNAL_DESCRIPTIONS.L)
+    expect(signals.H).toBe(SIGNAL_DESCRIPTIONS.H)
+    expect(signals.R).toBe(SIGNAL_DESCRIPTIONS.R)
   })
 })

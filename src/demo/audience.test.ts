@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { DEFAULT_DEMO_MESSAGE } from "../../shared/demoDefaults"
+import { devicePrefCommands, soundCommand } from "../alerts/tier"
 import { demoAudienceProfile, resolveDemoEntry } from "./audience"
 
 describe("시연 참여 프로필", () => {
@@ -9,6 +10,12 @@ describe("시연 참여 프로필", () => {
     expect(demoAudienceProfile.guardian.relation).toBe("엄마")
     expect(demoAudienceProfile.neighbor.relation).toBe("옆집 이모")
     expect(demoAudienceProfile.readingLevel).toBe(2)
+  })
+
+  it("시연 참여 사용자는 소리 보통 N 이다", () => {
+    expect(demoAudienceProfile.soundSensitive).toBe(false)
+    expect(soundCommand(demoAudienceProfile.soundSensitive)).toBe("N")
+    expect(devicePrefCommands(demoAudienceProfile)).toEqual(["F", "N"])
   })
 
   it("시연 원문에 대피가 있다", () => {

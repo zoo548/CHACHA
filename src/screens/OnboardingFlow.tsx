@@ -15,6 +15,7 @@ import { ProtoButton } from "../components/ProtoButton"
 import { ProtoChips } from "../components/ProtoChips"
 import { ProtoField } from "../components/ProtoField"
 import { ProtoGuardian } from "../components/ProtoGuardian"
+import { soundCommand } from "../alerts/tier"
 import { ReadingLevelPicker, SoundSensitivePicker } from "../components/ViewModePicker"
 import { TogetherIllustration } from "../components/TogetherIllustration"
 import type { Contact, Institution, Profile } from "../data/profile"
@@ -195,7 +196,10 @@ export function OnboardingFlow({
             <p className="onboard-description">큰 소리가 싫으면 소리 없이 알려 줘요.</p>
             <SoundSensitivePicker
               value={profile.soundSensitive}
-              onChange={(soundSensitive) => updateProfile({ soundSensitive })}
+              onChange={(soundSensitive) => {
+                updateProfile({ soundSensitive })
+                device.send(soundCommand(soundSensitive)).catch(() => {})
+              }}
             />
           </>
         )}

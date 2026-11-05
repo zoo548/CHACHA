@@ -22,7 +22,7 @@ import {
   type BroadcastType,
   type TemplateVariant,
 } from "./alerts/level"
-import { ALERT_LEVEL_RANK, deviceCommand, resolveAlertLevel } from "./alerts/tier"
+import { ALERT_LEVEL_RANK, deviceCommand, devicePrefCommands, resolveAlertLevel } from "./alerts/tier"
 import { DemoPanel } from "./components/DemoPanel"
 import { PdfPreview } from "./components/PdfPreview"
 import { ProtoSheet, type CallTarget } from "./components/ProtoSheet"
@@ -363,10 +363,13 @@ function App() {
     device.send(deviceCommand(alertView.uiLevel, disasterId)).catch(() => {})
   }, [screen, alertView, alertState, device])
 
+  // 연결·재연결마다 목소리(F/M)와 소리(Q/N)를 같이 한 번 보낸다. 차차등이 기억한다.
   useEffect(() => {
     if (device.state.status !== "connected") return
-    device.send(profile.chachaVoice).catch(() => {})
-  }, [device, device.state.status, profile.chachaVoice])
+    for (const cmd of devicePrefCommands(profile)) {
+      device.send(cmd).catch(() => {})
+    }
+  }, [device, device.state.status, profile.chachaVoice, profile.soundSensitive])
 
   // 하드웨어 버튼으로 확인했을 때(기기→앱 C): 알림 화면이 열려 있으면 확인 처리.
   useEffect(() => {

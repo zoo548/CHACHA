@@ -14,6 +14,6 @@ Capacitor로 감싸서 iOS 앱(우선)과 Android 앱으로 빌드한다. 실행
 - 색: --blue(차차 기능, 남색 #1F2A44), --danger(지금 해야 해요 H 빨강), --caution(조심해요 L 주황 #E8710A), --safety(알아두세요 I 파랑). 애니메이션·깜빡임 추가 금지. 색은 정부 발송 유형이 아니라 src/alerts/tier.ts.
 - 기기 기능(블루투스, 알림, 저장, 전화)은 Capacitor 플러그인으로 만들고, 아이폰에서 동작하는지를 기준으로 판단한다. 브라우저 전용 API(Web Bluetooth 직접 호출 등)는 쓰지 않는다.
 - 아이폰 화면: 노치·홈 인디케이터 영역(safe area)을 침범하지 않는다.
-- 기기 명령: 앱→기기 "I\n" "L\n" "H\n" "R\n" "C\n" "F\n" "M\n" / 기기→앱 "C"(버튼 확인). 우선순위 H/R > L > I. 기기는 BLE Nordic UART Service.
+- 기기 명령: 앱→기기 "I\n" "L\n" "H\n" "R\n" "C\n" "F\n" "M\n" "Q\n" "N\n" / 기기→앱 "C"(버튼 확인). 우선순위 H/R > L > I. F·M·Q·N은 차차등이 기억함. 기기는 BLE Nordic UART Service.
 - 사용자 정보는 휴대폰 안에만 저장(서버 전송 없음).
 - 한 번에 한 기능만 고치고, 끝나면 바꾼 파일과 직접 확인하는 방법을 알려준다.
