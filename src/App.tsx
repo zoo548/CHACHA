@@ -62,7 +62,13 @@ import {
   resolveDemoEntry,
   saveDemoAudience,
 } from "./demo/audience"
-import { joinDemo, loadDemoDeviceId } from "./demo/demoClient"
+import {
+  clearDemoJoinGate,
+  joinDemo,
+  loadDemoDeviceId,
+  markExistingDemoCurrentSeen,
+  saveDemoJoinedAt,
+} from "./demo/demoClient"
 import { useDemoBroadcast } from "./demo/useDemoBroadcast"
 import {
   alertRegionQuery,
@@ -197,6 +203,7 @@ function App() {
 
   // 알림 / 도움 상황 / 전화할 대상
   const [alertState, setAlertState] = useState<AlertState | null>(null)
+  const [lastIncoming, setLastIncoming] = useState<AlertState | null>(null)
   const [sampleFrom, setSampleFrom] = useState<AppScreen>("prep")
   const [emergencyNumber, setEmergencyNumber] = useState<"119" | "112">("119")
   const [situation, setSituation] = useState("무서운 사람이 있어요")
@@ -234,7 +241,10 @@ function App() {
           joined: joinedDemo,
           profileReady: isProfileReady(loaded),
         })
-        if (entry.clearSaved) await saveDemoAudience(false)
+        if (entry.clearSaved) {
+          await saveDemoAudience(false)
+          await clearDemoJoinGate()
+        }
         setDemoAudience(entry.audience)
         if (entry.screen === "demo-join") {
           setScreen("demo-join")
@@ -396,6 +406,18 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, alertState, device])
 
+  const rememberIncoming = (payload: NotificationPayload) => {
+    if (payload.kind === "practice") return
+    if (payload.sample || !payload.alertId) return
+    setLastIncoming(payloadToState(payload))
+  }
+
+  const openPastAlert = () => {
+    if (!lastIncoming) return
+    setAlertState(lastIncoming)
+    setScreen("alert")
+  }
+
   const applyIncoming = (payload: NotificationPayload | null) => {
     if (!payload || isExcludedPayload(payload)) return
     let changed = true
@@ -409,6 +431,7 @@ function App() {
       return payloadToState(payload)
     })
     if (changed) {
+      rememberIncoming(payload)
       setScreen("alert")
       setDemoOpen(false)
       setSheet(null)
@@ -420,6 +443,7 @@ function App() {
     enabled: ready && demoAudience,
     onIncoming: (payload) => {
       if (isExcludedPayload(payload)) return
+      rememberIncoming(payload)
       setAlertState(payloadToState(payload))
       setScreen("alert")
       setDemoOpen(false)
@@ -437,12 +461,18 @@ function App() {
       setProfile(next)
       await saveProfile(next)
     }
+    await saveDemoJoinedAt(new Date().toISOString())
+    setLastIncoming(null)
+    setAlertState(null)
+    setDanger(false)
+    setAcknowledged(false)
     setDemoAudience(true)
     setDemoLinkOk(true)
     setScreen("home")
     setTab("home")
     await saveDemoAudience(true)
-    await Promise.all([audioP, permP])
+    const markP = markExistingDemoCurrentSeen()
+    await Promise.all([audioP, permP, markP])
     try {
       const id = await loadDemoDeviceId()
       const count = await joinDemo(id)
@@ -610,10 +640,7 @@ function App() {
       <HomeScreen
         danger={danger}
         acknowledged={acknowledged}
-        openAlert={() => {
-          setAlertState({ kind: "preset", disasterId: "heavy_rain", level: "evacuate" })
-          setScreen("alert")
-        }}
+        openAlert={openPastAlert}
         goCard={() => setActiveTab("card")}
         goHelp={() => setActiveTab("help")}
         goPrep={() => setActiveTab("prep")}

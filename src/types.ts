@@ -31,6 +31,7 @@ export type IconName =
   | "alert"
   | "arrow-down"
   | "bell"
+  | "bluetooth"
   | "building"
   | "call"
   | "check"

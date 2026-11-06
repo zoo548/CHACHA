@@ -5,6 +5,7 @@ import type { DemoMessage } from "../../shared/demoDefaults"
 
 const DEVICE_KEY = "chacha-demo-device-id-v1"
 const SEEN_KEY = "chacha-demo-seen-id-v1"
+const JOINED_AT_KEY = "chacha-demo-joined-at-v1"
 const PRESENTER_KEY = "chacha-presenter-key"
 
 export function demoApiUrl(path: string): string {
@@ -67,6 +68,67 @@ export async function loadSeenDemoId(): Promise<string | null> {
 export async function saveSeenDemoId(id: string): Promise<void> {
   try {
     await Preferences.set({ key: SEEN_KEY, value: id })
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function loadDemoJoinedAt(): Promise<string | null> {
+  try {
+    const { value } = await Preferences.get({ key: JOINED_AT_KEY })
+    return value || null
+  } catch {
+    return null
+  }
+}
+
+export async function saveDemoJoinedAt(iso: string): Promise<void> {
+  try {
+    await Preferences.set({ key: JOINED_AT_KEY, value: iso })
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function clearDemoJoinGate(): Promise<void> {
+  try {
+    await Preferences.remove({ key: JOINED_AT_KEY })
+  } catch {
+    /* ignore */
+  }
+}
+
+/** 앱을 예전 버전에서 올린 경우: 참여 시각이 없으면 지금으로 두고 예전 문자는 막는다. */
+export async function loadOrStartDemoJoinedAt(): Promise<string> {
+  const existing = await loadDemoJoinedAt()
+  if (existing) return existing
+  const joinedAt = new Date().toISOString()
+  await saveDemoJoinedAt(joinedAt)
+  return joinedAt
+}
+
+export function isDemoSentAfterJoin(sentAt: string | undefined, joinedAt: string | null): boolean {
+  if (!joinedAt || !sentAt) return false
+  const sent = Date.parse(sentAt)
+  const joined = Date.parse(joinedAt)
+  if (!Number.isFinite(sent) || !Number.isFinite(joined)) return false
+  return sent > joined
+}
+
+export function shouldPresentDemoMessage(
+  current: { id?: string; sentAt?: string },
+  opts: { seenId: string | null; joinedAt: string | null },
+): boolean {
+  if (!current.id) return false
+  if (opts.seenId === current.id) return false
+  return isDemoSentAfterJoin(current.sentAt, opts.joinedAt)
+}
+
+/** 참여하는 순간 서버에 있던 문자는 본 문자로 표시해서 알림을 띄우지 않는다. */
+export async function markExistingDemoCurrentSeen(): Promise<void> {
+  try {
+    const current = await fetchDemoCurrent()
+    if (current?.id) await saveSeenDemoId(current.id)
   } catch {
     /* ignore */
   }

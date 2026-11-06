@@ -7,8 +7,10 @@ import {
   fetchDemoCurrent,
   joinDemo,
   loadDemoDeviceId,
+  loadOrStartDemoJoinedAt,
   loadSeenDemoId,
   saveSeenDemoId,
+  shouldPresentDemoMessage,
 } from "./demoClient"
 
 const POLL_MS = 3_000
@@ -49,8 +51,11 @@ export function useDemoBroadcast({
         if (cancelled) return
         onLinkRef.current?.(true)
         if (!current) return
-        const seen = await loadSeenDemoId()
-        if (seen === current.id) return
+        const [seen, joinedAt] = await Promise.all([loadSeenDemoId(), loadOrStartDemoJoinedAt()])
+        if (!shouldPresentDemoMessage(current, { seenId: seen, joinedAt })) {
+          if (seen !== current.id) await saveSeenDemoId(current.id)
+          return
+        }
         const payload = handleIncomingAlert(current.message, {
           broadcast: current.govType,
           alertId: current.id,

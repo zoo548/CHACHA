@@ -60,9 +60,10 @@ function useLongPress(onLong: () => void, ms = 550) {
 
 function picCardClass(action: AlertAction, extra = "") {
   const hasArt = hasAssetIcon(action.art)
+  const enlargeText = !hasArt && !action.phoneKind
   return [
     "pic-card",
-    hasArt ? "" : "text-only",
+    enlargeText ? "text-only" : "",
     action.disabled ? "disabled" : "",
     extra,
   ]
@@ -73,12 +74,13 @@ function picCardClass(action: AlertAction, extra = "") {
 function PicCardBody({ action }: { action: AlertAction }) {
   const art = action.art
   const hasArt = hasAssetIcon(art)
+  const enlargeText = !hasArt && !action.phoneKind
   const label = hasArt && action.short ? (
     <b>{action.short}</b>
-  ) : hasArt ? (
-    <small>{action.text}</small>
-  ) : (
+  ) : enlargeText ? (
     <b>{action.text}</b>
+  ) : (
+    <small>{action.text}</small>
   )
   return (
     <>

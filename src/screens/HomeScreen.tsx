@@ -10,21 +10,33 @@ import { DEMO_INVITE_LABEL } from "../demo/audience"
 import type { Profile } from "../data/profile"
 import { useDevice } from "../device/DeviceContext"
 
-/** 상태 → 상단 알림표시 문구. 디자인(em 태그) 그대로. */
-function deviceStatusLabel(status: ReturnType<typeof useDevice>["state"]["status"]): string {
-  switch (status) {
-    case "connected":
-      return "차차등 연결됨"
-    case "scanning":
-      return "차차등 찾는 중"
-    case "connecting":
-      return "차차등 연결 중"
-    case "unsupported":
-      return "" // 라벨 숨김 (예: Safari)
-    case "disconnected":
-    default:
-      return "차차등 연결 끊김"
+function HomeDeviceBadge() {
+  const { state, connect } = useDevice()
+  const busy = state.status === "scanning" || state.status === "connecting"
+
+  const onReconnect = () => {
+    if (state.status === "connected" || busy) return
+    // requestDevice 는 클릭 안에서 바로 호출해야 브라우저 선택 창이 열린다.
+    connect().catch(() => {})
   }
+
+  if (state.status === "connected") {
+    return (
+      <span className="device-badge connected">
+        <i className="device-badge-dot" />
+        차차등 연결됨
+      </span>
+    )
+  }
+  if (busy) {
+    return <span className="device-badge connecting">연결 중…</span>
+  }
+  return (
+    <button type="button" className="device-badge disconnected" onClick={onReconnect}>
+      <Icon name="bluetooth" />
+      차차등 연결하기
+    </button>
+  )
 }
 
 export function HomeScreen({
@@ -57,7 +69,10 @@ export function HomeScreen({
   onDemoInvite?: () => Promise<void>
 }) {
   const { state: deviceState } = useDevice()
-  const label = deviceStatusLabel(deviceState.status)
+  const deviceHint =
+    deviceState.status === "disconnected" || deviceState.status === "unsupported"
+      ? deviceState.errorMessage
+      : null
   const [inviteBusy, setInviteBusy] = useState(false)
   return (
     <main className="proto-page home-page">
@@ -77,8 +92,9 @@ export function HomeScreen({
       )}
       <header className="home-head">
         <Logo onSecretTap={openDemo} />
-        {label && <em className={`device-badge ${deviceState.status}`}>{label}</em>}
+        <HomeDeviceBadge />
       </header>
+      {deviceHint && <p className="device-reconnect-hint">{deviceHint}</p>}
       {demoBanner && (
         <p className={`demo-home-banner${demoBanner.includes("끊겼") ? " offline" : ""}`}>
           {demoBanner}

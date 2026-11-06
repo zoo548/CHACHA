@@ -23,6 +23,7 @@ const paths: Record<IconName, ReactNode> = {
   alert: <><path d="M12 3 2.8 20h18.4Z" /><path d="M12 9v5m0 3h.01" /></>,
   "arrow-down": <><path d="M12 3v15" /><path d="m6 13 6 6 6-6" /></>,
   bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></>,
+  bluetooth: <path d="m7 7 10 10-5 5V2l5 5L7 17" />,
   building: <><path d="M5 21V5h14v16M3 21h18" /><path d="M9 9h2m2 0h2m-6 4h2m2 0h2m-6 4h2m2 0h2" /></>,
   call: <path d="M7 3H4.5A1.5 1.5 0 0 0 3 4.5C3 13.6 10.4 21 19.5 21a1.5 1.5 0 0 0 1.5-1.5V17l-5-2-1.2 3c-3.9-1.7-6.1-3.9-7.8-7.8l3-1.2Z" />,
   check: <path d="m5 12 4 4L19 6" />,
